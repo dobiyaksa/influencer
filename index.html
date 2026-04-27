@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공구 캘린더</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --accent: 212, 119, 109;
+      --accent-hex: #D4776D;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #bbb8b5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    /* ── Control Panel ── */
+    .control-panel {
+      width: 1080px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 14px 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-row input[type="text"] {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1.5px solid #e0dbd9;
+      border-radius: 10px;
+      font-size: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #666;
+      outline: none;
+      transition: border-color 0.2s;
+      background: rgba(255,255,255,0.6);
+    }
+    .panel-row input[type="text"]:focus { border-color: var(--accent-hex); }
+    .panel-row input[type="text"]::placeholder { color: #c5bfbc; }
+    .panel-divider {
+      width: 1px; height: 24px; background: #e0dbd9; flex-shrink: 0;
+    }
+    .panel-btn {
+      padding: 8px 20px;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .panel-btn:hover { transform: translateY(-1px); }
+    .panel-btn.apply {
+      background: #666;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+    .panel-btn.refresh {
+      background: linear-gradient(135deg, #8CADE0, #6688C9);
+      box-shadow: 0 2px 10px rgba(102,136,200,0.25);
+    }
+    .panel-btn.save {
+      background: linear-gradient(135deg, #E0908A, #C96E66);
+      box-shadow: 0 2px 10px rgba(200,110,102,0.25);
+    }
+    .panel-label {
+      font-size: 11px; color: #a09a97; font-weight: 500; white-space: nowrap;
+    }
+    .panel-color {
+      width: 30px; height: 30px;
+      border: 1.5px solid #e0dbd9; border-radius: 8px;
+      cursor: pointer; padding: 2px;
+      background: none;
+    }
+    .panel-color::-webkit-color-swatch-wrapper { padding: 0; }
+    .panel-color::-webkit-color-swatch { border: none; border-radius: 5px; }
+    .panel-status {
+      font-size: 10px; color: #999; white-space: nowrap;
+    }
+    .panel-status.ok { color: #5A9A5A; }
+    .panel-status.err { color: var(--accent-hex); }
+    .panel-hint {
+      color: #c0b8b5; font-size: 10px; letter-spacing: 0.3px;
+    }
+
+    /* ── Calendar ── */
+    .calendar {
+      width: 1080px;
+      min-height: 1350px;
+      background: #FFFBF9;
+      position: relative;
+      overflow: visible;
+    }
+
+    .calendar-bg {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 340px;
+      background: linear-gradient(175deg, rgba(var(--accent),0.35) 0%, rgba(var(--accent),0.18) 25%, rgba(var(--accent),0.06) 55%, #FFFBF9 100%);
+    }
+
+    /* ── Header ── */
+    .header {
+      position: relative; z-index: 1;
+      padding: 32px 60px 0;
+      height: 260px;
+    }
+    .month-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 270px;
+      font-weight: 600;
+      color: rgba(var(--accent), 0.14);
+      line-height: 0.76;
+      letter-spacing: -14px;
+      position: absolute;
+      top: 6px; left: 30px;
+    }
+    .header-right {
+      position: absolute;
+      left: 320px; top: 32px;
+    }
+    .month-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 86px;
+      font-weight: 600;
+      color: #363636;
+      line-height: 1;
+    }
+    .calendar-title {
+      font-size: 46px;
+      font-weight: 900;
+      color: var(--accent-hex);
+      margin-top: 0;
+      letter-spacing: -0.5px;
+    }
+    .handle {
+      font-size: 17px;
+      color: #bfb3af;
+      font-weight: 400;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Day headers ── */
+    .day-headers-wrap {
+      position: relative; z-index: 1;
+      padding: 0 40px;
+      margin-bottom: 4px;
+    }
+    .day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding-bottom: 13px;
+      border-bottom: 2px solid rgba(var(--accent), 0.35);
+    }
+    .day-header {
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #c2b5b1;
+      letter-spacing: 3.5px;
+    }
+
+    /* ── Weeks ── */
+    .weeks { position: relative; z-index: 1; padding: 0 40px; }
+
+    .week {
+      position: relative;
+      padding: 18px 0 14px;
+    }
+    .week-line {
+      position: absolute;
+      bottom: 0; left: 10px; right: 10px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #E8D5D1 20%, #E8D5D1 80%, transparent 100%);
+    }
+    .week.no-products { padding-bottom: 18px; }
+
+    /* ── Dates ── */
+    .dates {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 10px;
+    }
+    .date-cell {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 400;
+      color: #a89e9a;
+      position: relative;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .date-cell.start-date {
+      color: var(--accent-hex);
+      font-weight: 800;
+      font-size: 21px;
+    }
+    .date-circle {
+      position: absolute;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2.5px solid var(--accent-hex);
+      background: rgba(var(--accent), 0.06);
+    }
+    .date-cell .date-badge {
+      position: absolute;
+      top: -6px;
+      left: calc(50% + 22px);
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      background: linear-gradient(135deg, rgba(var(--accent),0.8), var(--accent-hex));
+      padding: 2.5px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(var(--accent), 0.3);
+      min-width: 10px;
+      z-index: 2;
+    }
+    .date-cell:last-child .date-badge {
+      left: auto;
+      right: calc(50% + 22px);
+    }
+    .date-badge.empty-badge {
+      background: none; box-shadow: none; padding: 0; min-width: 0;
+      color: #d8cfcb; font-size: 13px; font-weight: 400;
+    }
+    .date-badge.empty-badge:hover { color: var(--accent-hex); }
+
+    /* ── Products ── */
+    .products-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      min-height: 120px;
+      align-items: start;
+    }
+    .product-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 14px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .product-card:hover {
+      background: rgba(var(--accent), 0.04);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.03);
+    }
+    .product-card img {
+      width: 86px;
+      height: 86px;
+      object-fit: cover;
+      border-radius: 14px;
+      flex-shrink: 0;
+      background: #f3edeb;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    }
+    .product-info {
+      flex: 1;
+      min-width: 0;
+      padding-top: 4px;
+    }
+    .product-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: #333;
+      line-height: 1.35;
+      word-break: keep-all;
+      letter-spacing: -0.3px;
+    }
+    .product-desc {
+      font-size: 12.5px;
+      color: #a69b97;
+      line-height: 1.7;
+      margin-top: 5px;
+      word-break: keep-all;
+    }
+
+    /* ── Editable ── */
+    [contenteditable] {
+      outline: none; cursor: text;
+      border-radius: 4px;
+      transition: box-shadow 0.15s;
+    }
+    [contenteditable]:hover { box-shadow: 0 0 0 2px rgba(var(--accent),0.2); }
+    [contenteditable]:focus { box-shadow: 0 0 0 2px rgba(var(--accent),0.5); }
+    .product-desc.placeholder { color: #d8cfcb; }
+    .date-badge.save-hide { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="control-panel">
+    <div class="panel-row">
+      <input id="api-key" type="text" placeholder="Google Sheets API 키" style="flex:0.4" />
+      <input id="sheet-url" type="text" placeholder="Google 스프레드시트 URL" />
+      <button class="panel-btn apply" onclick="applySettings()">적용</button>
+      <span id="sheet-status" class="panel-status"></span>
+    </div>
+    <div class="panel-row">
+      <button id="refresh-btn" class="panel-btn refresh" onclick="loadAndRender()">새로고침</button>
+      <button id="save-btn" class="panel-btn save" onclick="saveImage()">이미지 저장</button>
+      <div class="panel-divider"></div>
+      <span class="panel-label">테마</span>
+      <input type="color" id="color-picker" class="panel-color" value="#D4776D" oninput="applyColor(this.value)" />
+      <div class="panel-divider"></div>
+      <span class="panel-hint">텍스트를 클릭하면 수정할 수 있습니다</span>
+    </div>
+  </div>
+  <div id="calendar" class="calendar"></div>
+
+  <script>
+    let API_KEY = localStorage.getItem('api_key') || '';
+    let SPREADSHEET_ID = localStorage.getItem('sheet_id') || '';
+    let SHEET_GID = localStorage.getItem('sheet_gid') || '';
+    const HANDLE = '@공구캘린더';
+    const TITLE = '공동구매 일정';
+
+    function parseSheetUrl(url) {
+      const idMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      const gidMatch = url.match(/[#&?]gid=(\d+)/);
+      if (!idMatch) return null;
+      return { id: idMatch[1], gid: gidMatch ? gidMatch[1] : '0' };
+    }
+
+    function applySettings() {
+      const keyInput = document.getElementById('api-key');
+      const urlInput = document.getElementById('sheet-url');
+      const status = document.getElementById('sheet-status');
+      const key = keyInput.value.trim();
+      const url = urlInput.value.trim();
+      if (!key) { status.textContent = 'API 키를 입력하세요'; status.className = 'panel-status err'; return; }
+      if (!url) { status.textContent = 'URL을 입력하세요'; status.className = 'panel-status err'; return; }
+      const parsed = parseSheetUrl(url);
+      if (!parsed) { status.textContent = '올바른 스프레드시트 URL이 아닙니다'; status.className = 'panel-status err'; return; }
+      API_KEY = key;
+      SPREADSHEET_ID = parsed.id;
+      SHEET_GID = parsed.gid;
+      localStorage.setItem('api_key', key);
+      localStorage.setItem('sheet_id', parsed.id);
+      localStorage.setItem('sheet_gid', parsed.gid);
+      localStorage.setItem('sheet_url', url);
+      status.textContent = '데이터를 불러옵니다...';
+      status.className = 'panel-status ok';
+      loadAndRender().then(() => {
+        status.textContent = '로드 완료';
+        document.querySelectorAll('.product-desc').forEach(el=>{
+          if(el.textContent.trim()==='설명 입력') el.classList.add('placeholder');
+          el.addEventListener('focus',()=>{if(el.classList.contains('placeholder')){el.textContent='';el.classList.remove('placeholder');}});
+          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='설명 입력';el.classList.add('placeholder');}});
+        });
+        document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{
+          el.addEventListener('focus',()=>{if(el.textContent.trim()==='+'){el.textContent='';} el.classList.remove('empty-badge');});
+          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='+';el.classList.add('empty-badge');}});
+        });
+      }).catch(() => {
+        status.textContent = '로드 실패 — API 키 또는 URL을 확인하세요';
+        status.className = 'panel-status err';
+      });
+    }
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_HEADERS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1,3),16);
+      const g = parseInt(hex.slice(3,5),16);
+      const b = parseInt(hex.slice(5,7),16);
+      return `${r}, ${g}, ${b}`;
+    }
+
+    function applyColor(hex) {
+      document.documentElement.style.setProperty('--accent', hexToRgb(hex));
+      document.documentElement.style.setProperty('--accent-hex', hex);
+      localStorage.setItem('theme_color', hex);
+    }
+
+    (function initColor() {
+      const saved = localStorage.getItem('theme_color');
+      if (saved) {
+        applyColor(saved);
+        document.getElementById('color-picker').value = saved;
+      }
+    })();
+
+    function getShortName(title) {
+      const map = [
+        ['프로바이오틱스', '분홍이'],
+        ['비타민D', '제가 만든 비타민D'],
+        ['비타민d', '제가 만든 비타민D'],
+        ['마그샷', '마그샷 마그에이드'],
+        ['베르베린', '베르베린 (엄선한 원료사)'],
+        ['오메가3', '오메안비러유'],
+        ['오메가 3', '오메안비러유'],
+        ['디오스민', '디오스민'],
+        ['칼마디', '칼마디'],
+      ];
+      for (const [kw, name] of map) { if (title.includes(kw)) return name; }
+      let c = title.replace(/닥터체크\s*/g,'').replace(/원퍼데이\s*/g,'').replace(/투퍼데이\s*/g,'')
+        .replace(/저스트\s*글로우\s*/g,'').replace(/박약다식\s*/g,'').trim();
+      return c.length > 12 ? c.substring(0,12) : c;
+    }
+
+    function getProductDesc(title) {
+      const map = {
+        '프로바이오틱스': '인기템 깜짝공구\n단 3일!',
+        '비타민D': '샤인머스캣 맛',
+        '마그샷': '제가 배합 참여\n레모나 맛\n100% 유기산 마그네슘 액상!',
+        '베르베린': '혈당과 체중 관리',
+        '오메가3': '고품질\n안비린 오메가 3',
+        '디오스민': '먹는 압박스타킹!\n혈관 꽉 잡아주는\n유명한 그 제품!',
+        '칼마디': '부담없는 가격,\n속편한 칼마디',
+      };
+      for (const [kw, desc] of Object.entries(map)) { if (title.includes(kw)) return desc; }
+      return '';
+    }
+
+    function getBadge(title) {
+      if (title.includes('프로바이오틱스')) return 'HOT';
+      if (title.includes('비타민D')) return '품절대란템';
+      if (title.includes('오메가3')) return 'HOT';
+      return '';
+    }
+
+    function parseStartDay(ds) { return new Date(ds).getDate(); }
+
+    function getCalendarWeeks(year, month) {
+      const dim = new Date(year, month+1, 0).getDate();
+      const weeks = []; let week = Array(7).fill(null);
+      for (let d=1; d<=dim; d++) {
+        const dow = new Date(year, month, d).getDay();
+        week[dow] = d;
+        if (dow===6 || d===dim) { weeks.push(week); week = Array(7).fill(null); }
+      }
+      return weeks;
+    }
+
+    function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+    async function loadAndRender() {
+      try {
+        const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${API_KEY}`;
+        const meta = await fetch(metaUrl).then(r=>r.json());
+        if (meta.error) throw new Error(meta.error.message);
+        const sheet = meta.sheets?.find(s=>s.properties.sheetId===Number(SHEET_GID));
+        const sn = sheet?.properties?.title||'Sheet1';
+        const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sn)}!A2:H1000?key=${API_KEY}`;
+        const data = await fetch(dataUrl).then(r=>r.json());
+        if (data.error) throw new Error(data.error.message);
+        const rows = data.values||[], products = [];
+        rows.forEach((row, i) => {
+          products.push({ id:row[0]+'_'+i, title:row[1]||'', startDate:row[3]||'', endDate:row[4]||'',
+            salesLink:row[5]||'', thumbnail:row[7]||'', startDay:parseStartDay(row[3]) });
+        });
+        const sd = new Date(products[0]?.startDate||new Date());
+        renderCalendar(sd.getFullYear(), sd.getMonth(), products);
+      } catch(e) {
+        document.getElementById('calendar').innerHTML =
+          `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#D4776D;font-size:20px;padding:60px;text-align:center;line-height:1.6">${esc(e.message)}</div>`;
+      }
+    }
+
+    function renderCalendar(year, month, products) {
+      const weeks = getCalendarWeeks(year, month);
+      const mn = String(month+1).padStart(2,'0');
+      const startDays = new Set(products.map(p=>p.startDay));
+      const sdm = {}; products.forEach(p=>{ if(!sdm[p.startDay]) sdm[p.startDay]=p; });
+      const pbw = weeks.map(w => {
+        const d = w.filter(v=>v!==null);
+        return products.filter(p=>d.includes(p.startDay)).sort((a,b)=>a.startDay-b.startDay);
+      });
+
+      let h = '<div class="calendar-bg"></div>';
+
+      h += `<div class="header">
+        <div class="month-num" contenteditable="true" spellcheck="false">${mn}</div>
+        <div class="header-right">
+          <div class="month-name" contenteditable="true" spellcheck="false">${MONTH_NAMES[month]}</div>
+          <div class="calendar-title" contenteditable="true" spellcheck="false">${esc(TITLE)}</div>
+          <div class="handle" contenteditable="true" spellcheck="false">${esc(HANDLE)}</div>
+        </div>
+      </div>`;
+
+      h += '<div class="day-headers-wrap"><div class="day-headers">';
+      DAY_HEADERS.forEach(d => { h += `<div class="day-header">${d}</div>`; });
+      h += '</div></div><div class="weeks">';
+
+      weeks.forEach((week, wi) => {
+        const wp = pbw[wi], hp = wp.length>0;
+        const isLast = wi === weeks.length - 1;
+        h += `<div class="week ${hp?'':'no-products'}"><div class="dates">`;
+        for (let c=0; c<7; c++) {
+          const day = week[c], isS = day && startDays.has(day);
+          const prod = day?sdm[day]:null;
+          const badge = prod?getBadge(prod.title):'';
+          h += `<div class="date-cell ${isS?'start-date':''}">`;
+          if (isS) h += '<span class="date-circle"></span>';
+          h += `<span style="position:relative;z-index:1">${day||''}</span>`;
+          if (isS) {
+            if (badge) {
+              h += `<span class="date-badge" contenteditable="true" spellcheck="false">${esc(badge)}</span>`;
+            } else {
+              h += `<span class="date-badge empty-badge" contenteditable="true" spellcheck="false">+</span>`;
+            }
+          }
+          h += '</div>';
+        }
+        h += '</div>';
+
+        if (hp) {
+          h += '<div class="products-row">';
+          const uniqueDays = [...new Set(wp.map(p=>p.startDay))].sort((a,b)=>a-b);
+          uniqueDays.forEach((day, di) => {
+            const dow = new Date(year, month, day).getDay();
+            const nextDay = uniqueDays[di+1];
+            const nd = nextDay ? new Date(year, month, nextDay).getDay() : 7;
+            const span = Math.max(1, nd - dow);
+            const dayProducts = wp.filter(x=>x.startDay===day);
+
+            h += `<div style="grid-column:${dow+1}/span ${span};">`;
+            dayProducts.forEach(p => {
+              const sn = getShortName(p.title), desc = getProductDesc(p.title);
+              const dh = desc ? desc.split('\n').map(l=>esc(l)).join('<br>') : '';
+              h += `<div class="product-card"
+                data-link="${esc(p.salesLink)}" onclick="if(this.dataset.link&&!window.getSelection().toString())window.open(this.dataset.link,'_blank')">
+                <img src="${esc(p.thumbnail)}" alt="${esc(sn)}"/>
+                <div class="product-info">
+                  <div class="product-name" contenteditable="true" spellcheck="false">${esc(sn)}</div>
+                  <div class="product-desc" contenteditable="true" spellcheck="false">${dh||'설명 입력'}</div>
+                </div>
+              </div>`;
+            });
+            h += '</div>';
+          });
+          h += '</div>';
+        }
+        if (!isLast) h += '<div class="week-line"></div>';
+        h += '</div>';
+      });
+      h += '</div>';
+      document.getElementById('calendar').innerHTML = h;
+    }
+
+    const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAA0lEQVQI12P4z8BQDwAEgAF/QualIQAAAABJRU5ErkJggg==';
+
+    async function convertImgSrc(img) {
+      const src = img.src;
+      if (!src || src.startsWith('data:')) return src;
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || 86;
+        c.height = img.naturalHeight || 86;
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return c.toDataURL();
+      } catch(e) {}
+      try {
+        const r = await fetch(src);
+        const b = await r.blob();
+        return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b);});
+      } catch(e) {}
+      try {
+        const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(src));
+        const b = await r.blob();
+        return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b);});
+      } catch(e) {}
+      return PIXEL;
+    }
+
+    async function saveImage() {
+      const btn = document.getElementById('save-btn');
+      const cal = document.getElementById('calendar');
+      btn.textContent = '저장 중...';
+      try {
+        document.activeElement?.blur();
+        document.querySelectorAll('.product-desc.placeholder').forEach(el=>{el.textContent='';});
+        document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{el.classList.add('save-hide');});
+        document.querySelectorAll('.date-badge').forEach(el=>{if(!el.textContent.trim())el.classList.add('save-hide');});
+
+        const imgs = cal.querySelectorAll('img');
+        const origSrcs = [];
+        for (const img of imgs) {
+          origSrcs.push(img.src);
+          img.src = await convertImgSrc(img);
+        }
+        await new Promise(r=>setTimeout(r,100));
+
+        const _origCP = CanvasRenderingContext2D.prototype.createPattern;
+        CanvasRenderingContext2D.prototype.createPattern = function(img, rep) {
+          if (img && (img.width === 0 || img.height === 0)) return null;
+          return _origCP.call(this, img, rep);
+        };
+
+        cal.style.height = '1350px';
+        cal.style.overflow = 'hidden';
+        const canvas = await html2canvas(cal,{
+          scale:2, backgroundColor:'#FFFBF9', allowTaint:true,
+        });
+        CanvasRenderingContext2D.prototype.createPattern = _origCP;
+        cal.style.height = '';
+        cal.style.overflow = '';
+        imgs.forEach((img,i)=>{img.src=origSrcs[i];});
+        document.querySelectorAll('.date-badge.save-hide').forEach(el=>{el.classList.remove('save-hide');});
+        document.querySelectorAll('.product-desc').forEach(el=>{
+          if(!el.textContent.trim()){el.textContent='설명 입력';el.classList.add('placeholder');}
+        });
+        const link = document.createElement('a');
+        link.download='공구캘린더.png'; link.href=canvas.toDataURL('image/png'); link.click();
+        btn.textContent='저장 완료!';
+        setTimeout(()=>{btn.textContent='이미지 저장';},2000);
+      } catch(e) {
+        const c = document.getElementById('calendar');
+        if(c){c.style.height='';c.style.overflow='';}
+        document.querySelectorAll('.date-badge.save-hide').forEach(el=>{el.classList.remove('save-hide');});
+        btn.textContent='이미지 저장'; alert('저장 실패: '+e.message);
+      }
+    }
+
+    const savedKey = localStorage.getItem('api_key');
+    const savedUrl = localStorage.getItem('sheet_url');
+    if (savedKey) document.getElementById('api-key').value = savedKey;
+    if (savedUrl) document.getElementById('sheet-url').value = savedUrl;
+
+    function showGuide() {
+      document.getElementById('calendar').innerHTML =
+        `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#999;padding:80px 60px;text-align:center;line-height:2">
+          <div style="font-size:48px;margin-bottom:20px">📋</div>
+          <div style="font-size:22px;font-weight:800;color:#666;margin-bottom:12px">공동구매 캘린더</div>
+          <div style="font-size:14px;color:#aaa;max-width:500px">
+            위 패널에 <b style="color:#888">Google Sheets API 키</b>와 <b style="color:#888">스프레드시트 URL</b>을 입력한 후<br>
+            <b style="color:#888">적용</b> 버튼을 눌러주세요.
+          </div>
+          <div style="margin-top:30px;font-size:12px;color:#c0b8b5;line-height:2;text-align:left">
+            <div>1. <a href="https://console.cloud.google.com" target="_blank" style="color:#8CADE0">Google Cloud Console</a>에서 프로젝트 생성</div>
+            <div>2. Google Sheets API 활성화</div>
+            <div>3. API 키 생성 (사용자 인증 정보 → API 키)</div>
+            <div>4. 스프레드시트 공유 설정: "링크가 있는 모든 사용자 — 뷰어"</div>
+          </div>
+        </div>`;
+    }
+
+    function initApp() {
+      if (!API_KEY || !SPREADSHEET_ID) { showGuide(); return; }
+      loadAndRender().then(()=>{
+        document.querySelectorAll('.product-desc').forEach(el=>{
+          if(el.textContent.trim()==='설명 입력') el.classList.add('placeholder');
+          el.addEventListener('focus',()=>{if(el.classList.contains('placeholder')){el.textContent='';el.classList.remove('placeholder');}});
+          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='설명 입력';el.classList.add('placeholder');}});
+        });
+        document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{
+          el.addEventListener('focus',()=>{if(el.textContent.trim()==='+'){el.textContent='';} el.classList.remove('empty-badge');});
+          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='+';el.classList.add('empty-badge');}});
+        });
+      });
+    }
+    initApp();
+  </script>
+</body>
+</html>
