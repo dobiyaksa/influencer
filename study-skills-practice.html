@@ -375,9 +375,10 @@ html, body {
       <li><a href="#prereq">사전 준비 — 환경 세팅</a></li>
       <li><a href="#overview">스킬 개요 — 사용 가능한 명령어</a></li>
       <li><a href="#practice1">실습 1 — /공구캘린더 (캘린더 수정)</a></li>
-      <li><a href="#practice2">실습 2 — /당첨자폼 (이벤트 폼 커스터마이징)</a></li>
-      <li><a href="#practice3">실습 3 — /커리큘럼 (커리큘럼 페이지 수정)</a></li>
-      <li><a href="#practice4">실습 4 — /deploy (배포하기)</a></li>
+      <li><a href="#practice2">실습 2 — /공구대시보드 (매출 대시보드)</a></li>
+      <li><a href="#practice3">실습 3 — /당첨자폼 (이벤트 폼 커스터마이징)</a></li>
+      <li><a href="#practice4">실습 4 — /커리큘럼 (커리큘럼 페이지 수정)</a></li>
+      <li><a href="#practice5">실습 5 — /deploy (배포하기)</a></li>
       <li><a href="#challenge">도전 과제</a></li>
     </ol>
   </div>
@@ -557,6 +558,10 @@ html, body {
         <span class="skill-desc">AI 스터디 커리큘럼 페이지 생성 및 수정</span>
       </div>
       <div class="skill-item">
+        <span class="skill-cmd">/공구대시보드</span>
+        <span class="skill-desc">공구 매출 대시보드 수정 (API 연동, 차트, 테이블)</span>
+      </div>
+      <div class="skill-item">
         <span class="skill-cmd">/deploy</span>
         <span class="skill-desc">Cloudflare Pages에 프로덕션 배포</span>
       </div>
@@ -629,10 +634,107 @@ html, body {
     </div>
   </div>
 
-  <!-- Section 3: 실습 2 -->
+  <!-- Section 3: 실습 2 — 공구대시보드 -->
   <div class="section" id="practice2">
     <div class="section-number">3</div>
-    <h2>실습 2 — /당첨자폼</h2>
+    <h2>실습 2 — /공구대시보드</h2>
+    <p class="section-desc">친한스토어 어드민 API를 연동하여 공동구매 매출 대시보드를 수정합니다.</p>
+
+    <h3><span class="step-icon">🎯</span> 실습 목표</h3>
+    <ul class="checklist">
+      <li>REST API 로그인(ID/PW + 2FA) 흐름을 이해한다</li>
+      <li>Swagger로 API 스키마를 확인하고 데이터를 연동할 수 있다</li>
+      <li>CORS 프록시를 통해 외부 API를 브라우저에서 호출할 수 있다</li>
+      <li>Chart.js 차트와 테이블을 커스터마이징할 수 있다</li>
+    </ul>
+
+    <h3><span class="step-icon">📖</span> 핵심 개념</h3>
+
+    <div class="step-card">
+      <div class="step-label">API 인증 흐름</div>
+      <p><strong>1단계:</strong> ID/PW 로그인 &rarr; <code>POST /api/admin/v2/authentications/login</code><br>
+      <strong>2단계:</strong> master 계정이면 2FA 발송 &rarr; <code>POST /api/admin/v2/authentications/2fa/send</code><br>
+      <strong>3단계:</strong> 슬랙 인증번호 입력 &rarr; <code>PUT /api/admin/v2/authentications/2fa/verify</code><br>
+      <strong>4단계:</strong> JWT 토큰 획득 &rarr; 이후 모든 API 호출에 <code>Authorization: Bearer {token}</code> 사용</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">CORS 프록시</div>
+      <p>브라우저에서 다른 도메인 API를 직접 호출하면 CORS 정책으로 차단됩니다.<br>
+      Cloudflare Pages Functions가 같은 도메인에서 요청을 받아 서버 측에서 API로 전달합니다.</p>
+      <div class="code-block">
+        <span class="comment"># 브라우저 &rarr; 같은 도메인 (CORS 없음)</span><br>
+        influencer-p68.pages.dev<span class="flag">/api/admin/...</span><br><br>
+        <span class="comment"># Cloudflare Function &rarr; API 서버 (서버간 통신, CORS 없음)</span><br>
+        <span class="flag">&rarr;</span> api.store.friendly-pharmacist.com<span class="flag">/api/admin/...</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">공구 상태 코드</div>
+      <p>Swagger 스키마 기준 공구 진행 상태:</p>
+      <div class="code-block">
+        <span class="comment"># 진행예정</span><br>
+        T0: 검토중 / T2: 준비중 / T4: 확정 / T6: 진행중 / T8: 진행완료<br><br>
+        <span class="comment"># 진행중 (주문 발생, 매출 데이터 있음)</span><br>
+        <span class="command">Y0: 정산대기</span><br><br>
+        <span class="comment"># 완료</span><br>
+        <span class="command">Y8: 정산완료</span><br><br>
+        <span class="comment"># 기타</span><br>
+        C0: 취소 / C4: 보류
+      </div>
+    </div>
+
+    <h3><span class="step-icon">🔨</span> 실습 과정</h3>
+
+    <div class="step-card">
+      <div class="step-label">실습 2-A — 대시보드 접속 및 로그인</div>
+      <p>브라우저에서 대시보드에 접속하고 로그인합니다:</p>
+      <div class="code-block">
+        <span class="comment"># 브라우저에서 접속</span><br>
+        <span class="url">http://localhost:3000/dashboard</span><br><br>
+        <span class="comment"># 친한스토어 어드민 계정으로 로그인</span><br>
+        <span class="comment"># master 계정은 슬랙 2FA 인증 필요</span>
+      </div>
+      <p style="margin-top:8px;">로그인 성공 시 통계 카드, 차트, 공구 테이블이 표시됩니다.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">실습 2-B — Swagger로 API 스키마 확인</div>
+      <p>API 응답 구조를 Swagger에서 확인하는 방법을 실습합니다:</p>
+      <div class="code-block">
+        <span class="command">/공구대시보드</span><br>
+        Swagger API 문서를 참고하여 공구 상세 API의<br>
+        응답 필드를 확인하고, 매출 리포트 데이터 구조를 알려줘
+      </div>
+      <div class="tip">
+        <strong>Swagger URL:</strong> dev-api.store.friendly-pharmacist.com/swagger-ui/index.html 에서 API 스키마를 직접 확인할 수 있습니다.
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">실습 2-C — 대시보드 커스터마이징</div>
+      <p>대시보드의 차트나 테이블을 수정해 봅니다:</p>
+      <div class="code-block">
+        <span class="command">/공구대시보드</span><br>
+        매출 TOP 10 차트를 세로 바 차트로 변경해줘
+      </div>
+      <div class="code-block">
+        <span class="command">/공구대시보드</span><br>
+        테이블에 "주문수" 컬럼을 추가해줘
+      </div>
+    </div>
+
+    <div class="result-preview">
+      <div class="label">확인 방법</div>
+      <div class="url">http://localhost:3000/dashboard &rarr; 로그인 &rarr; 공구 클릭 &rarr; 상세 매출 데이터 확인</div>
+    </div>
+  </div>
+
+  <!-- Section 4: 실습 3 — 당첨자폼 -->
+  <div class="section" id="practice3">
+    <div class="section-number">4</div>
+    <h2>실습 3 — /당첨자폼</h2>
     <p class="section-desc">이벤트 당첨자 배송지 입력 폼을 커스터마이징합니다.</p>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
@@ -645,7 +747,7 @@ html, body {
     <h3><span class="step-icon">🔨</span> 실습 과정</h3>
 
     <div class="step-card">
-      <div class="step-label">실습 2-A — 제품 정보 변경</div>
+      <div class="step-label">실습 3-A — 제품 정보 변경</div>
       <p>폼에 표시되는 제품 정보를 본인의 제품으로 바꿔봅니다:</p>
       <div class="code-block">
         <span class="command">/당첨자폼</span><br>
@@ -655,7 +757,7 @@ html, body {
     </div>
 
     <div class="step-card">
-      <div class="step-label">실습 2-B — 폼 필드 추가</div>
+      <div class="step-label">실습 3-B — 폼 필드 추가</div>
       <p>새로운 입력 필드를 추가해 봅니다:</p>
       <div class="code-block">
         <span class="command">/당첨자폼</span><br>
@@ -665,7 +767,7 @@ html, body {
     </div>
 
     <div class="step-card">
-      <div class="step-label">실습 2-C — 관리자 페이지 확인</div>
+      <div class="step-label">실습 3-C — 관리자 페이지 확인</div>
       <p>관리자 페이지에서 데이터를 확인합니다:</p>
       <div class="code-block">
         <span class="comment"># 브라우저에서 접속</span><br>
@@ -684,10 +786,10 @@ html, body {
     </div>
   </div>
 
-  <!-- Section 4: 실습 3 -->
-  <div class="section" id="practice3">
-    <div class="section-number">4</div>
-    <h2>실습 3 — /커리큘럼</h2>
+  <!-- Section 5: 실습 4 — 커리큘럼 -->
+  <div class="section" id="practice4">
+    <div class="section-number">5</div>
+    <h2>실습 4 — /커리큘럼</h2>
     <p class="section-desc">AI 스터디 커리큘럼 페이지를 수정하고 나만의 커리큘럼을 만들어 봅니다.</p>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
@@ -700,7 +802,7 @@ html, body {
     <h3><span class="step-icon">🔨</span> 실습 과정</h3>
 
     <div class="step-card">
-      <div class="step-label">실습 3-A — 커리큘럼 내용 수정</div>
+      <div class="step-label">실습 4-A — 커리큘럼 내용 수정</div>
       <p>기존 커리큘럼의 내용을 본인 스타일로 수정합니다:</p>
       <div class="code-block">
         <span class="command">/커리큘럼</span><br>
@@ -709,7 +811,7 @@ html, body {
     </div>
 
     <div class="step-card">
-      <div class="step-label">실습 3-B — 새 주차 추가</div>
+      <div class="step-label">실습 4-B — 새 주차 추가</div>
       <p>5주차를 추가해 봅니다:</p>
       <div class="code-block">
         <span class="command">/커리큘럼</span><br>
@@ -720,7 +822,7 @@ html, body {
     </div>
 
     <div class="step-card">
-      <div class="step-label">실습 3-C — 나만의 커리큘럼 만들기</div>
+      <div class="step-label">실습 4-C — 나만의 커리큘럼 만들기</div>
       <p>완전히 새로운 커리큘럼을 구성해 봅니다:</p>
       <div class="code-block">
         <span class="command">/커리큘럼</span><br>
@@ -739,10 +841,10 @@ html, body {
     </div>
   </div>
 
-  <!-- Section 5: 실습 4 -->
-  <div class="section" id="practice4">
-    <div class="section-number">5</div>
-    <h2>실습 4 — /deploy (배포하기)</h2>
+  <!-- Section 7: 실습 5 -->
+  <div class="section" id="practice5">
+    <div class="section-number">6</div>
+    <h2>실습 5 — /deploy (배포하기)</h2>
     <p class="section-desc">수정한 결과물을 Cloudflare Pages에 배포합니다.</p>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
@@ -812,7 +914,17 @@ html, body {
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 C — 새로운 커리큘럼 기획</div>
+      <div class="step-label">도전 C — 대시보드 새 기능 추가</div>
+      <p>매출 대시보드에 새로운 시각화나 기능을 추가해 보세요.</p>
+      <div class="code-block">
+        <span class="command">/공구대시보드</span><br>
+        약사별 공구 참여 횟수와 총 매출을 보여주는<br>
+        새로운 차트를 추가해줘
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">도전 D — 새로운 커리큘럼 기획</div>
       <p>본인만의 스터디 커리큘럼을 기획하고 페이지로 만들어 보세요.</p>
       <div class="code-block">
         <span class="command">/커리큘럼</span><br>
