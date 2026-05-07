@@ -96,6 +96,73 @@ html, body {
 .toc li a:hover {
   text-decoration: underline;
 }
+.toc-time {
+  font-size: 11px;
+  color: #9A9A9A;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.difficulty {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 100px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.difficulty.easy {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+.difficulty.medium {
+  background: #FFF3E0;
+  color: #E65100;
+}
+.difficulty.hard {
+  background: #FCE4EC;
+  color: #C62828;
+}
+.learn-outcome {
+  background: linear-gradient(135deg, #EDE7F6, #E8EAF6);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-size: 12.5px;
+  color: #4A4A4A;
+  line-height: 1.7;
+  border-left: 3px solid #7C4DFF;
+}
+.learn-outcome strong {
+  color: #7C4DFF;
+}
+.back-to-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #FF6B35, #E84E1B);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: transform 0.2s;
+}
+.back-to-top:hover {
+  transform: scale(1.1);
+}
+.back-to-top.visible {
+  display: flex;
+}
 
 .section {
   background: white;
@@ -219,6 +286,96 @@ html, body {
   color: #4A4A4A;
   line-height: 1.7;
   border-left: 3px solid #E03131;
+}
+
+/* ── Terminal Mockup ── */
+.terminal-mockup {
+  background: #1a1a2e;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  font-family: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.terminal-titlebar {
+  background: #2d2d44;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.terminal-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.terminal-dot.red { background: #ff5f57; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #28c840; }
+.terminal-title-text {
+  flex: 1;
+  text-align: center;
+  color: #8888aa;
+  font-size: 11px;
+  font-weight: 500;
+}
+.terminal-body {
+  display: flex;
+  min-height: 180px;
+}
+.terminal-pane {
+  flex: 1;
+  padding: 14px 16px;
+  color: #c8c8d8;
+}
+.terminal-pane + .terminal-pane {
+  border-left: 2px solid #2d2d44;
+}
+.terminal-pane-label {
+  color: #6c6c8a;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2d2d44;
+}
+.terminal-pane .t-prompt { color: #7ee787; }
+.terminal-pane .t-cmd { color: #e8e8f0; }
+.terminal-pane .t-info { color: #58a6ff; }
+.terminal-pane .t-dim { color: #555570; }
+.terminal-pane .t-accent { color: #ff9f43; }
+.terminal-pane .t-cursor {
+  display: inline-block;
+  width: 7px; height: 14px;
+  background: #c8c8d8;
+  vertical-align: middle;
+  animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+.terminal-statusbar {
+  background: #16213e;
+  padding: 5px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  border-top: 1px solid #2d2d44;
+}
+.terminal-statusbar .ts-left {
+  display: flex; align-items: center; gap: 12px; color: #8888aa;
+}
+.terminal-statusbar .ts-right {
+  display: flex; align-items: center; gap: 6px;
+}
+.terminal-statusbar .ts-badge {
+  color: #ff6b8a;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.terminal-statusbar .ts-shells {
+  color: #58a6ff;
 }
 
 .skill-tag {
@@ -367,18 +524,19 @@ html, body {
     <div class="hero-badge"><span class="dot"></span>AI 스터디 실습 자료</div>
     <h1>Claude Code 스킬 실습 가이드</h1>
     <p>슬래시 명령어(스킬)를 활용하여<br>실제 프로젝트를 만들고 수정하는 실습 과정입니다.</p>
+    <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">전체 소요 시간: 약 2~3시간</p>
   </div>
 
   <div class="toc">
     <h2>목차</h2>
     <ol>
-      <li><a href="#prereq">사전 준비 — 환경 세팅</a></li>
-      <li><a href="#overview">스킬 개요 — 사용 가능한 명령어</a></li>
-      <li><a href="#practice1">실습 1 — /공구캘린더 (캘린더 수정)</a></li>
-      <li><a href="#practice2">실습 2 — /공구대시보드 (매출 대시보드)</a></li>
-      <li><a href="#practice3">실습 3 — /당첨자폼 (이벤트 폼 커스터마이징)</a></li>
-      <li><a href="#practice4">실습 4 — /deploy (배포하기)</a></li>
-      <li><a href="#challenge">도전 과제</a></li>
+      <li><a href="#prereq">사전 준비 — 환경 세팅</a> <span class="toc-time">20분</span></li>
+      <li><a href="#overview">스킬 개요 — 사용 가능한 명령어</a> <span class="toc-time">5분</span></li>
+      <li><a href="#practice1">실습 1 — /공구캘린더 (캘린더 수정)</a> <span class="toc-time">20분</span></li>
+      <li><a href="#practice2">실습 2 — /공구대시보드 (매출 대시보드)</a> <span class="toc-time">30분</span></li>
+      <li><a href="#practice3">실습 3 — /당첨자폼 (이벤트 폼 커스터마이징)</a> <span class="toc-time">20분</span></li>
+      <li><a href="#practice4">실습 4 — /deploy (배포하기)</a> <span class="toc-time">10분</span></li>
+      <li><a href="#challenge">도전 과제</a> <span class="toc-time">자유</span></li>
     </ol>
   </div>
 
@@ -434,7 +592,29 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 5 — 프로젝트 다운로드</div>
+        <div class="step-label">Step 5 — 권한 확인 생략 설정 (원커맨드)</div>
+        <p>실습 중 매번 권한 확인 팝업이 뜨지 않도록, 아래 명령어 하나로 alias를 등록합니다.</p>
+        <div class="code-block">
+          echo "alias claude='claude --dangerously-skip-permissions'" >> ~/.zshrc && source ~/.zshrc
+        </div>
+        <p style="margin-top:8px;">설정 완료 후 <code>claude</code>를 실행하면 자동으로 권한 확인 없이 동작합니다.</p>
+        <div class="warning"><strong>주의:</strong> 이 옵션은 Claude가 파일 수정·명령어 실행 등을 확인 없이 진행합니다. <strong>스터디 실습용</strong>으로만 사용하고, 중요한 프로젝트에서는 alias를 해제하세요.<br>
+        해제: <code>unalias claude</code> 또는 <code>~/.zshrc</code>에서 해당 줄을 삭제합니다.</div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-label">Step 6 — cmux 설치 (AI 코딩 전용 터미널)</div>
+        <p>cmux는 Claude Code에 최적화된 터미널 앱입니다. 화면 분할, 알림, 내장 브라우저 등을 지원합니다.</p>
+        <div class="code-block">
+          <span class="command">brew</span> install <span class="flag">--cask</span> cmux
+        </div>
+        <p style="margin-top:8px;">설치 후 응용 프로그램에서 <strong>cmux</strong>를 실행합니다.</p>
+        <div class="tip"><strong>Homebrew가 없다면:</strong> 먼저 아래 명령어로 설치하세요.<br>
+        <code style="font-size:11px;word-break:break-all;">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-label">Step 7 — 프로젝트 다운로드</div>
         <p>GitHub에서 프로젝트를 클론합니다.</p>
         <div class="code-block">
           <span class="command">git</span> clone <span class="url">https://github.com/kimkh10/influencer.git</span><br>
@@ -443,22 +623,60 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 6 — 로컬 서버 실행</div>
-        <p>프로젝트를 브라우저에서 확인합니다.</p>
+        <div class="step-label">Step 8 — cmux에서 서버 + Claude Code 동시 실행</div>
+        <p>cmux를 열고, 화면을 분할하여 한쪽에서 서버를 띄우고 다른 쪽에서 Claude Code를 실행합니다.</p>
         <div class="code-block">
-          <span class="command">npx</span> serve .
-        </div>
-        <p style="margin-top:8px;">브라우저에서 <code>http://localhost:3000</code> 접속하여 확인합니다.</p>
-      </div>
-
-      <div class="step-card">
-        <div class="step-label">Step 7 — Claude Code 실행</div>
-        <p>새 터미널 탭(<code>Cmd + T</code>)을 열고, 프로젝트 폴더에서 Claude Code를 시작합니다.</p>
-        <div class="code-block">
-          <span class="command">cd</span> influencer<br>
+          <span class="comment"># 패널 1: 로컬 서버 실행</span><br>
+          <span class="command">npx</span> serve .<br><br>
+          <span class="comment"># Cmd+D로 패널 분할 후, 패널 2: Claude Code 실행</span><br>
           <span class="command">claude</span>
         </div>
-        <p style="margin-top:8px;">Claude Code가 실행되면 슬래시 명령어를 사용할 수 있습니다.</p>
+        <p style="margin-top:8px;">브라우저에서 <code>http://localhost:3000</code> 접속하여 캘린더를 확인합니다.</p>
+        <div class="tip"><strong>cmux 기본 조작:</strong><br>
+        • 세로 분할: <code>Cmd + D</code><br>
+        • 가로 분할: <code>Cmd + Shift + D</code><br>
+        • 패널 전환: <code>Cmd + [</code> / <code>Cmd + ]</code><br>
+        • 내장 브라우저: <code>Cmd + Shift + B</code></div>
+
+        <p style="margin-top:14px;font-size:12px;color:#999;">실행하면 아래와 같은 화면이 됩니다:</p>
+        <div class="terminal-mockup">
+          <div class="terminal-titlebar">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title-text">cmux — study</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-pane">
+              <div class="terminal-pane-label">Panel 1 — Local Server</div>
+              <span class="t-prompt">$ </span><span class="t-cmd">npx serve .</span><br><br>
+              <span class="t-info">  Serving!</span><br><br>
+              <span class="t-dim">  - Local:  </span><span class="t-cmd">http://localhost:3000</span><br>
+              <span class="t-dim">  - Network:</span><span class="t-cmd"> http://192.168.0.10:3000</span><br><br>
+              <span class="t-dim">  Copied local address to clipboard!</span>
+            </div>
+            <div class="terminal-pane">
+              <div class="terminal-pane-label">Panel 2 — Claude Code</div>
+              <span class="t-prompt">$ </span><span class="t-cmd">claude</span><br><br>
+              <span class="t-accent">  ╭──────────────────────────╮</span><br>
+              <span class="t-accent">  │</span><span class="t-cmd">  Claude Code            </span><span class="t-accent">│</span><br>
+              <span class="t-accent">  │</span><span class="t-dim">  /influencer             </span><span class="t-accent">│</span><br>
+              <span class="t-accent">  ╰──────────────────────────╯</span><br><br>
+              <span class="t-info">  &gt; </span><span class="t-cursor"></span>
+            </div>
+          </div>
+          <div class="terminal-statusbar">
+            <div class="ts-left">
+              <span>influencer</span>
+              <span>main</span>
+            </div>
+            <div class="ts-right">
+              <span class="ts-badge">&gt;&gt; bypass permissions on</span>
+              <span class="ts-shells"> · 2 shells</span>
+            </div>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:8px;"><strong>하단 상태바 확인:</strong> alias 설정이 적용되면 <code style="color:#ff6b8a;">bypass permissions on</code>이 표시됩니다. 이 상태에서 Claude가 파일 수정·명령어 실행을 확인 없이 바로 진행합니다.</div>
       </div>
 
     </div>
@@ -506,7 +724,18 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 5 — 프로젝트 다운로드</div>
+        <div class="step-label">Step 5 — 권한 확인 생략 설정 (원커맨드)</div>
+        <p>실습 중 매번 권한 확인 팝업이 뜨지 않도록, 아래 명령어 하나로 설정을 등록합니다.</p>
+        <div class="code-block">
+          if(!(Test-Path $PROFILE)){New-Item $PROFILE -Force|Out-Null}; Add-Content $PROFILE "function claude { & claude.ps1 --dangerously-skip-permissions @args }"
+        </div>
+        <p style="margin-top:8px;">설정 후 <strong>터미널을 닫고 다시 열면</strong> <code>claude</code> 실행 시 자동으로 권한 확인 없이 동작합니다.</p>
+        <div class="warning"><strong>주의:</strong> 이 옵션은 Claude가 파일 수정·명령어 실행 등을 확인 없이 진행합니다. <strong>스터디 실습용</strong>으로만 사용하고, 중요한 프로젝트에서는 해제하세요.<br>
+        해제: <code>notepad $PROFILE</code>로 열어 해당 줄을 삭제합니다.</div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-label">Step 6 — 프로젝트 다운로드</div>
         <p>GitHub에서 프로젝트를 클론합니다.</p>
         <div class="code-block">
           <span class="command">git</span> clone <span class="url">https://github.com/kimkh10/influencer.git</span><br>
@@ -515,7 +744,7 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 6 — 로컬 서버 실행</div>
+        <div class="step-label">Step 7 — 로컬 서버 실행</div>
         <p>프로젝트를 브라우저에서 확인합니다.</p>
         <div class="code-block">
           <span class="command">npx</span> serve .
@@ -525,16 +754,35 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 7 — Claude Code 실행</div>
-        <p>새 터미널 창을 열고, 프로젝트 폴더에서 Claude Code를 시작합니다.</p>
+        <div class="step-label">Step 8 — 터미널 분할 + Claude Code 실행</div>
+        <p>서버가 실행 중인 상태에서 화면을 분할하여 Claude Code를 동시에 띄웁니다.<br>
+        <span style="font-size:11px;color:#999;">(Mac에서는 cmux 사용을 권장합니다. Windows는 Windows Terminal 분할 기능을 사용합니다.)</span></p>
+        <div class="code-block">
+          <span class="comment"># Windows Terminal에서 화면 분할:</span><br>
+          <span class="command">Alt + Shift + D</span>  <span class="comment">(현재 패널 복제 분할)</span>
+        </div>
+        <p style="margin-top:8px;">분할된 오른쪽 패널에서 Claude Code를 실행합니다:</p>
         <div class="code-block">
           <span class="command">cd</span> influencer<br>
           <span class="command">claude</span>
         </div>
-        <p style="margin-top:8px;">Claude Code가 실행되면 슬래시 명령어를 사용할 수 있습니다.</p>
+        <div class="tip"><strong>Windows Terminal 분할 조작:</strong><br>
+        • 세로 분할: <code>Alt + Shift + =</code> (또는 <code>+</code>)<br>
+        • 가로 분할: <code>Alt + Shift + -</code><br>
+        • 패널 전환: <code>Alt + 방향키</code><br>
+        • 패널 닫기: <code>Ctrl + Shift + W</code></div>
       </div>
 
     </div>
+
+    <div class="divider"></div>
+    <h3><span class="step-icon">✅</span> 환경 세팅 완료 체크리스트</h3>
+    <ul class="checklist">
+      <li><code>node --version</code> 실행 시 버전 번호가 출력된다</li>
+      <li><code>git --version</code> 실행 시 버전 번호가 출력된다</li>
+      <li><code>claude</code> 실행 시 Claude Code가 시작된다</li>
+      <li><code>http://localhost:3000</code> 접속 시 캘린더가 보인다</li>
+    </ul>
   </div>
 
   <!-- Section 1: 스킬 개요 -->
@@ -585,11 +833,16 @@ html, body {
     <h2>실습 1 — /공구캘린더</h2>
     <p class="section-desc">공동구매 캘린더의 디자인과 제품 매핑을 수정해 봅니다.</p>
 
+    <div class="learn-outcome">
+      <strong>배우는 것:</strong> CSS 변수를 통한 테마 변경, REST API 데이터와 제품 매핑의 관계, html2canvas를 이용한 DOM→이미지 변환 원리, 대시보드와의 인증 토큰 공유 구조
+    </div>
+
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
     <ul class="checklist">
       <li>캘린더의 테마 색상을 변경할 수 있다</li>
       <li>새로운 제품 매핑을 추가할 수 있다</li>
       <li>캘린더를 PNG 이미지로 다운로드할 수 있다</li>
+      <li>캘린더가 친한스토어 API에서 데이터를 받아오는 구조를 이해한다</li>
     </ul>
 
     <h3><span class="step-icon">🔨</span> 실습 과정</h3>
@@ -603,6 +856,7 @@ html, body {
         캘린더 테마 색상을 파란색 계열로 변경해줘
       </div>
       <p style="margin-top:8px;">브라우저에서 <code>http://localhost:3000</code>을 새로고침하여 변경 사항을 확인합니다.</p>
+      <div class="tip"><strong>동작 원리:</strong> 캘린더의 모든 색상은 CSS 변수(<code>--accent</code>, <code>--accent-hex</code>)로 관리됩니다. Claude는 이 변수값만 변경하여 전체 테마를 일괄 적용합니다.</div>
     </div>
 
     <div class="step-card">
@@ -616,20 +870,27 @@ html, body {
         - 설명: 먹는 피부관리 / 저분자 콜라겐<br>
         - 배지: NEW
       </div>
+      <div class="tip"><strong>매핑이란?</strong> 친한스토어 API의 "공구타이틀(<code>group_purchase_title</code>)"에 키워드(예: 콜라겐)가 포함되면, 캘린더에 지정한 제품명·설명·배지가 자동 표시됩니다. 캘린더와 대시보드는 동일한 REST API를 사용하며, 로그인 토큰도 공유합니다.</div>
     </div>
 
     <div class="step-card">
       <div class="step-label">실습 1-C — 자유 수정</div>
-      <p>본인만의 캘린더를 만들어 봅니다:</p>
+      <p>본인만의 캘린더를 만들어 봅니다. 아래 예시 중 하나를 시도해 보세요:</p>
       <div class="code-block">
         <span class="command">/공구캘린더</span><br>
         캘린더 헤더에 있는 핸들 이름을 내 인스타 아이디로 바꿔줘
       </div>
+      <div class="code-block">
+        <span class="command">/공구캘린더</span><br>
+        캘린더 하단에 "문의: DM 주세요" 텍스트를 추가해줘
+      </div>
     </div>
+
+    <div class="tip"><strong>데이터 흐름:</strong> 캘린더는 대시보드와 동일한 친한스토어 REST API(<code>/api/admin/v1/group-purchases/plans</code>)를 호출합니다. 상태코드 T4(확정), T6(진행중), T8(진행완료), Y0(정산대기)인 공구만 필터링하여 표시합니다. 대시보드에서 먼저 로그인하면, 캘린더에서도 자동 인증됩니다(동일한 <code>dashboard_bearer_token</code> 공유).</div>
 
     <div class="result-preview">
       <div class="label">확인 방법</div>
-      <div class="url">http://localhost:3000 → 캘린더 확인 → "이미지 저장" 버튼 클릭</div>
+      <div class="url">http://localhost:3000 → 관리자 패널 열기 → 로그인 → 캘린더 확인 → "이미지 저장" 버튼 클릭</div>
     </div>
   </div>
 
@@ -638,6 +899,10 @@ html, body {
     <div class="section-number">3</div>
     <h2>실습 2 — /공구대시보드</h2>
     <p class="section-desc">친한스토어 어드민 API를 연동하여 공동구매 매출 대시보드를 수정합니다.</p>
+
+    <div class="learn-outcome">
+      <strong>배우는 것:</strong> REST API 인증(JWT + 2FA) 흐름, Swagger 문서 읽는 법, CORS 프록시의 원리와 필요성, Chart.js를 이용한 데이터 시각화, API 응답 데이터를 화면에 렌더링하는 방법
+    </div>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
     <ul class="checklist">
@@ -651,37 +916,44 @@ html, body {
 
     <div class="step-card">
       <div class="step-label">API 인증 흐름</div>
-      <p><strong>1단계:</strong> ID/PW 로그인 &rarr; <code>POST /api/admin/v2/authentications/login</code><br>
+      <p>대시보드는 4단계 인증을 거쳐 API에 접근합니다:</p>
+      <p style="margin-top:8px;"><strong>1단계:</strong> ID/PW 로그인 &rarr; <code>POST /api/admin/v2/authentications/login</code><br>
       <strong>2단계:</strong> master 계정이면 2FA 발송 &rarr; <code>POST /api/admin/v2/authentications/2fa/send</code><br>
       <strong>3단계:</strong> 슬랙 인증번호 입력 &rarr; <code>PUT /api/admin/v2/authentications/2fa/verify</code><br>
       <strong>4단계:</strong> JWT 토큰 획득 &rarr; 이후 모든 API 호출에 <code>Authorization: Bearer {token}</code> 사용</p>
+      <div class="tip" style="margin-top:12px;"><strong>JWT란?</strong> JSON Web Token의 약자로, 서버가 발급한 인증 정보를 담은 문자열입니다. 매 API 호출 시 이 토큰을 헤더에 포함하여 "로그인된 사용자"임을 증명합니다.</div>
     </div>
 
     <div class="step-card">
       <div class="step-label">CORS 프록시</div>
-      <p>브라우저에서 다른 도메인 API를 직접 호출하면 CORS 정책으로 차단됩니다.<br>
-      Cloudflare Pages Functions가 같은 도메인에서 요청을 받아 서버 측에서 API로 전달합니다.</p>
+      <p>브라우저에서 다른 도메인 API를 직접 호출하면 <strong>CORS(Cross-Origin Resource Sharing)</strong> 정책으로 차단됩니다. 이를 해결하기 위해 Cloudflare Pages Functions가 같은 도메인에서 요청을 받아 서버 측에서 API로 전달합니다.</p>
       <div class="code-block">
-        <span class="comment"># 브라우저 &rarr; 같은 도메인 (CORS 없음)</span><br>
+        <span class="comment"># 왜 차단될까?</span><br>
+        <span class="comment"># 브라우저 보안 정책: 다른 도메인으로의 직접 요청을 차단</span><br>
+        <span class="comment"># influencer-p68.pages.dev → api.store.xxx.com ❌ (CORS 차단)</span><br><br>
+        <span class="comment"># 해결: 같은 도메인 프록시 경유</span><br>
+        <span class="comment"># Step 1: 브라우저 → 같은 도메인 (CORS 없음)</span><br>
         influencer-p68.pages.dev<span class="flag">/api/admin/...</span><br><br>
-        <span class="comment"># Cloudflare Function &rarr; API 서버 (서버간 통신, CORS 없음)</span><br>
+        <span class="comment"># Step 2: Cloudflare Function → API 서버 (서버간 통신, CORS 없음)</span><br>
         <span class="flag">&rarr;</span> api.store.friendly-pharmacist.com<span class="flag">/api/admin/...</span>
       </div>
+      <div class="tip"><strong>로컬 개발 시:</strong> <code>localhost</code>에서는 프록시 없이 API 서버에 직접 요청합니다. 프록시는 배포 환경(pages.dev)에서만 동작합니다.</div>
     </div>
 
     <div class="step-card">
       <div class="step-label">공구 상태 코드</div>
-      <p>Swagger 스키마 기준 공구 진행 상태:</p>
+      <p>Swagger 스키마 기준 공구 진행 상태 — 대시보드의 필터와 배지 색상에 사용됩니다:</p>
       <div class="code-block">
-        <span class="comment"># 진행예정</span><br>
+        <span class="comment"># 진행예정 (파란색 배지)</span><br>
         T0: 검토중 / T2: 준비중 / T4: 확정 / T6: 진행중 / T8: 진행완료<br><br>
-        <span class="comment"># 진행중 (주문 발생, 매출 데이터 있음)</span><br>
+        <span class="comment"># 진행중 — 주문이 발생하여 매출 데이터가 존재 (녹색 배지)</span><br>
         <span class="command">Y0: 정산대기</span><br><br>
-        <span class="comment"># 완료</span><br>
+        <span class="comment"># 완료 (회색 배지)</span><br>
         <span class="command">Y8: 정산완료</span><br><br>
         <span class="comment"># 기타</span><br>
         C0: 취소 / C4: 보류
       </div>
+      <div class="tip"><strong>핵심 포인트:</strong> Y0(정산대기)인 공구만 "진행중"으로 표시됩니다. T6(진행중)은 아직 주문이 발생하지 않은 단계이므로 "진행예정"으로 분류됩니다.</div>
     </div>
 
     <h3><span class="step-icon">🔨</span> 실습 과정</h3>
@@ -696,6 +968,7 @@ html, body {
         <span class="comment"># master 계정은 슬랙 2FA 인증 필요</span>
       </div>
       <p style="margin-top:8px;">로그인 성공 시 통계 카드, 차트, 공구 테이블이 표시됩니다.</p>
+      <p style="margin-top:4px;">테이블에서 <strong>공구를 클릭</strong>하면 상세 정보(인플루언서, 셀러, 옵션, 일별 매출)를 확인할 수 있습니다.</p>
     </div>
 
     <div class="step-card">
@@ -707,13 +980,13 @@ html, body {
         응답 필드를 확인하고, 매출 리포트 데이터 구조를 알려줘
       </div>
       <div class="tip">
-        <strong>Swagger URL:</strong> dev-api.store.friendly-pharmacist.com/swagger-ui/index.html 에서 API 스키마를 직접 확인할 수 있습니다.
+        <strong>Swagger URL:</strong> dev-api.store.friendly-pharmacist.com/swagger-ui/index.html 에서 API 스키마를 직접 확인할 수 있습니다. 각 API의 요청 파라미터, 응답 필드, HTTP 메서드를 한눈에 볼 수 있습니다.
       </div>
     </div>
 
     <div class="step-card">
       <div class="step-label">실습 2-C — 대시보드 커스터마이징</div>
-      <p>대시보드의 차트나 테이블을 수정해 봅니다:</p>
+      <p>대시보드의 차트나 테이블을 수정해 봅니다. 아래 예시 중 하나를 선택하세요:</p>
       <div class="code-block">
         <span class="command">/공구대시보드</span><br>
         매출 TOP 10 차트를 세로 바 차트로 변경해줘
@@ -722,11 +995,19 @@ html, body {
         <span class="command">/공구대시보드</span><br>
         테이블에 "주문수" 컬럼을 추가해줘
       </div>
+      <div class="code-block">
+        <span class="command">/공구대시보드</span><br>
+        통계 카드에 "이번 달 매출" 항목을 추가해줘
+      </div>
     </div>
 
     <div class="result-preview">
       <div class="label">확인 방법</div>
-      <div class="url">http://localhost:3000/dashboard &rarr; 로그인 &rarr; 공구 클릭 &rarr; 상세 매출 데이터 확인</div>
+      <div class="url">http://localhost:3000/dashboard → 로그인 → 공구 클릭 → 상세 매출 데이터 확인</div>
+    </div>
+
+    <div class="warning">
+      <strong>주의:</strong> 일부 공구(진행예정 상태)는 아직 매출 데이터가 없을 수 있습니다. 상세 패널에서 "아직 매출 데이터가 없습니다" 메시지가 표시되는 것은 정상입니다.
     </div>
   </div>
 
@@ -735,6 +1016,10 @@ html, body {
     <div class="section-number">4</div>
     <h2>실습 3 — /당첨자폼</h2>
     <p class="section-desc">이벤트 당첨자 배송지 입력 폼을 커스터마이징합니다.</p>
+
+    <div class="learn-outcome">
+      <strong>배우는 것:</strong> HTML 폼 요소(input, select, textarea) 구조, Google Apps Script를 이용한 폼 데이터 저장, 관리자 페이지에서 데이터 조회 및 엑셀 내보내기
+    </div>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
     <ul class="checklist">
@@ -773,6 +1058,7 @@ html, body {
         <span class="url">http://localhost:3000/event-admin</span><br>
         <span class="comment"># 로그인: admin / 1234</span>
       </div>
+      <p style="margin-top:8px;">로그인 후 제출된 데이터를 테이블로 확인하고, 엑셀이나 CSV로 내보내기할 수 있습니다.</p>
     </div>
 
     <div class="result-preview">
@@ -790,6 +1076,10 @@ html, body {
     <div class="section-number">5</div>
     <h2>실습 4 — /deploy (배포하기)</h2>
     <p class="section-desc">수정한 결과물을 Cloudflare Pages에 배포합니다.</p>
+
+    <div class="learn-outcome">
+      <strong>배우는 것:</strong> 정적 웹사이트 배포의 개념, Cloudflare Pages 배포 방법, 로컬 개발환경과 프로덕션 환경의 차이
+    </div>
 
     <h3><span class="step-icon">🎯</span> 실습 목표</h3>
     <ul class="checklist">
@@ -831,41 +1121,44 @@ html, body {
   <div class="section" id="challenge">
     <div class="section-number">★</div>
     <h2>도전 과제</h2>
-    <p class="section-desc">실습을 모두 마친 후, 아래 도전 과제 중 하나를 선택하여 완성해 보세요.</p>
+    <p class="section-desc">실습을 모두 마친 후, 아래 도전 과제 중 하나를 선택하여 완성해 보세요. 난이도를 참고하여 도전해 보세요!</p>
 
     <div class="step-card">
-      <div class="step-label">도전 A — 캘린더 리디자인</div>
-      <p>공구 캘린더의 디자인을 완전히 새롭게 바꿔보세요.</p>
+      <div class="step-label">도전 A — 캘린더 리디자인 <span class="difficulty easy">쉬움</span></div>
+      <p>공구 캘린더의 디자인을 완전히 새롭게 바꿔보세요. CSS 변수와 레이아웃을 자유롭게 변경합니다.</p>
       <div class="code-block">
         <span class="command">/공구캘린더</span><br>
         캘린더 디자인을 모던하고 심플한 스타일로 바꿔줘.<br>
         색상은 네이비+골드, 폰트는 좀 더 고급스럽게.
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: 새 테마가 적용된 캘린더를 PNG로 저장할 수 있다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 B — 대시보드에 새로운 차트 추가</div>
-      <p>매출 대시보드에 약사별/브랜드별 통계 차트를 추가해 보세요.</p>
+      <div class="step-label">도전 B — 대시보드에 새로운 차트 추가 <span class="difficulty medium">보통</span></div>
+      <p>매출 대시보드에 약사별/브랜드별 통계 차트를 추가해 보세요. Chart.js의 다양한 차트 유형을 활용합니다.</p>
       <div class="code-block">
         <span class="command">/공구대시보드</span><br>
         약사별 공구 참여 횟수와 총 매출을 보여주는<br>
-        새로운 차트를 추가해줘
+        도넛 차트를 추가해줘
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: 새 차트가 대시보드에 표시되고, 데이터가 정확히 반영된다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 C — 대시보드 테이블 기능 확장</div>
-      <p>테이블에 새로운 컬럼이나 필터를 추가해 보세요.</p>
+      <div class="step-label">도전 C — 대시보드 테이블 기능 확장 <span class="difficulty medium">보통</span></div>
+      <p>테이블에 새로운 컬럼이나 필터를 추가해 보세요. API 데이터 구조를 이해하고 활용하는 연습입니다.</p>
       <div class="code-block">
         <span class="command">/공구대시보드</span><br>
         테이블에 "주문수", "박스수" 컬럼을 추가하고<br>
         브랜드별 필터 드롭다운을 만들어줘
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: 새 컬럼이 표시되고, 필터가 정상 동작한다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 D — 나만의 이벤트 폼 만들기</div>
-      <p>본인의 공동구매에 맞는 당첨자 폼을 처음부터 만들어 보세요.</p>
+      <div class="step-label">도전 D — 나만의 이벤트 폼 만들기 <span class="difficulty easy">쉬움</span></div>
+      <p>본인의 공동구매에 맞는 당첨자 폼을 처음부터 디자인해 보세요. 실제로 사용할 수 있는 완성도를 목표로 합니다.</p>
       <div class="code-block">
         <span class="command">/당첨자폼</span><br>
         새로운 이벤트 폼을 만들어줘.<br>
@@ -873,45 +1166,52 @@ html, body {
         테마 색상: [원하는 색상]<br>
         추가 필드: [필요한 필드]
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: 제품 정보, 색상, 필드가 모두 반영된 폼이 완성된다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 E — 대시보드 다크모드 커스터마이징</div>
-      <p>대시보드의 다크모드 색상을 본인 취향에 맞게 변경해 보세요.</p>
+      <div class="step-label">도전 E — 대시보드 다크모드 커스터마이징 <span class="difficulty easy">쉬움</span></div>
+      <p>대시보드의 다크모드 색상을 본인 취향에 맞게 변경해 보세요. CSS 변수 체계를 이해하는 연습입니다.</p>
       <div class="code-block">
         <span class="command">/공구대시보드</span><br>
         다크모드 색상을 네이비 계열로 바꾸고<br>
         포인트 색상을 민트에서 골드로 변경해줘
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: 다크모드 토글 시 변경된 색상이 전체 UI에 일관 적용된다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 F — 새로운 API 데이터 연동</div>
-      <p>Swagger에서 아직 사용하지 않는 API를 찾아 대시보드에 연동해 보세요.</p>
+      <div class="step-label">도전 F — 새로운 API 데이터 연동 <span class="difficulty hard">어려움</span></div>
+      <p>Swagger에서 아직 사용하지 않는 API를 찾아 대시보드에 연동해 보세요. API 탐색부터 데이터 렌더링까지 전 과정을 경험합니다.</p>
       <div class="code-block">
         <span class="command">/공구대시보드</span><br>
         Swagger를 확인하고 주문 상세 API가 있으면<br>
         공구별 주문 목록을 상세 패널에 추가해줘
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: Swagger에서 API를 찾고, 해당 데이터가 대시보드에 표시된다</p>
     </div>
 
     <div class="step-card">
-      <div class="step-label">도전 G — 캘린더 + 대시보드 연동</div>
-      <p>대시보드의 공구 데이터를 캘린더에 자동으로 반영해 보세요.</p>
+      <div class="step-label">도전 G — 캘린더 + 대시보드 연동 <span class="difficulty hard">어려움</span></div>
+      <p>대시보드의 공구 데이터를 캘린더에 자동으로 반영해 보세요. 두 시스템을 연결하는 고급 과제입니다.</p>
       <div class="code-block">
         <span class="command">/공구캘린더</span><br>
         대시보드 API에서 진행중인 공구 목록을 가져와서<br>
         캘린더에 자동으로 표시되게 만들어줘
       </div>
+      <p style="font-size:12px; color:#9A9A9A; margin-top:8px;">완성 기준: API에서 가져온 공구 일정이 캘린더에 자동 표시된다</p>
     </div>
   </div>
 
   <div class="footer">
     <p>AI 스터디 — Claude Code 스킬 실습 가이드</p>
-    <p><a href="study-curriculum">커리큘럼 보기</a> · <a href="study">스터디 신청</a></p>
+    <p><a href="study-curriculum">커리큘럼 보기</a> · <a href="dashboard">매출 대시보드</a> · <a href="study">스터디 신청</a></p>
   </div>
 
 </div>
+
+<button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="맨 위로">↑</button>
+
 <script>
 function switchOS(os) {
   document.querySelectorAll('.os-tab').forEach(t => t.classList.remove('active'));
@@ -924,6 +1224,15 @@ function switchOS(os) {
     document.getElementById('os-win').classList.add('active');
   }
 }
+
+window.addEventListener('scroll', function() {
+  var btn = document.querySelector('.back-to-top');
+  if (window.scrollY > 400) {
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
+  }
+});
 </script>
 </body>
 </html>

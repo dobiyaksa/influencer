@@ -1095,9 +1095,27 @@
 
   // ── Auth ──
 
+  function parseJwtExp(token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp ? payload.exp * 1000 : 0;
+    } catch(e) { return 0; }
+  }
+
+  function isTokenExpired(token) {
+    const exp = parseJwtExp(token);
+    return exp > 0 && Date.now() > exp;
+  }
+
   function checkSavedToken() {
     const saved = localStorage.getItem(TOKEN_KEY);
     if (saved) {
+      if (isTokenExpired(saved)) {
+        localStorage.removeItem(TOKEN_KEY);
+        document.getElementById('login-view').style.display = 'block';
+        showToast('토큰이 만료되었습니다. 다시 로그인해주세요.', 'warn');
+        return;
+      }
       bearerToken = saved;
       showDashboard();
     } else {
@@ -1314,11 +1332,20 @@
   // ── API ──
 
   async function apiCall(endpoint) {
+    if (isTokenExpired(bearerToken)) {
+      localStorage.removeItem(TOKEN_KEY);
+      bearerToken = '';
+      location.reload();
+      throw new Error('토큰 만료');
+    }
     const res = await fetch(API_BASE + endpoint, {
       headers: { 'Authorization': 'Bearer ' + bearerToken }
     });
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem(TOKEN_KEY);
+        bearerToken = '';
+        location.reload();
         throw new Error('인증 실패 — 토큰을 확인하세요');
       }
       throw new Error('HTTP ' + res.status);
@@ -1360,10 +1387,23 @@
   async function loadAllData() {
     showLoading();
     try {
-      const plansRes = await fetchPlans(200, 0);
+      const PAGE_SIZE = 200;
+      let allItems = [];
+      let offset = 0;
+      let hasMore = true;
 
-      const planItems = Array.isArray(plansRes.data) ? plansRes.data : [];
-      cachedPlans = planItems.map(normalizePlanItem);
+      while (hasMore) {
+        const plansRes = await fetchPlans(PAGE_SIZE, offset);
+        const items = Array.isArray(plansRes.data) ? plansRes.data : [];
+        allItems = allItems.concat(items);
+        if (items.length < PAGE_SIZE) {
+          hasMore = false;
+        } else {
+          offset += PAGE_SIZE;
+        }
+      }
+
+      cachedPlans = allItems.map(normalizePlanItem);
 
       renderAll();
       showToast(cachedPlans.length + '개 공구 데이터를 불러왔습니다.');

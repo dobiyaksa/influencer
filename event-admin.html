@@ -528,8 +528,6 @@
 
   <script>
     /* ── Constants ── */
-    const ADMIN_ID = 'admin';
-    const ADMIN_PW = '1234';
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4ihndsT6HQh1WYRch8vnCdRlY084Tw5sPrLDfLpCJ5raQROrUysoTEZMdjcLSWC3nbw/exec';
     const SESSION_KEY = 'event_form_admin_session_v1';
     let cachedSubs = [];
@@ -550,28 +548,40 @@
     if (localStorage.getItem(SESSION_KEY) === 'ok') {
       showAdmin();
     } else {
-      loginView.style.display = '';
+      loginView.style.display = 'block';
     }
 
-    /* ── Login ── */
-    loginForm.addEventListener('submit', function(e) {
+    /* ── Login (서버측 검증) ── */
+    loginForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const id = document.getElementById('login-id').value.trim();
       const pw = document.getElementById('login-pw').value.trim();
-      if (id === ADMIN_ID && pw === ADMIN_PW) {
-        localStorage.setItem(SESSION_KEY, 'ok');
-        loginErr.style.display = 'none';
-        showAdmin();
-      } else {
-        loginErr.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+      const btn = loginForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      try {
+        const res = await fetch(APPS_SCRIPT_URL + '?action=login&id=' + encodeURIComponent(id) + '&pw=' + encodeURIComponent(pw));
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem(SESSION_KEY, 'ok');
+          loginErr.style.display = 'none';
+          showAdmin();
+        } else {
+          loginErr.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+          loginErr.style.display = 'block';
+        }
+      } catch(err) {
+        loginErr.textContent = '서버 연결 실패. 잠시 후 다시 시도해주세요.';
         loginErr.style.display = 'block';
       }
+      btn.disabled = false;
+      btn.textContent = '로그인';
     });
 
     /* ── Show Admin ── */
     function showAdmin() {
       loginView.style.display = 'none';
-      adminView.style.display = '';
+      adminView.style.display = 'block';
       loadAndRender();
     }
 

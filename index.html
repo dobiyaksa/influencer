@@ -388,16 +388,77 @@
     [contenteditable]:focus { box-shadow: 0 0 0 2px rgba(var(--accent),0.5); }
     .product-desc.placeholder { color: #d8cfcb; }
     .date-badge.save-hide { display: none !important; }
+
+    /* ── Login Modal ── */
+    .login-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300;
+    }
+    .login-overlay.hidden { display: none; }
+    .login-box {
+      background: #fff; border-radius: 18px; padding: 36px 32px;
+      width: 370px; max-width: 90vw;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+    }
+    .login-box h3 { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 4px; }
+    .login-box .login-sub { font-size: 12px; color: #aaa; margin-bottom: 20px; }
+    .login-box .field { margin-bottom: 14px; }
+    .login-box .field label { display: block; font-size: 11px; color: #999; margin-bottom: 5px; font-weight: 600; }
+    .login-box .field input,
+    .login-box .field textarea {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #e0dbd9; border-radius: 10px;
+      font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+      outline: none; color: #333;
+    }
+    .login-box .field textarea { height: 72px; resize: vertical; }
+    .login-box .field input:focus,
+    .login-box .field textarea:focus { border-color: var(--accent-hex); }
+    .login-box .btn-login {
+      width: 100%; padding: 11px;
+      background: var(--accent-hex); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+      margin-top: 4px;
+    }
+    .login-box .btn-login:hover { opacity: 0.9; }
+    .login-box .login-toggle { text-align: center; margin-top: 12px; }
+    .login-box .login-toggle a { font-size: 11px; color: #8CADE0; cursor: pointer; text-decoration: underline; }
+    .login-box .login-err { color: var(--accent-hex); font-size: 11px; margin-top: 8px; display: none; }
+    .login-box .login-hint { font-size: 10px; color: #c0b8b5; text-align: center; margin-top: 16px; }
+    .login-box .login-mode { display: none; }
+    .login-box .login-mode.active { display: block; }
+    .login-box .tfa-notice {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; background: #f6f9fc; border-radius: 10px;
+      font-size: 12px; color: #5A9A5A; margin-bottom: 16px;
+    }
+    .login-box .tfa-code-wrap { display: flex; align-items: center; gap: 8px; }
+    .login-box .tfa-code-wrap input { flex: 1; }
+    .login-box .tfa-timer { font-size: 13px; font-weight: 700; color: var(--accent-hex); white-space: nowrap; }
+    .login-box .tfa-timer.expired { color: #ccc; }
+    .login-box .tfa-resend { text-align: center; margin-top: 10px; }
+    .login-box .tfa-resend a { font-size: 11px; color: #8CADE0; cursor: pointer; text-decoration: underline; }
+    .panel-login-status {
+      font-size: 11px; padding: 6px 12px; border-radius: 8px;
+      background: #f6f6f4; text-align: center;
+    }
+    .panel-login-status.logged-in { color: #5A9A5A; background: #eef6ee; }
+    .panel-login-status.logged-out { color: #c96e66; background: #fef5f4; }
   </style>
 </head>
 <body>
   <button class="admin-btn" id="admin-btn" onclick="toggleAdmin()" title="관리자">&#128274;</button>
   <div class="control-panel hidden" id="control-panel">
-    <div class="panel-row">
-      <input id="api-key" type="text" placeholder="Google Sheets API 키" />
-      <input id="sheet-url" type="text" placeholder="Google 스프레드시트 URL" />
-      <button class="panel-btn apply" onclick="applySettings()">적용</button>
-      <span id="sheet-status" class="panel-status"></span>
+    <div class="panel-row" style="flex-direction:column;gap:6px;">
+      <div id="panel-login-status" class="panel-login-status logged-out">로그인 필요</div>
+      <div style="display:flex;gap:6px;width:100%;">
+        <button class="panel-btn apply" style="flex:1;" onclick="showLoginModal()">로그인</button>
+        <button class="panel-btn" style="flex:1;background:#e0dbd9;color:#999;" onclick="logoutCalendar()">로그아웃</button>
+      </div>
     </div>
     <div class="panel-row">
       <span class="panel-label">년월 선택</span>
@@ -421,62 +482,315 @@
       <div class="panel-divider"></div>
       <span class="panel-hint">텍스트를 클릭하면 수정할 수 있습니다</span>
       <div class="panel-divider"></div>
-      <button class="panel-btn" style="background:#e0dbd9;color:#999;font-size:11px;padding:6px 14px;width:100%;" onclick="adminLogout()">로그아웃</button>
+      <button class="panel-btn" style="background:#e0dbd9;color:#999;font-size:11px;padding:6px 14px;width:100%;" onclick="adminLogout()">패널 닫기</button>
     </div>
   </div>
   <div id="calendar" class="calendar"></div>
 
+  <!-- Login Modal -->
+  <div id="login-overlay" class="login-overlay hidden">
+    <div class="login-box">
+      <h3>친한스토어 로그인</h3>
+      <p class="login-sub">공구 데이터를 불러오기 위해 로그인하세요.</p>
+
+      <div class="login-mode active" id="cal-login-pw">
+        <div class="field">
+          <label>아이디 (이메일)</label>
+          <input type="email" id="cal-input-id" placeholder="admin@example.com" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label>비밀번호</label>
+          <input type="password" id="cal-input-pw" placeholder="비밀번호" />
+        </div>
+        <button class="btn-login" onclick="calLoginWithCredentials()">로그인</button>
+        <div class="login-toggle">
+          <a onclick="calToggleLoginMode('token')">토큰 직접 입력</a>
+        </div>
+      </div>
+
+      <div class="login-mode" id="cal-login-token">
+        <div class="field">
+          <label>Bearer Token</label>
+          <textarea id="cal-input-token" placeholder="JWT 토큰을 붙여넣기 하세요" spellcheck="false"></textarea>
+        </div>
+        <button class="btn-login" onclick="calConnectWithToken()">연결</button>
+        <div class="login-toggle">
+          <a onclick="calToggleLoginMode('pw')">ID/PW 로그인</a>
+        </div>
+      </div>
+
+      <div class="login-mode" id="cal-login-2fa">
+        <div class="tfa-notice">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 10.5 L9 13 L13.5 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          슬랙에 발송된 인증번호를 확인하세요.
+        </div>
+        <div class="field">
+          <label>인증번호</label>
+          <div class="tfa-code-wrap">
+            <input type="text" id="cal-input-2fa" placeholder="인증번호 입력" maxlength="6" spellcheck="false" autocomplete="off" />
+            <span class="tfa-timer" id="cal-tfa-timer">04:00</span>
+          </div>
+        </div>
+        <button class="btn-login" onclick="calVerify2fa()">인증</button>
+        <div class="tfa-resend">
+          <a onclick="calResend2fa()">인증번호 재발송</a>
+        </div>
+      </div>
+
+      <div class="login-err" id="cal-login-err"></div>
+      <div class="login-hint">
+        친한스토어 어드민 계정 · 대시보드와 로그인 공유
+        <br><a onclick="closeLoginModal()" style="color:#8CADE0;cursor:pointer;">닫기</a>
+      </div>
+    </div>
+  </div>
+
   <script>
-    let API_KEY = localStorage.getItem('api_key') || '';
-    let SPREADSHEET_ID = localStorage.getItem('sheet_id') || '';
-    let SHEET_GID = localStorage.getItem('sheet_gid') || '';
+    const TOKEN_KEY = 'dashboard_bearer_token';
+    const API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? 'https://api.store.friendly-pharmacist.com' : '';
+    const ALLOWED_STEPS = ['T4','T6','T8','Y0'];
+
+    let bearerToken = '';
     let SELECTED_YEAR = null;
     let SELECTED_MONTH = null;
     let LOADED_PRODUCTS = [];
+    let calTfaAdminId = '';
+    let calTfaAdminIdx = 0;
+    let calTfaTimerId = null;
     const HANDLE = '@friendly-pharmacist';
     const TITLE = '공동구매 일정';
 
-    function parseSheetUrl(url) {
-      const idMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-      const gidMatch = url.match(/[#&?]gid=(\d+)/);
-      if (!idMatch) return null;
-      return { id: idMatch[1], gid: gidMatch ? gidMatch[1] : '0' };
+    function parseJwtExp(token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp ? payload.exp * 1000 : 0;
+      } catch(e) { return 0; }
     }
 
-    function applySettings() {
-      const keyInput = document.getElementById('api-key');
-      const urlInput = document.getElementById('sheet-url');
-      const status = document.getElementById('sheet-status');
-      const key = keyInput.value.trim();
-      const url = urlInput.value.trim();
-      if (!key) { status.textContent = 'API 키를 입력하세요'; status.className = 'panel-status err'; return; }
-      if (!url) { status.textContent = 'URL을 입력하세요'; status.className = 'panel-status err'; return; }
-      const parsed = parseSheetUrl(url);
-      if (!parsed) { status.textContent = '올바른 스프레드시트 URL이 아닙니다'; status.className = 'panel-status err'; return; }
-      API_KEY = key;
-      SPREADSHEET_ID = parsed.id;
-      SHEET_GID = parsed.gid;
-      localStorage.setItem('api_key', key);
-      localStorage.setItem('sheet_id', parsed.id);
-      localStorage.setItem('sheet_gid', parsed.gid);
-      localStorage.setItem('sheet_url', url);
-      status.textContent = '데이터를 불러옵니다...';
-      status.className = 'panel-status ok';
-      loadAndRender().then(() => {
-        status.textContent = '로드 완료';
-        document.querySelectorAll('.product-desc').forEach(el=>{
-          if(el.textContent.trim()==='설명 입력') el.classList.add('placeholder');
-          el.addEventListener('focus',()=>{if(el.classList.contains('placeholder')){el.textContent='';el.classList.remove('placeholder');}});
-          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='설명 입력';el.classList.add('placeholder');}});
-        });
-        document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{
-          el.addEventListener('focus',()=>{if(el.textContent.trim()==='+'){el.textContent='';} el.classList.remove('empty-badge');});
-          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='+';el.classList.add('empty-badge');}});
-        });
-      }).catch(() => {
-        status.textContent = '로드 실패 — API 키 또는 URL을 확인하세요';
-        status.className = 'panel-status err';
+    function isTokenExpired(token) {
+      const exp = parseJwtExp(token);
+      return exp > 0 && Date.now() > exp;
+    }
+
+    async function apiCall(endpoint) {
+      if (isTokenExpired(bearerToken)) {
+        localStorage.removeItem(TOKEN_KEY);
+        bearerToken = '';
+        updateLoginStatus();
+        throw new Error('토큰 만료');
+      }
+      const res = await fetch(API_BASE + endpoint, {
+        headers: { 'Authorization': 'Bearer ' + bearerToken }
       });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem(TOKEN_KEY);
+          bearerToken = '';
+          updateLoginStatus();
+          throw new Error('인증 실패');
+        }
+        throw new Error('HTTP ' + res.status);
+      }
+      return res.json();
+    }
+
+    function updateLoginStatus() {
+      const el = document.getElementById('panel-login-status');
+      if (bearerToken && !isTokenExpired(bearerToken)) {
+        el.textContent = '로그인됨';
+        el.className = 'panel-login-status logged-in';
+      } else {
+        el.textContent = '로그인 필요';
+        el.className = 'panel-login-status logged-out';
+      }
+    }
+
+    function showLoginModal() {
+      document.getElementById('login-overlay').classList.remove('hidden');
+      calToggleLoginMode('pw');
+      document.getElementById('cal-login-err').style.display = 'none';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-overlay').classList.add('hidden');
+      calStopTfaTimer();
+    }
+
+    function calToggleLoginMode(mode) {
+      document.getElementById('cal-login-pw').classList.toggle('active', mode === 'pw');
+      document.getElementById('cal-login-token').classList.toggle('active', mode === 'token');
+      document.getElementById('cal-login-2fa').classList.toggle('active', mode === '2fa');
+      document.getElementById('cal-login-err').style.display = 'none';
+      if (mode !== '2fa') calStopTfaTimer();
+    }
+
+    async function calLoginWithCredentials() {
+      const adminId = document.getElementById('cal-input-id').value.trim();
+      const password = document.getElementById('cal-input-pw').value;
+      const errEl = document.getElementById('cal-login-err');
+      if (!adminId || !password) {
+        errEl.textContent = '아이디와 비밀번호를 입력하세요.';
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(API_BASE + '/api/admin/v2/authentications/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ adminId, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.message || data.title || '로그인 실패';
+          errEl.style.display = 'block';
+          return;
+        }
+        const loginData = data.data || data;
+        if (loginData.is2FaAuth) {
+          calTfaAdminId = loginData.adminId || adminId;
+          calTfaAdminIdx = loginData.adminIdx || 0;
+          await calSend2faCode();
+          return;
+        }
+        const tokenObj = loginData.token || {};
+        const token = tokenObj.accessToken || tokenObj.access_token || '';
+        if (!token) {
+          errEl.textContent = '토큰을 찾지 못했습니다.';
+          errEl.style.display = 'block';
+          return;
+        }
+        bearerToken = token;
+        localStorage.setItem(TOKEN_KEY, token);
+        closeLoginModal();
+        updateLoginStatus();
+        loadAndRender();
+      } catch (e) {
+        errEl.textContent = '연결 실패: ' + e.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    async function calConnectWithToken() {
+      const token = document.getElementById('cal-input-token').value.trim();
+      const errEl = document.getElementById('cal-login-err');
+      if (!token) {
+        errEl.textContent = '토큰을 입력하세요.';
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      bearerToken = token;
+      try {
+        await apiCall('/api/admin/v1/group-purchases/plans?limit=1&offset=0');
+        localStorage.setItem(TOKEN_KEY, token);
+        closeLoginModal();
+        updateLoginStatus();
+        loadAndRender();
+      } catch (e) {
+        errEl.textContent = 'API 연결 실패: ' + e.message;
+        errEl.style.display = 'block';
+        bearerToken = '';
+      }
+    }
+
+    async function calSend2faCode() {
+      const errEl = document.getElementById('cal-login-err');
+      try {
+        const res = await fetch(API_BASE + '/api/admin/v2/authentications/2fa/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ adminId: calTfaAdminId, adminIdx: calTfaAdminIdx })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          errEl.textContent = err.message || '2FA 발송 실패';
+          errEl.style.display = 'block';
+          return;
+        }
+        calToggleLoginMode('2fa');
+        document.getElementById('cal-input-2fa').value = '';
+        document.getElementById('cal-input-2fa').focus();
+        calStartTfaTimer();
+      } catch (e) {
+        errEl.textContent = '2FA 발송 실패: ' + e.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    function calStartTfaTimer() {
+      calStopTfaTimer();
+      let remaining = 240;
+      const timerEl = document.getElementById('cal-tfa-timer');
+      timerEl.classList.remove('expired');
+      function tick() {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        if (remaining <= 0) { calStopTfaTimer(); timerEl.classList.add('expired'); return; }
+        remaining--;
+      }
+      tick();
+      calTfaTimerId = setInterval(tick, 1000);
+    }
+
+    function calStopTfaTimer() {
+      if (calTfaTimerId) { clearInterval(calTfaTimerId); calTfaTimerId = null; }
+    }
+
+    async function calVerify2fa() {
+      const code = document.getElementById('cal-input-2fa').value.trim();
+      const errEl = document.getElementById('cal-login-err');
+      if (!code) {
+        errEl.textContent = '인증번호를 입력하세요.';
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch(API_BASE + '/api/admin/v2/authentications/2fa/verify', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ adminId: calTfaAdminId, adminIdx: calTfaAdminIdx, authCode: code })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.message || '인증번호가 올바르지 않습니다.';
+          errEl.style.display = 'block';
+          return;
+        }
+        calStopTfaTimer();
+        const loginData = data.data || data;
+        const tokenObj = loginData.token || {};
+        const token = tokenObj.accessToken || tokenObj.access_token || '';
+        if (!token) {
+          errEl.textContent = '토큰을 찾지 못했습니다.';
+          errEl.style.display = 'block';
+          return;
+        }
+        bearerToken = token;
+        localStorage.setItem(TOKEN_KEY, token);
+        closeLoginModal();
+        updateLoginStatus();
+        loadAndRender();
+      } catch (e) {
+        errEl.textContent = '인증 실패: ' + e.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    async function calResend2fa() {
+      document.getElementById('cal-login-err').style.display = 'none';
+      await calSend2faCode();
+    }
+
+    function logoutCalendar() {
+      localStorage.removeItem(TOKEN_KEY);
+      bearerToken = '';
+      LOADED_PRODUCTS = [];
+      updateLoginStatus();
+      showGuide();
     }
     const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DAY_HEADERS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -568,25 +882,38 @@
     function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
     async function loadAndRender() {
+      if (!bearerToken) { showGuide(); return; }
       try {
-        const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${API_KEY}`;
-        const meta = await fetch(metaUrl).then(r=>r.json());
-        if (meta.error) throw new Error(meta.error.message);
-        const sheet = meta.sheets?.find(s=>s.properties.sheetId===Number(SHEET_GID));
-        const sn = sheet?.properties?.title || meta.sheets?.[0]?.properties?.title || 'Sheet1';
-        const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sn)}!A2:H1000?key=${API_KEY}`;
-        const data = await fetch(dataUrl).then(r=>r.json());
-        if (data.error) throw new Error(data.error.message);
-        const rows = data.values||[], products = [];
-        rows.forEach((row, i) => {
-          const sd = new Date(row[3]||'');
-          products.push({ id:row[0]+'_'+i, title:row[1]||'', startDate:row[3]||'', endDate:row[4]||'',
-            salesLink:row[5]||'', thumbnail:row[7]||'', startDay:sd.getDate(),
-            startYear:sd.getFullYear(), startMonth:sd.getMonth() });
+        const PAGE_SIZE = 200;
+        let allItems = [], offset = 0, hasMore = true;
+        while (hasMore) {
+          const res = await apiCall('/api/admin/v1/group-purchases/plans?limit=' + PAGE_SIZE + '&offset=' + offset);
+          const items = Array.isArray(res.data) ? res.data : [];
+          allItems = allItems.concat(items);
+          hasMore = items.length >= PAGE_SIZE;
+          offset += PAGE_SIZE;
+        }
+        const filtered = allItems.filter(p => ALLOWED_STEPS.includes(p.group_purchase_plan_step_code));
+        LOADED_PRODUCTS = filtered.map(raw => {
+          const sd = new Date(raw.start_date);
+          return {
+            id: raw.group_purchase_plan_idx,
+            title: raw.group_purchase_title || '',
+            startDate: raw.start_date || '',
+            endDate: raw.end_date || '',
+            salesLink: '',
+            thumbnail: raw.image_url || '',
+            startDay: sd.getDate(),
+            startYear: sd.getFullYear(),
+            startMonth: sd.getMonth()
+          };
         });
-        LOADED_PRODUCTS = products;
         renderForCurrentMonth();
       } catch(e) {
+        if (e.message === '토큰 만료' || e.message === '인증 실패') {
+          showGuide();
+          return;
+        }
         document.getElementById('calendar').innerHTML =
           `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#D4776D;font-size:20px;padding:60px;text-align:center;line-height:1.6">${esc(e.message)}</div>`;
       }
@@ -625,7 +952,7 @@
         localStorage.setItem('selected_month', value);
       }
       if (LOADED_PRODUCTS.length > 0) renderForCurrentMonth();
-      else if (API_KEY && SPREADSHEET_ID) loadAndRender();
+      else if (bearerToken) loadAndRender();
     }
 
     function getEditStore() {
@@ -892,11 +1219,7 @@
       }
     })();
 
-    const savedKey = localStorage.getItem('api_key');
-    const savedUrl = localStorage.getItem('sheet_url');
     const savedMonth = localStorage.getItem('selected_month');
-    if (savedKey) document.getElementById('api-key').value = savedKey;
-    if (savedUrl) document.getElementById('sheet-url').value = savedUrl;
     if (savedMonth) {
       document.getElementById('month-picker').value = savedMonth;
       const [y, m] = savedMonth.split('-').map(Number);
@@ -910,31 +1233,40 @@
           <div style="font-size:48px;margin-bottom:20px">📋</div>
           <div style="font-size:22px;font-weight:800;color:#666;margin-bottom:12px">공동구매 캘린더</div>
           <div style="font-size:14px;color:#aaa;max-width:500px">
-            위 패널에 <b style="color:#888">Google Sheets API 키</b>와 <b style="color:#888">스프레드시트 URL</b>을 입력한 후<br>
-            <b style="color:#888">적용</b> 버튼을 눌러주세요.
+            관리자 패널(자물쇠 아이콘)을 열고<br>
+            <b style="color:#888">로그인</b> 버튼을 눌러 친한스토어 계정으로 로그인하세요.
           </div>
-          <div style="margin-top:30px;font-size:12px;color:#c0b8b5;line-height:2;text-align:left">
-            <div>1. <a href="https://console.cloud.google.com" target="_blank" style="color:#8CADE0">Google Cloud Console</a>에서 프로젝트 생성</div>
-            <div>2. Google Sheets API 활성화</div>
-            <div>3. API 키 생성 (사용자 인증 정보 → API 키)</div>
-            <div>4. 스프레드시트 공유 설정: "링크가 있는 모든 사용자 — 뷰어"</div>
+          <div style="margin-top:20px;font-size:12px;color:#c0b8b5;line-height:2;text-align:left">
+            <div>1. 관리자 비밀번호로 패널 열기</div>
+            <div>2. 로그인 버튼 → 아이디/비밀번호 입력</div>
+            <div>3. 슬랙 2FA 인증번호 입력</div>
+            <div>4. 캘린더 데이터 자동 로드</div>
           </div>
         </div>`;
     }
 
+    // Enter key handlers for login modal
+    document.getElementById('cal-input-pw').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') calLoginWithCredentials();
+    });
+    document.getElementById('cal-input-2fa').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') calVerify2fa();
+    });
+    document.getElementById('login-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeLoginModal();
+    });
+
     function initApp() {
-      if (!API_KEY || !SPREADSHEET_ID) { showGuide(); return; }
-      loadAndRender().then(()=>{
-        document.querySelectorAll('.product-desc').forEach(el=>{
-          if(el.textContent.trim()==='설명 입력') el.classList.add('placeholder');
-          el.addEventListener('focus',()=>{if(el.classList.contains('placeholder')){el.textContent='';el.classList.remove('placeholder');}});
-          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='설명 입력';el.classList.add('placeholder');}});
-        });
-        document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{
-          el.addEventListener('focus',()=>{if(el.textContent.trim()==='+'){el.textContent='';} el.classList.remove('empty-badge');});
-          el.addEventListener('blur',()=>{if(!el.textContent.trim()){el.textContent='+';el.classList.add('empty-badge');}});
-        });
-      });
+      const saved = localStorage.getItem(TOKEN_KEY);
+      if (saved && !isTokenExpired(saved)) {
+        bearerToken = saved;
+        updateLoginStatus();
+        loadAndRender();
+      } else {
+        if (saved) localStorage.removeItem(TOKEN_KEY);
+        updateLoginStatus();
+        showGuide();
+      }
     }
     initApp();
   </script>

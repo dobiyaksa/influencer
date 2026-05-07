@@ -703,13 +703,25 @@
       const scriptUrl = localStorage.getItem('study_script_url');
       if (scriptUrl) {
         try {
-          await fetch(scriptUrl, {
+          const res = await fetch(scriptUrl, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(obj)
           });
-        } catch(e) {}
+          const result = await res.json();
+          if (result && result.error) {
+            console.warn('서버 제출 경고:', result.error);
+          }
+        } catch(e) {
+          try {
+            await fetch(scriptUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(obj)
+            });
+          } catch(e2) {}
+        }
       }
 
       const submissions = JSON.parse(localStorage.getItem('study_submissions') || '[]');
