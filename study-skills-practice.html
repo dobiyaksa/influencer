@@ -615,17 +615,18 @@ html, body {
 
       <div class="step-card">
         <div class="step-label">Step 7 — 프로젝트 다운로드 + 개인 레포 연결</div>
-        <p>원본 프로젝트를 클론한 뒤, 본인의 GitHub 레포로 연결합니다.</p>
+        <p>Claude Code에게 자연어로 요청하면 됩니다. cmux 또는 터미널에서 Claude Code를 먼저 실행하세요.</p>
         <div class="code-block">
-          <span class="comment"># 1. 원본 클론</span><br>
-          <span class="command">git</span> clone <span class="url">https://github.com/kimkh10/influencer.git</span><br>
-          <span class="command">cd</span> influencer<br><br>
-          <span class="comment"># 2. 본인 GitHub에 "influencer" 빈 레포 생성 후 remote 변경</span><br>
-          <span class="command">git</span> remote set-url origin https://github.com/<span class="flag">본인아이디</span>/influencer.git<br><br>
-          <span class="comment"># 3. 개인 레포로 push</span><br>
-          <span class="command">git</span> push <span class="flag">-u</span> origin main
+          <span class="command">claude</span>
         </div>
-        <div class="tip"><strong>왜 개인 레포로 옮기나요?</strong> 원본 레포는 읽기 전용입니다. 개인 레포로 연결해야 실습 중 수정한 코드를 push하고 배포할 수 있습니다.</div>
+        <p style="margin-top:10px;">Claude Code가 실행되면 아래처럼 말하세요:</p>
+        <div class="code-block">
+          github.com/kimkh10/influencer 레포를 클론하고,<br>
+          내 GitHub 아이디는 <span class="flag">본인아이디</span>야.<br>
+          내 개인 레포로 remote를 변경하고 push까지 해줘.
+        </div>
+        <div class="tip"><strong>왜 개인 레포로 옮기나요?</strong> 원본 레포는 읽기 전용입니다. 개인 레포로 연결해야 실습 중 수정한 코드를 push하고 배포할 수 있습니다.<br><br>
+        <strong>사전 준비:</strong> 본인 GitHub에 <code>influencer</code>라는 이름의 빈 레포를 미리 만들어 두세요.</div>
       </div>
 
       <div class="step-card">
@@ -742,17 +743,18 @@ html, body {
 
       <div class="step-card">
         <div class="step-label">Step 6 — 프로젝트 다운로드 + 개인 레포 연결</div>
-        <p>원본 프로젝트를 클론한 뒤, 본인의 GitHub 레포로 연결합니다.</p>
+        <p>Claude Code에게 자연어로 요청하면 됩니다. 터미널에서 Claude Code를 먼저 실행하세요.</p>
         <div class="code-block">
-          <span class="comment"># 1. 원본 클론</span><br>
-          <span class="command">git</span> clone <span class="url">https://github.com/kimkh10/influencer.git</span><br>
-          <span class="command">cd</span> influencer<br><br>
-          <span class="comment"># 2. 본인 GitHub에 "influencer" 빈 레포 생성 후 remote 변경</span><br>
-          <span class="command">git</span> remote set-url origin https://github.com/<span class="flag">본인아이디</span>/influencer.git<br><br>
-          <span class="comment"># 3. 개인 레포로 push</span><br>
-          <span class="command">git</span> push <span class="flag">-u</span> origin main
+          <span class="command">claude</span>
         </div>
-        <div class="tip"><strong>왜 개인 레포로 옮기나요?</strong> 원본 레포는 읽기 전용입니다. 개인 레포로 연결해야 실습 중 수정한 코드를 push하고 배포할 수 있습니다.</div>
+        <p style="margin-top:10px;">Claude Code가 실행되면 아래처럼 말하세요:</p>
+        <div class="code-block">
+          github.com/kimkh10/influencer 레포를 클론하고,<br>
+          내 GitHub 아이디는 <span class="flag">본인아이디</span>야.<br>
+          내 개인 레포로 remote를 변경하고 push까지 해줘.
+        </div>
+        <div class="tip"><strong>왜 개인 레포로 옮기나요?</strong> 원본 레포는 읽기 전용입니다. 개인 레포로 연결해야 실습 중 수정한 코드를 push하고 배포할 수 있습니다.<br><br>
+        <strong>사전 준비:</strong> 본인 GitHub에 <code>influencer</code>라는 이름의 빈 레포를 미리 만들어 두세요.</div>
       </div>
 
       <div class="step-card">
