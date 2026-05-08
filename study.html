@@ -712,24 +712,14 @@
       const scriptUrl = localStorage.getItem('study_script_url') || 'https://script.google.com/macros/s/AKfycbymf9MuhljUlU26eM6-FypyLtmVN2MpUSe9YSUzyRgzJm9ngmz5hgXkFbujMhFvSAa8/exec';
       if (scriptUrl) {
         try {
-          const res = await fetch(scriptUrl, {
+          await fetch(scriptUrl, {
             method: 'POST',
+            mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(obj)
           });
-          const result = await res.json();
-          if (result && result.error) {
-            console.warn('서버 제출 경고:', result.error);
-          }
         } catch(e) {
-          try {
-            await fetch(scriptUrl, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(obj)
-            });
-          } catch(e2) {}
+          console.warn('서버 제출 실패:', e);
         }
       }
 
