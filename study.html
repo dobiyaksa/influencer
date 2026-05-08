@@ -587,8 +587,8 @@
 
   <div class="success-card" id="success-card">
     <div class="icon">&#127891;</div>
-    <h3>지원 완료!</h3>
-    <p>설문 참여 감사합니다.<br>스터디 확정 시 내부 슬랙 채널로 안내드릴게요.<br><br>함께 성장하는 AI 스터디가 되겠습니다!</p>
+    <h3>신청 완료!</h3>
+    <p>설문 참여 감사합니다.<br>스터디 확정 시 안내드릴게요.<br><br>함께 성장하는 AI 스터디가 되겠습니다!</p>
   </div>
 
   <script>
@@ -697,7 +697,7 @@
       submitBtn.textContent = '제출 중...';
       submitBtn.disabled = true;
 
-      const scriptUrl = localStorage.getItem('study_script_url');
+      const scriptUrl = localStorage.getItem('study_script_url') || 'https://script.google.com/macros/s/AKfycbxszy2XHzaSHz2rJgoS-qDkbUmIBJZ0-WuorMthrbihIzsYql063Bjr4LD4KNCRceX62Q/exec';
       if (scriptUrl) {
         try {
           const res = await fetch(scriptUrl, {
