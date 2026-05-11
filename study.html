@@ -492,85 +492,20 @@
       </div>
     </div>
 
-    <!-- 섹션 4: AI 도입 관심사 -->
+    <!-- 섹션 4: 스터디 참여 -->
     <div class="section-card" data-section="4">
-      <div class="section-title"><span class="num">4</span> AI 도입 관심사</div>
-      <div class="section-desc">교육 내용 구성을 위한 질문입니다.</div>
-
-      <div class="form-group">
-        <label class="form-label">생성형 AI 도입·활용에 있어 가장 우려되는 점은 무엇인가요? <span class="required">*</span>
-          <span class="hint">(최대 2개 선택)</span>
-        </label>
-        <div class="checkbox-group" data-max="2">
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="정보 보안·기밀 유출">정보 보안·기밀 유출</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="부정확한 정보(환각)">부정확한 정보(환각)</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="저작권·법적 이슈">저작권·법적 이슈</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="일자리 대체 우려">일자리 대체 우려</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="학습 진입장벽">학습 진입장벽</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="사용료·비용 부담">사용료·비용 부담</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="환자 정보 보호(HIPAA 등)">환자 정보 보호</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,2)"><input type="checkbox" name="concerns" value="특별히 없음">특별히 없음</label>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">AX 교육에서 가장 듣고 싶은 주제는 무엇인가요? <span class="required">*</span>
-          <span class="hint">(최대 3개 선택)</span>
-        </label>
-        <div class="checkbox-group" data-max="3">
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="생성형 AI 시장 트렌드와 산업 전망">AI 시장 트렌드와 전망</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="AI 기본 원리·개념">AI 기본 원리·개념</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="Claude vs ChatGPT 등 도구별 차이">도구별 차이 비교</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="효과적인 프롬프트 작성법">프롬프트 작성법</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="약국 실무 활용 사례">약국 실무 활용 사례</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="AX(AI 전환)를 통한 생산성 개선">AX 생산성 개선 사례</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="보안·윤리 가이드라인">보안·윤리 가이드라인</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="AI로 SNS·마케팅 자동화">SNS·마케팅 자동화</label>
-          <label class="checkbox-item" onclick="toggleCheckMax(this,3)"><input type="checkbox" name="topics" value="AI 기반 약물정보 검색·활용">약물정보 검색·활용</label>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">향후 본인 업무에 AI를 적용해 볼 의향이 있으신가요? <span class="required">*</span></label>
-        <div class="radio-group">
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="ai_intent" value="적극적으로 적용하고 싶다">적극적으로 적용하고 싶다</label>
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="ai_intent" value="조건이 맞으면 적용해 보고 싶다">조건이 맞으면 적용해 보고 싶다</label>
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="ai_intent" value="잘 모르겠다 / 추가 학습이 필요하다">잘 모르겠다 / 추가 학습이 필요하다</label>
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="ai_intent" value="별로 필요성을 느끼지 못한다">별로 필요성을 느끼지 못한다</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- 섹션 5: 스터디 참여 -->
-    <div class="section-card" data-section="5">
-      <div class="section-title"><span class="num">5</span> 스터디 참여</div>
+      <div class="section-title"><span class="num">4</span> 스터디 참여</div>
       <div class="section-desc">스터디 운영에 참고할 정보입니다.</div>
 
       <div class="form-group">
-        <label class="form-label">희망 요일 <span class="required">*</span>
-          <span class="hint">(복수 선택 가능)</span>
-        </label>
-        <div class="checkbox-group">
-          <label class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" name="day" value="월">월</label>
-          <label class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" name="day" value="화">화</label>
-          <label class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" name="day" value="수">수</label>
-          <label class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" name="day" value="목">목</label>
-          <label class="checkbox-item" onclick="toggleCheck(this)"><input type="checkbox" name="day" value="금">금</label>
-        </div>
+        <label class="form-label">스터디 일정</label>
+        <p style="font-size:14px;color:#555;line-height:1.8;margin-top:4px;">매주 <strong style="color:#FF6B35;">수요일</strong> 오프라인 모임 (1시간)<br>12시 ~ 13시 / 13시 ~ 14시</p>
+        <input type="hidden" name="day" value="수요일">
       </div>
 
       <div class="form-group">
-        <label class="form-label">희망 시간대 <span class="required">*</span></label>
-        <div class="radio-group">
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="time" value="오전 (9~12시)" required>오전 (9~12시)</label>
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="time" value="오후 (12~18시)">오후 (12~18시)</label>
-          <label class="radio-item" onclick="selectRadio(this)"><input type="radio" name="time" value="저녁 (18~21시)">저녁 (18~21시)</label>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">스터디를 통해 기대하는 바는 무엇인가요? <span class="required">*</span></label>
-        <textarea class="form-textarea" name="expectation" placeholder="예: 실무에 바로 쓸 수 있는 프롬프트를 배우고 싶습니다." required></textarea>
+        <label class="form-label">스터디를 통해 만들거나 개발하고 싶은 과제가 있다면 구체적으로 적어 주세요 <span class="required">*</span></label>
+        <textarea class="form-textarea" name="expectation" placeholder="예: 복약지도 안내문 자동 생성, 공동구매 매출 리포트 등" required></textarea>
       </div>
 
       <div class="form-group">
@@ -681,18 +616,6 @@
 
       if (!form.querySelector('textarea[name="first_ai_use"]').value.trim()) { alert('AI로 해보고 싶은 업무를 입력해주세요.'); return false; }
 
-      const concerns = form.querySelectorAll('input[name="concerns"]:checked');
-      if (concerns.length === 0) { alert('우려 사항을 선택해주세요.'); return false; }
-
-      if (!form.querySelector('input[name="ai_intent"]:checked')) { alert('AI 적용 의향을 선택해주세요.'); return false; }
-
-      const topics = form.querySelectorAll('input[name="topics"]:checked');
-      if (topics.length === 0) { alert('듣고 싶은 주제를 선택해주세요.'); return false; }
-
-      const days = form.querySelectorAll('input[name="day"]:checked');
-      if (days.length === 0) { alert('희망 요일을 선택해주세요.'); return false; }
-
-      if (!form.querySelector('input[name="time"]:checked')) { alert('희망 시간대를 선택해주세요.'); return false; }
       if (!form.querySelector('textarea[name="expectation"]').value.trim()) { alert('기대하는 바를 입력해주세요.'); return false; }
 
       const data = new FormData(form);

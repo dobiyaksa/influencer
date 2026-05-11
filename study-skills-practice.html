@@ -603,19 +603,18 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 6 — cmux 설치 (AI 코딩 전용 터미널)</div>
-        <p>cmux는 Claude Code에 최적화된 터미널 앱입니다. 화면 분할, 알림, 내장 브라우저 등을 지원합니다.</p>
+        <div class="step-label">Step 6 — 터미널 2개 준비</div>
+        <p>실습에서는 <strong>터미널 창 2개</strong>를 사용합니다. 하나는 로컬 서버용, 다른 하나는 Claude Code용입니다.</p>
         <div class="code-block">
-          <span class="command">brew</span> install <span class="flag">--cask</span> cmux
+          <span class="comment"># Mac 터미널 새 창 열기</span><br>
+          <span class="command">Cmd + N</span>  <span class="comment">(기본 터미널 앱에서)</span>
         </div>
-        <p style="margin-top:8px;">설치 후 응용 프로그램에서 <strong>cmux</strong>를 실행합니다.</p>
-        <div class="tip"><strong>Homebrew가 없다면:</strong> 먼저 아래 명령어로 설치하세요.<br>
-        <code style="font-size:11px;word-break:break-all;">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></div>
+        <div class="tip"><strong>터미널 앱:</strong> Mac 기본 터미널, iTerm2, Warp 등 어떤 터미널이든 괜찮습니다. 창 2개만 열어두세요.</div>
       </div>
 
       <div class="step-card">
         <div class="step-label">Step 7 — 프로젝트 다운로드 + 개인 레포 연결</div>
-        <p>Claude Code에게 자연어로 요청하면 됩니다. cmux 또는 터미널에서 Claude Code를 먼저 실행하세요.</p>
+        <p>Claude Code에게 자연어로 요청하면 됩니다. 터미널에서 Claude Code를 먼저 실행하세요.</p>
         <div class="code-block">
           <span class="command">claude</span>
         </div>
@@ -648,20 +647,25 @@ html, body {
       </div>
 
       <div class="step-card">
-        <div class="step-label">Step 9 — cmux에서 서버 + Claude Code 동시 실행</div>
-        <p>cmux를 열고, 화면을 분할하여 한쪽에서 서버를 띄우고 다른 쪽에서 Claude Code를 실행합니다.</p>
+        <div class="step-label">Step 9 — 터미널 2개로 서버 + Claude Code 동시 실행</div>
+        <p>터미널 창을 2개 열어 각각 서버와 Claude Code를 실행합니다.</p>
+
+        <p style="margin-top:12px;font-weight:700;color:#FF6B2B;">터미널 1 — 로컬 서버</p>
         <div class="code-block">
-          <span class="comment"># 패널 1: 로컬 서버 실행 (CORS 프록시 포함)</span><br>
-          <span class="command">npx</span> wrangler pages dev .<br><br>
-          <span class="comment"># Cmd+D로 패널 분할 후, 패널 2: Claude Code 실행</span><br>
+          <span class="command">cd</span> influencer<br>
+          <span class="command">npx</span> wrangler pages dev .
+        </div>
+        <p style="margin-top:4px;font-size:12px;color:#888;">서버가 실행되면 <code>http://localhost:8788</code> 주소가 표시됩니다.</p>
+
+        <p style="margin-top:16px;font-weight:700;color:#FF6B2B;">터미널 2 — Claude Code (새 터미널 창)</p>
+        <div class="code-block">
+          <span class="command">cd</span> influencer<br>
           <span class="command">claude</span>
         </div>
-        <p style="margin-top:8px;">브라우저에서 <code>http://localhost:8788</code> 접속하여 캘린더를 확인합니다.</p>
-        <div class="tip"><strong>cmux 기본 조작:</strong><br>
-        • 세로 분할: <code>Cmd + D</code><br>
-        • 가로 분할: <code>Cmd + Shift + D</code><br>
-        • 패널 전환: <code>Cmd + [</code> / <code>Cmd + ]</code><br>
-        • 내장 브라우저: <code>Cmd + Shift + B</code></div>
+        <p style="margin-top:4px;font-size:12px;color:#888;">서버는 그대로 두고, 새 터미널 창(<code>Cmd + N</code>)에서 Claude Code를 실행합니다.</p>
+
+        <p style="margin-top:14px;">브라우저에서 <code>http://localhost:8788</code> 접속하여 캘린더를 확인합니다.</p>
+        <div class="tip"><strong>핵심:</strong> 터미널 1(서버)은 계속 켜둔 상태로, 터미널 2(Claude Code)에서 코드를 수정하면 브라우저를 새로고침하여 결과를 확인합니다.</div>
 
         <p style="margin-top:14px;font-size:12px;color:#999;">실행하면 아래와 같은 화면이 됩니다:</p>
         <div class="terminal-mockup">
@@ -669,18 +673,27 @@ html, body {
             <span class="terminal-dot red"></span>
             <span class="terminal-dot yellow"></span>
             <span class="terminal-dot green"></span>
-            <span class="terminal-title-text">cmux — study</span>
+            <span class="terminal-title-text">터미널 1 — 로컬 서버</span>
           </div>
           <div class="terminal-body">
-            <div class="terminal-pane">
-              <div class="terminal-pane-label">Panel 1 — Local Server</div>
+            <div class="terminal-pane" style="border-right:none;">
               <span class="t-prompt">$ </span><span class="t-cmd">npx wrangler pages dev .</span><br><br>
               <span class="t-info">  Ready on</span> <span class="t-cmd">http://localhost:8788</span><br><br>
               <span class="t-dim">  [mf:inf] Worker reloaded!</span><br>
               <span class="t-dim">  [mf:inf] Listening on :8788</span>
             </div>
-            <div class="terminal-pane">
-              <div class="terminal-pane-label">Panel 2 — Claude Code</div>
+          </div>
+        </div>
+
+        <div class="terminal-mockup" style="margin-top:10px;">
+          <div class="terminal-titlebar">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title-text">터미널 2 — Claude Code</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-pane" style="border-right:none;">
               <span class="t-prompt">$ </span><span class="t-cmd">claude</span><br><br>
               <span class="t-accent">  ╭──────────────────────────╮</span><br>
               <span class="t-accent">  │</span><span class="t-cmd">  Claude Code            </span><span class="t-accent">│</span><br>
@@ -689,18 +702,7 @@ html, body {
               <span class="t-info">  &gt; </span><span class="t-cursor"></span>
             </div>
           </div>
-          <div class="terminal-statusbar">
-            <div class="ts-left">
-              <span>influencer</span>
-              <span>main</span>
-            </div>
-            <div class="ts-right">
-              <span class="ts-badge">&gt;&gt; bypass permissions on</span>
-              <span class="ts-shells"> · 2 shells</span>
-            </div>
-          </div>
         </div>
-        <div class="tip" style="margin-top:8px;"><strong>하단 상태바 확인:</strong> alias 설정이 적용되면 <code style="color:#ff6b8a;">bypass permissions on</code>이 표시됩니다. 이 상태에서 Claude가 파일 수정·명령어 실행을 확인 없이 바로 진행합니다.</div>
       </div>
 
     </div>
@@ -805,7 +807,7 @@ html, body {
       <div class="step-card">
         <div class="step-label">Step 9 — 터미널 분할 + Claude Code 실행</div>
         <p>서버가 실행 중인 상태에서 화면을 분할하여 Claude Code를 동시에 띄웁니다.<br>
-        <span style="font-size:11px;color:#999;">(Mac에서는 cmux 사용을 권장합니다. Windows는 Windows Terminal 분할 기능을 사용합니다.)</span></p>
+        <span style="font-size:11px;color:#999;">(Windows Terminal 분할 기능 또는 별도 터미널 창을 사용합니다.)</span></p>
         <div class="code-block">
           <span class="comment"># Windows Terminal에서 화면 분할:</span><br>
           <span class="command">Alt + Shift + D</span>  <span class="comment">(현재 패널 복제 분할)</span>

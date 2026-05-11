@@ -938,6 +938,7 @@
       <div class="header-actions">
         <span class="badge badge-teal" id="badge-status"><span class="pulse"></span> 연결됨</span>
         <button class="btn-sm primary" onclick="refreshData()">새로고침</button>
+        <button class="btn-sm" id="mask-btn" onclick="toggleMask()">금액 보기</button>
         <button class="btn-sm" onclick="exportExcel()">엑셀</button>
         <button class="btn-sm" onclick="exportCSV()">CSV</button>
         <button class="btn-sm danger" onclick="disconnectToken()">로그아웃</button>
@@ -1055,8 +1056,19 @@
     return d.innerHTML;
   }
 
+  let moneyMasked = true;
+
+  window.toggleMask = function() {
+    moneyMasked = !moneyMasked;
+    document.getElementById('mask-btn').textContent = moneyMasked ? '금액 보기' : '금액 숨기기';
+    renderStats();
+    renderTable();
+    renderPlanChartJS();
+  };
+
   function formatCurrency(n) {
     if (n == null || isNaN(n)) return '-';
+    if (moneyMasked) return '***';
     return Number(n).toLocaleString('ko-KR') + '원';
   }
 
@@ -1364,6 +1376,11 @@
 
   function getStepLabel(code) { return STEP_LABELS[code] || code || '-'; }
 
+  function isDateActive(startDate, endDate) {
+    if (!startDate || !endDate) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return today >= startDate.slice(0, 10) && today <= endDate.slice(0, 10);
+  }
   function isActiveStep(code) { return code === 'Y0'; }
   function isCompletedStep(code) { return code === 'Y8'; }
   function isUpcomingStep(code) { return ['T0','T2','T4','T6','T8'].includes(code); }
@@ -1423,7 +1440,7 @@
       endDate: raw.end_date || '',
       stepCode: stepCode,
       stepLabel: getStepLabel(stepCode),
-      isActive: isActiveStep(stepCode),
+      isActive: isDateActive(raw.start_date, raw.end_date),
       exposeYn: raw.expose_yn || 'N',
       influencerName: raw.influencer_name || '',
       pharmacyName: raw.pharmacy_name || '',
@@ -1457,9 +1474,11 @@
     document.getElementById('stat-total').textContent = formatNumber(plans.length);
     document.getElementById('stat-active').textContent = formatNumber(active);
     document.getElementById('stat-sellers').textContent = formatNumber(uniqueInfluencers);
-    document.getElementById('stat-products').textContent = totalSales > 0
-      ? (totalSales >= 100000000 ? Math.round(totalSales / 100000000 * 10) / 10 + '억' : Math.round(totalSales / 10000).toLocaleString() + '만')
-      : '—';
+    document.getElementById('stat-products').textContent = moneyMasked
+      ? '***'
+      : (totalSales > 0
+        ? (totalSales >= 100000000 ? Math.round(totalSales / 100000000 * 10) / 10 + '억' : Math.round(totalSales / 10000).toLocaleString() + '만')
+        : '—');
   }
 
   function getChartColors() {
@@ -1521,7 +1540,7 @@
             ticks: {
               color: c.text,
               font: { size: 10, family: 'JetBrains Mono' },
-              callback: v => v >= 10000 ? Math.round(v / 10000) + '만' : v
+              callback: v => moneyMasked ? '' : (v >= 10000 ? Math.round(v / 10000) + '만' : v)
             },
             border: { color: 'transparent' }
           },
@@ -1608,11 +1627,11 @@
     let result = [...cachedPlans];
 
     if (currentFilter === 'active') {
-      result = result.filter(p => p.stepCode === 'Y0');
+      result = result.filter(p => p.isActive);
     } else if (currentFilter === 'completed') {
-      result = result.filter(p => p.stepCode === 'Y8');
+      result = result.filter(p => !p.isActive && ['T8','Y0','Y8'].includes(p.stepCode));
     } else if (currentFilter === 'upcoming') {
-      result = result.filter(p => isUpcomingStep(p.stepCode));
+      result = result.filter(p => !p.isActive && ['T0','T2','T4','T6'].includes(p.stepCode));
     } else if (currentFilter === 'cancelled') {
       result = result.filter(p => ['C0','C4'].includes(p.stepCode));
     }
