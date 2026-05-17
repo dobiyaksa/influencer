@@ -1290,6 +1290,50 @@
       overflow: hidden; text-overflow: ellipsis;
     }
     .upcoming-plans-table .col-brand { color: var(--teal); }
+
+    /* === Info banner — 데이터 출처 안내 === */
+    .info-banner {
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.06), rgba(45, 212, 191, 0.02));
+      border: 1px solid rgba(45, 212, 191, 0.22);
+      border-radius: 10px; padding: 0; margin-bottom: 16px;
+    }
+    .info-banner > summary {
+      list-style: none; cursor: pointer;
+      padding: 12px 18px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: #c9d1d9;
+    }
+    .info-banner > summary::-webkit-details-marker { display: none; }
+    .info-banner .info-icon { font-size: 16px; }
+    .info-banner .info-title { font-weight: 600; color: #fff; flex: 1; }
+    .info-banner .info-chevron {
+      color: #8b949e; font-size: 12px;
+      transition: transform 0.15s;
+    }
+    .info-banner[open] .info-chevron { transform: rotate(180deg); }
+    .info-banner .info-body {
+      padding: 4px 18px 16px 18px;
+      border-top: 1px dashed rgba(45, 212, 191, 0.18);
+      display: flex; flex-direction: column; gap: 10px;
+      font-size: 12px; color: #c9d1d9; line-height: 1.6;
+    }
+    .info-banner .info-row { display: flex; gap: 12px; align-items: flex-start; }
+    .info-banner .info-tag {
+      flex-shrink: 0; min-width: 110px;
+      padding: 3px 9px; border-radius: 5px;
+      font-size: 11px; font-weight: 600;
+      text-align: center; align-self: flex-start;
+    }
+    .info-banner .info-tag.store { background: rgba(45, 212, 191, 0.16); color: #2dd4bf; }
+    .info-banner .info-tag.apify { background: rgba(245, 158, 11, 0.18); color: #f59e0b; }
+    .info-banner .info-tag.local { background: rgba(139, 148, 158, 0.18); color: #b8c0ca; }
+    .info-banner .info-note {
+      margin-top: 6px; padding: 8px 12px;
+      background: rgba(245, 158, 11, 0.06);
+      border-left: 3px solid #f59e0b;
+      border-radius: 4px;
+      font-size: 11px; color: #d8c8a0;
+    }
   </style>
 </head>
 <body>
@@ -1488,6 +1532,32 @@
       </div>
     </div>
 
+    <!-- Info banner — 데이터 출처 안내 -->
+    <details class="info-banner">
+      <summary>
+        <span class="info-icon">ℹ️</span>
+        <span class="info-title">이 대시보드의 데이터는 어디서 가져오나요?</span>
+        <span class="info-chevron">▾</span>
+      </summary>
+      <div class="info-body">
+        <div class="info-row">
+          <span class="info-tag store">🏪 친한스토어 API</span>
+          <span>로그인하면 친한스토어 어드민 API 가 본인 계정에 매핑된 <strong>공구 일정·매출·제품 구좌</strong> 데이터를 실시간으로 가져옵니다. 새로고침 시 최신 정보로 갱신.</span>
+        </div>
+        <div class="info-row">
+          <span class="info-tag apify">📷 Apify (선택)</span>
+          <span>Apify 토큰을 등록하면 본인 인스타 계정의 <strong>최근 포스트·좋아요·댓글</strong> 통계를 가져와 컨텐츠 카드에 표시. 토큰은 본인 브라우저(localStorage)에만 저장됩니다.</span>
+        </div>
+        <div class="info-row">
+          <span class="info-tag local">💾 로컬 저장</span>
+          <span>로그인 토큰·인스타 핸들·금액 마스킹 설정 등은 본인 브라우저에만 저장됩니다. 서버나 외부로 전송되지 않습니다.</span>
+        </div>
+        <div class="info-note">
+          ⚠️ 모든 매출/공구 데이터는 본인 계정에 매핑된 것만 표시됩니다. 다른 인플루언서의 데이터는 보이지 않습니다.
+        </div>
+      </div>
+    </details>
+
     <!-- Active Plans Panel -->
     <div class="dash-card active-plans-section">
       <div class="active-plans-header">
@@ -1608,21 +1678,6 @@
       </div>
     </div>
 
-    <!-- Brand summary panel -->
-    <div class="pv-brand-panel" id="pv-brand-panel" style="display:none">
-      <p class="pv-brand-panel-title">브랜드별 제품 관리</p>
-      <table class="pv-brand-table">
-        <thead>
-          <tr>
-            <th>브랜드</th>
-            <th>전체</th>
-            <th>공구 가능</th>
-          </tr>
-        </thead>
-        <tbody id="pv-brand-tbody"></tbody>
-      </table>
-    </div>
-
     <!-- Instagram Content Panel -->
     <div class="dash-card" id="ig-panel-card">
       <div class="ig-panel-header">
@@ -1635,6 +1690,21 @@
       <div id="ig-grid-wrap">
         <div class="ig-empty">인스타 핸들을 설정하면 최근 포스트가 표시됩니다.</div>
       </div>
+    </div>
+
+    <!-- Brand summary panel (이동: 가장 하단) -->
+    <div class="pv-brand-panel" id="pv-brand-panel" style="display:none">
+      <p class="pv-brand-panel-title">브랜드별 제품 관리</p>
+      <table class="pv-brand-table">
+        <thead>
+          <tr>
+            <th>브랜드</th>
+            <th>전체</th>
+            <th>공구 가능</th>
+          </tr>
+        </thead>
+        <tbody id="pv-brand-tbody"></tbody>
+      </table>
     </div>
 
   </div>
