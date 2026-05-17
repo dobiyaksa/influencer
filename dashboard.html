@@ -1570,7 +1570,7 @@
       let bound = false;
       return function initProductsView() {
         if (!bound) {
-          // Task 6 에서 bindProductsFilters() 호출 추가됨
+          bindProductsFilters();
           bound = true;
         }
         fetchProducts();
@@ -1759,6 +1759,73 @@
     document.getElementById('pv-sort').value = 'LAST_PLAN_ASC';
     document.getElementById('pv-size').value = '20';
     fetchProducts();
+  }
+
+  function pvDebounce(fn, ms) {
+    let t = null;
+    return function() {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, arguments), ms);
+    };
+  }
+
+  function bindProductsFilters() {
+    const keywordEl = document.getElementById('pv-keyword');
+    const expiredEl = document.getElementById('pv-expired');
+    const sortEl = document.getElementById('pv-sort');
+    const sizeEl = document.getElementById('pv-size');
+    const prev = document.getElementById('pv-prev');
+    const next = document.getElementById('pv-next');
+
+    const onKeyword = pvDebounce(() => {
+      productsState.keyword = keywordEl.value;
+      productsState.page = 0;
+      fetchProducts();
+    }, 300);
+    keywordEl.addEventListener('input', onKeyword);
+
+    document.querySelectorAll('input[name="pv-avail"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const checked = document.querySelector('input[name="pv-avail"]:checked');
+        productsState.available = checked ? checked.value : '';
+        productsState.page = 0;
+        fetchProducts();
+      });
+    });
+
+    expiredEl.addEventListener('change', () => {
+      productsState.isExpired = expiredEl.checked;
+      productsState.page = 0;
+      fetchProducts();
+    });
+
+    sortEl.addEventListener('change', () => {
+      productsState.sortType = sortEl.value;
+      productsState.page = 0;
+      fetchProducts();
+    });
+
+    sizeEl.addEventListener('change', () => {
+      productsState.size = Number(sizeEl.value);
+      productsState.page = 0;
+      fetchProducts();
+    });
+
+    prev.addEventListener('click', () => {
+      if (productsState.page > 0) {
+        productsState.page -= 1;
+        fetchProducts();
+      }
+    });
+
+    next.addEventListener('click', () => {
+      if (!productsState.data) return;
+      const totalPages = Math.max(1, Math.ceil(productsState.data.meta.totalCount / productsState.size));
+      if (productsState.page + 1 < totalPages) {
+        productsState.page += 1;
+        fetchProducts();
+      }
+    });
   }
 
   function showView(name) {
