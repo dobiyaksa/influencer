@@ -79,6 +79,49 @@
     .topnav { padding: 12px 24px; border-bottom: 1px solid var(--line); font-size: 12px; }
     .topnav a { color: var(--muted); text-decoration: none; margin-right: 14px; }
     .topnav a:hover { color: var(--teal); }
+
+    .handle-hint {
+      margin-top: 8px;
+      background: rgba(29, 158, 117, 0.05);
+      border: 1px solid rgba(29, 158, 117, 0.18);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 11px;
+    }
+    .hint-row {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 8px; color: var(--text); font-family: ui-monospace, Menlo, monospace;
+    }
+    .hint-url { color: var(--muted); }
+    .hint-mark {
+      color: var(--teal); font-weight: 700;
+      background: rgba(29, 158, 117, 0.16);
+      padding: 1px 6px; border-radius: 4px;
+    }
+    .hint-arrow { color: var(--teal); }
+    .hint-examples { color: var(--muted); font-family: -apple-system, "Noto Sans KR", sans-serif; }
+    .hint-examples ul { margin: 4px 0 0; padding: 0; list-style: none; }
+    .hint-examples li { margin-bottom: 3px; font-family: ui-monospace, Menlo, monospace; color: var(--text); }
+    .hint-examples b { color: var(--teal); font-weight: 700; }
+    .hint-examples .arrow { color: var(--muted); margin: 0 6px; }
+
+    details.step-collapse > summary {
+      list-style: none; cursor: pointer;
+      font-size: 15px; font-weight: 600; color: #fff;
+      display: flex; align-items: center; gap: 6px;
+      margin: 0;
+    }
+    details.step-collapse > summary::-webkit-details-marker { display: none; }
+    details.step-collapse > summary .chevron {
+      display: inline-block; font-size: 10px; color: var(--muted);
+      transition: transform 0.15s;
+    }
+    details.step-collapse[open] > summary .chevron { transform: rotate(90deg); }
+    details.step-collapse > summary .collapse-hint {
+      margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 400;
+    }
+    details.step-collapse[open] > summary .collapse-hint::after { content: ' (접기)'; }
+    details.step-collapse > .step-body { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -119,8 +162,23 @@
           <input type="password" id="apify-token" spellcheck="false" placeholder="apify_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
         </div>
         <div class="field">
-          <label for="ig-handle">인스타그램 핸들 (예: instagram)</label>
-          <input type="text" id="ig-handle" spellcheck="false" placeholder="ydy_nutrition" autocomplete="off">
+          <label for="ig-handle">인스타그램 핸들</label>
+          <input type="text" id="ig-handle" spellcheck="false" placeholder="yakstory119" autocomplete="off">
+          <div class="handle-hint">
+            <div class="hint-row">
+              <span class="hint-url">https://www.instagram.com/<span class="hint-mark">USER</span>/</span>
+              <span class="hint-arrow">→</span>
+              <span><span class="hint-mark">USER</span> 부분만 입력</span>
+            </div>
+            <div class="hint-examples">
+              <div>예시:</div>
+              <ul>
+                <li>instagram.com/<b>yakstory119</b>/<span class="arrow">→</span><b>yakstory119</b></li>
+                <li>instagram.com/<b>dr.example.kr</b>/<span class="arrow">→</span><b>dr.example.kr</b></li>
+                <li>@<b>pharmabros</b><span class="arrow">→</span><b>pharmabros</b> <span style="color:var(--muted)">(@ 빼고)</span></li>
+              </ul>
+            </div>
+          </div>
         </div>
         <p class="hint">두 값 모두 브라우저 localStorage 에 저장됩니다. 공용 PC에서 실습 시 사용 후 [저장 정보 지우기] 를 눌러주세요.</p>
         <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
@@ -131,11 +189,12 @@
       </div>
     </div>
 
-    <!-- Step 3: 실행 코드 -->
+    <!-- Step 3: 실행 코드 (접힘) -->
     <div class="step">
-      <div class="step-title"><span class="step-num">3</span> 실제로 호출되는 코드</div>
-      <div class="step-body">
-        <p>아래 코드가 [가져오기] 버튼을 누를 때 실행됩니다. Apify Actor <code>apify/instagram-scraper</code> 를 동기 실행하고 결과를 받습니다.</p>
+      <details class="step-collapse">
+        <summary><span class="chevron">▶</span><span class="step-num">3</span> 실제로 호출되는 코드 <span class="collapse-hint">(클릭하여 펼치기)</span></summary>
+        <div class="step-body">
+          <p>아래 코드가 [가져오기] 버튼을 누를 때 실행됩니다. Apify Actor <code>apify/instagram-scraper</code> 를 동기 실행하고 결과를 받습니다.</p>
 <pre class="code">const endpoint = `https://api.apify.com/v2/acts/apify~instagram-scraper`
   + `/run-sync-get-dataset-items?token=${TOKEN}`;
 
@@ -150,7 +209,8 @@ const res = await fetch(endpoint, {
 
 const posts = await res.json();
 // posts: [{ caption, displayUrl, likesCount, commentsCount, ... }]</pre>
-      </div>
+        </div>
+      </details>
     </div>
 
     <!-- 결과 -->
