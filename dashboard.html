@@ -409,6 +409,19 @@
       margin-bottom: 1.25rem;
     }
 
+    /* Section card wrapper — visual boundary between dashboard sections */
+    .dash-card {
+      background: #0f141a; border: 1px solid #1f2530;
+      border-radius: 12px; padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .dash-card > .section-label:first-child,
+    .dash-card > .active-plans-header:first-child,
+    .dash-card > .upcoming-plans-header:first-child {
+      margin-top: 0;
+    }
+    .dash-card .section-label { margin-top: 0; margin-bottom: 12px; }
+
     .chart-wrap { position: relative; width: 100%; }
 
     .chart-empty {
@@ -1400,7 +1413,7 @@
     </div>
 
     <!-- Active Plans Panel -->
-    <div class="active-plans-section">
+    <div class="dash-card active-plans-section">
       <div class="active-plans-header">
         <div class="active-plans-title">진행 중인 공구</div>
         <div class="active-plans-count" id="active-plans-count">—</div>
@@ -1427,7 +1440,7 @@
     </div>
 
     <!-- Upcoming Plans Panel -->
-    <div class="upcoming-plans-section">
+    <div class="dash-card upcoming-plans-section">
       <div class="upcoming-plans-header">
         <div class="upcoming-plans-title">시작 예정 공구 <span style="color:#6e7681; font-weight:400; font-size:12px; margin-left:6px;">(7일 이내)</span></div>
         <div class="upcoming-plans-count" id="upcoming-plans-count">—</div>
@@ -1453,65 +1466,69 @@
     </div>
 
     <!-- Metrics -->
-    <p class="section-label">핵심 지표</p>
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-tag">총 공구 수</div>
-        <div class="metric-val" id="stat-total">—</div>
-        <div class="accent-bar ab-teal"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">진행중 공구</div>
-        <div class="metric-val" id="stat-active">—</div>
-        <div class="accent-bar ab-blue"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">참여 약사</div>
-        <div class="metric-val" id="stat-sellers">—</div>
-        <div class="accent-bar ab-purple"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">총 매출</div>
-        <div class="metric-val" id="stat-products">—</div>
-        <div class="accent-bar ab-amber"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">총 제품 관리</div>
-        <div class="metric-val" id="stat-products-total">—</div>
-        <div class="accent-bar ab-teal"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">공구 가능 제품</div>
-        <div class="metric-val" id="stat-products-available">—</div>
-        <div class="accent-bar ab-blue"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">이번 달 컨텐츠 <span class="wip" style="margin-left:6px">WIP</span></div>
-        <div class="metric-val" id="stat-content-month">—</div>
-        <div class="accent-bar ab-purple"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-tag">누적 조회 <span class="wip" style="margin-left:6px">WIP</span></div>
-        <div class="metric-val" id="stat-content-views">—</div>
-        <div class="accent-bar ab-amber"></div>
+    <div class="dash-card">
+      <p class="section-label">핵심 지표</p>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-tag">총 공구 수</div>
+          <div class="metric-val" id="stat-total">—</div>
+          <div class="accent-bar ab-teal"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">진행중 공구</div>
+          <div class="metric-val" id="stat-active">—</div>
+          <div class="accent-bar ab-blue"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">참여 약사</div>
+          <div class="metric-val" id="stat-sellers">—</div>
+          <div class="accent-bar ab-purple"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">총 매출</div>
+          <div class="metric-val" id="stat-products">—</div>
+          <div class="accent-bar ab-amber"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">총 제품 관리</div>
+          <div class="metric-val" id="stat-products-total">—</div>
+          <div class="accent-bar ab-teal"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">공구 가능 제품</div>
+          <div class="metric-val" id="stat-products-available">—</div>
+          <div class="accent-bar ab-blue"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">이번 달 컨텐츠 <span class="wip" style="margin-left:6px">WIP</span></div>
+          <div class="metric-val" id="stat-content-month">—</div>
+          <div class="accent-bar ab-purple"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag">누적 조회 <span class="wip" style="margin-left:6px">WIP</span></div>
+          <div class="metric-val" id="stat-content-views">—</div>
+          <div class="accent-bar ab-amber"></div>
+        </div>
       </div>
     </div>
 
     <!-- Charts -->
-    <p class="section-label">차트</p>
-    <div class="charts-grid">
-      <div class="panel">
-        <p class="section-label" style="margin-bottom:8px">공구별 매출 TOP 10</p>
-        <div class="chart-wrap" style="height:220px">
-          <canvas id="chart-plans"></canvas>
+    <div class="dash-card">
+      <p class="section-label">차트</p>
+      <div class="charts-grid">
+        <div class="panel">
+          <p class="section-label" style="margin-bottom:8px">공구별 매출 TOP 10</p>
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="chart-plans"></canvas>
+          </div>
         </div>
-      </div>
-      <div class="panel">
-        <p class="section-label" style="margin-bottom:8px">진행 상태 분포</p>
-        <div class="chart-wrap" style="height:180px">
-          <canvas id="chart-status"></canvas>
+        <div class="panel">
+          <p class="section-label" style="margin-bottom:8px">진행 상태 분포</p>
+          <div class="chart-wrap" style="height:180px">
+            <canvas id="chart-status"></canvas>
+          </div>
+          <div class="legend" id="status-legend"></div>
         </div>
-        <div class="legend" id="status-legend"></div>
       </div>
     </div>
 
