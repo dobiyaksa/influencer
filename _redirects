@@ -1,0 +1,5 @@
+# Cloudflare Pages redirects
+# 로컬/프로덕션 메인 페이지를 대시보드로 정의
+# 캘린더는 ./calendar.html (rename 됨), 사이드바 메뉴에서 직접 접근
+
+/    /dashboard    302
