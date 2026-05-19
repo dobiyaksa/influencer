@@ -896,6 +896,22 @@
 
     /* === Sidebar Layout === */
     .dash-shell { display: flex; min-height: 100vh; }
+    /* 사이드바 접기/펴기 */
+    .sidebar { transition: margin-left 0.22s ease, width 0.22s ease; }
+    .dash-shell.sidebar-collapsed .sidebar { margin-left: -240px; }
+    #sidebar-toggle-btn {
+      position: fixed; top: 14px; left: 252px;
+      z-index: 100;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: #161b22; color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 6px;
+      cursor: pointer; font-size: 13px;
+      transition: left 0.22s ease, background 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    #sidebar-toggle-btn:hover { background: #1f2530; border-color: #2dd4bf; color: #fff; }
+    .dash-shell.sidebar-collapsed #sidebar-toggle-btn { left: 12px; }
     .sidebar {
       width: 240px; flex-shrink: 0;
       background: #0d1117; color: #c9d1d9;
@@ -1535,7 +1551,8 @@
 
 <!-- ── Admin View ── -->
 <div id="admin-view">
-  <div class="dash-shell">
+  <div class="dash-shell" id="dash-shell">
+    <button id="sidebar-toggle-btn" type="button" aria-label="사이드바 접기/펴기" title="사이드바 접기/펴기">◀</button>
     <!-- 좌측 사이드바 -->
     <aside class="sidebar">
       <div class="sidebar-brand">파마브로스</div>
@@ -2658,6 +2675,25 @@
     if (btn) btn.addEventListener('click', promptInstagramHandle);
     const cbtn = document.getElementById('contents-handle-btn');
     if (cbtn) cbtn.addEventListener('click', promptInstagramHandle);
+
+    // 사이드바 접기/펴기
+    const SIDEBAR_COLLAPSED_KEY = 'dashboard_sidebar_collapsed';
+    const shell = document.getElementById('dash-shell');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    function applySidebarState(collapsed) {
+      if (!shell || !toggleBtn) return;
+      shell.classList.toggle('sidebar-collapsed', collapsed);
+      toggleBtn.textContent = collapsed ? '▶' : '◀';
+      toggleBtn.title = collapsed ? '사이드바 펴기' : '사이드바 접기';
+    }
+    if (shell && toggleBtn) {
+      applySidebarState(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+      toggleBtn.addEventListener('click', () => {
+        const nowCollapsed = !shell.classList.contains('sidebar-collapsed');
+        applySidebarState(nowCollapsed);
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, nowCollapsed ? '1' : '0');
+      });
+    }
   });
 
   // === Products Summary (for dashboard metric cards) ===
