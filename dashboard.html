@@ -3538,7 +3538,7 @@
       ? cachedPlans
           .filter(p => {
             if (!p || p.isActive) return false;
-            if (p.stepCode !== 'T4') return false;
+            if (!isUpcomingStep(p.stepCode)) return false;
             if (!p.startDate) return false;
             try {
               const start = new Date(p.startDate);
