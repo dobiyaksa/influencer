@@ -1527,7 +1527,7 @@
       <div class="login-err" id="login-err"></div>
 
       <div class="login-hint">
-        친한스토어 어드민 계정으로 로그인하세요.
+        파마브로스 공동구매 계정으로 로그인하세요.
       </div>
     </div>
   </div>
@@ -1658,8 +1658,8 @@
       </summary>
       <div class="info-body">
         <div class="info-row">
-          <span class="info-tag store">🏪 친한스토어 API</span>
-          <span>로그인하면 친한스토어 어드민 API 가 본인 계정에 매핑된 <strong>공구 일정·매출·제품 구좌</strong> 데이터를 실시간으로 가져옵니다. 새로고침 시 최신 정보로 갱신.</span>
+          <span class="info-tag store">🏪 파마브로스 공동구매 API</span>
+          <span>로그인하면 파마브로스 공동구매 API 가 본인 계정에 매핑된 <strong>공구 일정·매출·제품 구좌</strong> 데이터를 실시간으로 가져옵니다. 새로고침 시 최신 정보로 갱신.</span>
         </div>
         <div class="info-row">
           <span class="info-tag apify">📷 Apify (선택)</span>
@@ -1874,7 +1874,7 @@
               <span class="challenge-title">직접 구현해보기 — 약사 전문성 입히기</span>
             </summary>
             <p class="challenge-desc">
-              현재 테이블은 친한스토어 API 가 주는 기본 정보만 보여줍니다. 약사 인플루언서로서 <strong>제품 효능 · 성분 · 복용 가이드</strong> 같은 전문 데이터를 입혀보는 실습 아이디어입니다.
+              현재 테이블은 파마브로스 공동구매 API 가 주는 기본 정보만 보여줍니다. 약사 인플루언서로서 <strong>제품 효능 · 성분 · 복용 가이드</strong> 같은 전문 데이터를 입혀보는 실습 아이디어입니다.
             </p>
             <ul class="challenge-list">
               <li><strong>제품별 약사 메모</strong> — 각 행에 효능 · 성분 · 주의사항 · 복용법을 직접 입력하고 <code>localStorage</code> 에 저장. 페이지를 새로고침해도 유지</li>
@@ -3994,7 +3994,7 @@
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '공구 매출');
-    XLSX.writeFile(wb, '친한스토어_공구대시보드_' + getDateStamp() + '.xlsx');
+    XLSX.writeFile(wb, '파마브로스공구_' + getDateStamp() + '.xlsx');
     showToast('엑셀 파일을 다운로드합니다.');
   };
 
@@ -4009,7 +4009,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = '친한스토어_공구대시보드_' + getDateStamp() + '.csv';
+    a.download = '파마브로스공구_' + getDateStamp() + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
