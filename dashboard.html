@@ -318,6 +318,8 @@
     }
 
     .btn-sm:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-sm.active { background: var(--teal); color: #0d1117; border-color: var(--teal); font-weight: 700; }
+    .consult-filter-btn.active { background: var(--teal); color: #0d1117; border-color: var(--teal); }
 
     .btn-sm.primary {
       background: var(--teal);
@@ -1709,6 +1711,9 @@
       </div>
       <div class="header-actions">
         <span class="badge badge-teal" id="badge-status"><span class="pulse"></span> 연결됨</span>
+        <select id="influencer-filter" onchange="setInfluencerFilter(this.value)" title="약사별로 데이터를 필터링합니다" style="padding:6px 10px; border:1px solid #30363d; border-radius:6px; background:#161b22; color:#c9d1d9; font-size:12px; cursor:pointer;">
+          <option value="">전체</option>
+        </select>
         <button class="btn-sm primary" onclick="refreshData()">새로고침</button>
         <button class="btn-sm" id="mask-btn" onclick="toggleMask()">금액 보기</button>
         <button class="btn-sm" onclick="exportExcel()">엑셀</button>
@@ -2099,11 +2104,126 @@
         </details>
       </section>
       <section class="view" id="view-consult">
-        <div class="view-placeholder">
-          <h2>개인 상담</h2>
-          <p>이 메뉴는 준비 중입니다.</p>
+        <div class="dash-card" style="padding:22px 24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h2 style="margin:0 0 4px; font-size:22px; color:#fff;">📩 개인 DM 상담</h2>
+              <p style="margin:0; color:#8b949e; font-size:13px;">인스타 DM 상담 내역을 복사·붙여넣기로 저장하고, 자동 요약본과 함께 관리합니다.</p>
+            </div>
+            <button class="btn-sm primary" onclick="openConsultModal()" style="white-space:nowrap;">➕ 새 상담 추가</button>
+          </div>
+          <div style="margin-top:12px; padding:8px 12px; background:rgba(45,212,191,0.06); border-left:3px solid #2dd4bf; border-radius:4px; font-size:11px; color:#8b949e;">
+            🔒 모든 상담 데이터는 본인 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다.
+          </div>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="dash-card" style="padding:18px 22px;">
+          <div id="consult-stats" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;"></div>
+        </div>
+
+        <!-- 검색/필터 -->
+        <div class="dash-card" style="padding:14px 18px;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <div style="position:relative; flex:1; min-width:220px;">
+              <input type="text" id="consult-search" placeholder="이름·핸들·내용·태그 검색…" oninput="renderConsultList()"
+                style="width:100%; box-sizing:border-box; padding:8px 32px 8px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+              <button onclick="document.getElementById('consult-search').value='';renderConsultList();this.blur();"
+                title="검색어 지우기"
+                style="position:absolute; right:6px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:transparent; color:#8b949e; border:0; cursor:pointer; font-size:14px; line-height:1;">✕</button>
+            </div>
+            <span id="consult-result-count" style="font-size:11px; color:#8b949e; padding:4px 10px; background:rgba(255,255,255,0.04); border-radius:10px; white-space:nowrap; display:none;"></span>
+            <div style="display:flex; gap:4px;">
+              <button class="btn-sm consult-filter-btn active" data-status="" onclick="setConsultFilter('')">전체</button>
+              <button class="btn-sm consult-filter-btn" data-status="pending" onclick="setConsultFilter('pending')">답변 대기</button>
+              <button class="btn-sm consult-filter-btn" data-status="done" onclick="setConsultFilter('done')">답변 완료</button>
+              <button class="btn-sm consult-filter-btn" data-status="important" onclick="setConsultFilter('important')">⭐ 중요</button>
+            </div>
+            <button class="btn-sm" onclick="exportConsultsExcel()">📥 엑셀</button>
+          </div>
+        </div>
+
+        <!-- 카드 리스트 -->
+        <div id="consult-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px;"></div>
+        <div id="consult-empty" style="display:none; padding:60px 20px; text-align:center; color:#6e7681; font-size:13px;">
+          저장된 상담이 없습니다. 우측 상단의 <strong>➕ 새 상담 추가</strong> 버튼으로 시작하세요.
         </div>
       </section>
+
+      <!-- 상담 추가/편집 모달 -->
+      <div id="consult-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; backdrop-filter:blur(3px);"
+           onclick="if(event.target===this)closeConsultModal()">
+        <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px 26px; width:640px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9;">
+          <h3 id="consult-modal-title" style="margin:0 0 4px; font-size:17px; color:#fff;">📩 새 상담 추가</h3>
+          <p style="margin:0 0 18px; color:#8b949e; font-size:12px;">인스타 DM 대화를 복사·붙여넣기 하세요. 휴리스틱 요약 또는 외부 AI 도구로 요약본을 생성할 수 있습니다.</p>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700;">고객 인스타 핸들</label>
+              <input type="text" id="consult-handle" placeholder="@yakstory119"
+                style="width:100%; box-sizing:border-box; margin-top:4px; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700;">상담 일자</label>
+              <input type="date" id="consult-date"
+                style="width:100%; box-sizing:border-box; margin-top:4px; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+          </div>
+
+          <label style="font-size:11px; color:#8b949e; font-weight:700;">📸 스크린샷 OCR (선택)</label>
+          <div id="ocr-paste-zone" tabindex="0"
+            style="margin-top:4px; padding:18px 14px; border:2px dashed #30363d; border-radius:8px; background:#0d1117; text-align:center; cursor:pointer; outline:none; transition: border-color 0.15s, background 0.15s;">
+            <div style="font-size:24px; margin-bottom:4px;">📸</div>
+            <div style="font-size:12px; color:#c9d1d9; font-weight:600;">스크린샷 붙여넣기 <code style="background:#1f2530; padding:1px 6px; border-radius:3px; color:#FFB088;">⌘V</code> 또는 클릭/드래그로 업로드</div>
+            <div style="font-size:11px; color:#8b949e; margin-top:4px;">한국어 OCR — 인식된 텍스트는 아래 대화창에 자동 추가됩니다</div>
+            <input type="file" id="ocr-file-input" accept="image/*" multiple style="display:none;">
+          </div>
+          <div id="ocr-status" style="display:none; margin-top:8px; padding:8px 12px; background:rgba(45,212,191,0.08); border-left:3px solid #2dd4bf; border-radius:4px; font-size:12px; color:#c9d1d9;"></div>
+          <div id="ocr-thumbs" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
+
+          <label style="font-size:11px; color:#8b949e; font-weight:700; margin-top:14px; display:block;">원본 DM 대화</label>
+          <textarea id="consult-original" rows="8" placeholder="DM 내용을 직접 붙여넣거나, 위 영역에 스크린샷을 붙여 자동 인식하세요…"
+            style="width:100%; box-sizing:border-box; margin-top:4px; padding:10px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+
+          <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+            <button class="btn-sm" onclick="generateHeuristicSummary()" title="외부 호출 없이 핵심 키워드·첫줄로 자동 요약">⚡ 자동 요약 (휴리스틱)</button>
+            <button class="btn-sm" onclick="runClaudeSidebar()" title="Claude for Chrome 확장 사이드바로 자동 분석" style="border-color:#FF8A00; color:#FF8A00;">🤖 Claude 사이드바로 분석</button>
+            <button class="btn-sm" onclick="openAITool('chatgpt')" title="ChatGPT 새 탭에서 요약 요청">🤖 ChatGPT 새 탭</button>
+            <button class="btn-sm" onclick="openAITool('claude')" title="Claude.ai 새 탭에서 요약 요청">🤖 Claude.ai 새 탭</button>
+            <button class="btn-sm" onclick="showClaudeInstallGuide()" title="Claude for Chrome 확장 설치 방법" style="font-size:10px;">📖 확장 설치 가이드</button>
+          </div>
+
+          <label style="font-size:11px; color:#8b949e; font-weight:700; margin-top:14px; display:block;">요약본 (편집 가능) — Q&amp;A 형식 권장</label>
+          <textarea id="consult-summary" rows="6" placeholder="Q. 비타민D 1000IU 임산부 복용 가능?&#10;A. 안전 용량, 의사 상담 권장&#10;[비타민D · 임산부]"
+            style="width:100%; box-sizing:border-box; margin-top:4px; padding:10px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700;">태그 (쉼표 구분)</label>
+              <input type="text" id="consult-tags" placeholder="비타민D, 부작용, 임산부"
+                style="width:100%; box-sizing:border-box; margin-top:4px; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700;">상태</label>
+              <select id="consult-status"
+                style="width:100%; box-sizing:border-box; margin-top:4px; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+                <option value="pending">답변 대기</option>
+                <option value="done" selected>답변 완료</option>
+                <option value="important">⭐ 중요</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="font-size:11px; color:#8b949e; font-weight:700; margin-top:12px; display:block;">메모 (선택)</label>
+          <input type="text" id="consult-notes" placeholder="추가 메모"
+            style="width:100%; box-sizing:border-box; margin-top:4px; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+
+          <div style="display:flex; gap:8px; margin-top:20px;">
+            <button class="btn-sm" onclick="closeConsultModal()" style="flex:1;">취소</button>
+            <button class="btn-sm primary" onclick="saveConsult()" style="flex:2;">저장</button>
+          </div>
+        </div>
+      </div>
       <section class="view" id="view-staff">
         <div class="view-placeholder">
           <h2>직원</h2>
@@ -2189,11 +2309,21 @@
 
   const API_BASE = '';
   const TOKEN_KEY = 'dashboard_bearer_token';
+  const ADMIN_EMAIL_KEY = 'current_admin_email';
+  const INFLUENCER_FILTER_KEY = 'dashboard_influencer_filter';
+
+  // 어드민 이메일 → 약사명 자동 매핑 (소문자 키)
+  const EMAIL_INFLUENCER_MAP = {
+    'anthony@pharma-bros.com': '호프만',
+  };
 
   let bearerToken = '';
-  let cachedPlans = [];
+  let cachedPlansAll = [];    // 원본 (API 전체)
+  let cachedPlans = [];        // 필터된 뷰 (= cachedPlansAll if no filter)
   let cachedSellers = [];
   let currentFilter = 'all';
+  let INFLUENCER_FILTER = (localStorage.getItem(INFLUENCER_FILTER_KEY) || null);
+  if (INFLUENCER_FILTER === 'null' || INFLUENCER_FILTER === '') INFLUENCER_FILTER = null;
   let sortCol = 'startDate';
   let sortDir = 'desc';
   let planChart = null;
@@ -2377,6 +2507,7 @@
 
       bearerToken = token;
       localStorage.setItem(TOKEN_KEY, token);
+      if (tfa_adminId) localStorage.setItem(ADMIN_EMAIL_KEY, tfa_adminId);
       showDashboard();
     } catch (e) {
       errEl.textContent = '연결 실패: ' + e.message;
@@ -2458,7 +2589,7 @@
     sellers: function initPlaceholderView() {},
     sales: function initPlaceholderView() {},
     customers: function initPlaceholderView() {},
-    consult: function initPlaceholderView() {},
+    consult: function initConsultView() { renderConsultStats(); renderConsultList(); },
     staff: function initPlaceholderView() {},
     attendance: function initPlaceholderView() {},
     contents: function initContentsView() {
@@ -3342,6 +3473,58 @@
   function isCompletedStep(code) { return code === 'Y8'; }
   function isUpcomingStep(code) { return ['T0','T2','T4','T6','T8'].includes(code); }
 
+  /* ── 약사(인플루언서) 필터 ── */
+  function inferDefaultInfluencer() {
+    const email = (localStorage.getItem(ADMIN_EMAIL_KEY) || '').trim().toLowerCase();
+    if (!email) return null;
+    return EMAIL_INFLUENCER_MAP[email] || null;
+  }
+  // 약사명 후보 — influencerName 의 괄호 안 실명 + 그 외 텍스트 + pharmacyName 모두 포함
+  function getPharmacistNames(p) {
+    const out = new Set();
+    const inf = (p.influencerName || '').trim();
+    if (inf) {
+      out.add(inf);
+      const m = inf.match(/\(([^)]+)\)/);
+      if (m && m[1]) out.add(m[1].trim());
+      const stripped = inf.replace(/\([^)]+\)/, '').trim();
+      if (stripped) out.add(stripped);
+    }
+    const phar = (p.pharmacyName || '').trim();
+    if (phar) out.add(phar);
+    return out;
+  }
+  function applyInfluencerFilter() {
+    if (INFLUENCER_FILTER) {
+      cachedPlans = cachedPlansAll.filter(p => getPharmacistNames(p).has(INFLUENCER_FILTER));
+    } else {
+      cachedPlans = cachedPlansAll;
+    }
+  }
+  function populateInfluencerDropdown() {
+    const sel = document.getElementById('influencer-filter');
+    if (!sel) return;
+    const counter = new Map(); // name -> count
+    cachedPlansAll.forEach(p => {
+      getPharmacistNames(p).forEach(n => {
+        counter.set(n, (counter.get(n) || 0) + 1);
+      });
+    });
+    const names = Array.from(counter.keys()).sort((a, b) => a.localeCompare(b, 'ko'));
+    const current = INFLUENCER_FILTER || '';
+    sel.innerHTML =
+      `<option value="">전체 (${cachedPlansAll.length}건)</option>` +
+      names.map(n => `<option value="${esc(n)}"${n === current ? ' selected' : ''}>${esc(n)} (${counter.get(n)})</option>`).join('');
+  }
+  window.setInfluencerFilter = function(value) {
+    INFLUENCER_FILTER = value || null;
+    if (INFLUENCER_FILTER) localStorage.setItem(INFLUENCER_FILTER_KEY, INFLUENCER_FILTER);
+    else localStorage.removeItem(INFLUENCER_FILTER_KEY);
+    applyInfluencerFilter();
+    populateInfluencerDropdown();
+    if (typeof renderAll === 'function') renderAll();
+  };
+
   async function fetchPlans(limit, offset) {
     const l = limit || 100;
     const o = offset || 0;
@@ -3375,7 +3558,17 @@
         }
       }
 
-      cachedPlans = allItems.map(normalizePlanItem);
+      cachedPlansAll = allItems.map(normalizePlanItem);
+      // 첫 로드 시 이메일 기반 기본 약사 필터 추론 (저장된 값 없을 때만)
+      if (INFLUENCER_FILTER === null && !localStorage.getItem(INFLUENCER_FILTER_KEY)) {
+        const inferred = inferDefaultInfluencer();
+        if (inferred) {
+          INFLUENCER_FILTER = inferred;
+          localStorage.setItem(INFLUENCER_FILTER_KEY, inferred);
+        }
+      }
+      applyInfluencerFilter();          // cachedPlans 갱신
+      populateInfluencerDropdown();
       if (cachedPlans.length > 0) updateSidebarBrand(cachedPlans[0].influencerName, cachedPlans[0].pharmacyName);
 
       renderAll();
@@ -3440,6 +3633,9 @@
     renderPlanChartJS();
     renderStatusChartJS();
     renderTable();
+    // 진행 중 / 시작 예정 공구 카드도 같이 갱신 — loadSalesInBackground 후 매출 반영
+    try { renderActivePlans(); } catch (e) {}
+    try { renderUpcomingPlans(); } catch (e) {}
   }
 
   function renderStats() {
@@ -3608,6 +3804,7 @@
   }
 
   function getFiltered() {
+    // cachedPlans 는 이미 INFLUENCER_FILTER 가 적용된 뷰임 (applyInfluencerFilter 참조)
     let result = getDateFiltered([...cachedPlans]);
 
     if (currentFilter === 'active') {
@@ -4371,6 +4568,720 @@
 
   // ── Init ──
   checkSavedToken();
+
+  /* ───────────────────────────────────────────────────────────────────
+     PERSONAL DM CONSULT — 개인 상담 관리 (view-consult)
+     ─────────────────────────────────────────────────────────────────── */
+
+  // ⚠️ var 사용 — checkSavedToken() 이 IIFE 위쪽에서 동기로 router() 까지 호출하면서
+  //   renderConsultList() 가 이 변수들을 참조하는 시점이 선언보다 앞설 수 있음 (TDZ 에러 방지)
+  var DM_CONSULT_KEY = 'dm_consultations';
+  var consultStatusFilter = '';
+  var consultEditingId = null;
+
+  function loadConsults() {
+    try { return JSON.parse(localStorage.getItem(DM_CONSULT_KEY) || '[]') || []; }
+    catch (e) { return []; }
+  }
+  function saveConsults(arr) {
+    try { localStorage.setItem(DM_CONSULT_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+
+  window.openConsultModal = function(id) {
+    consultEditingId = id || null;
+    const ov = document.getElementById('consult-modal-overlay');
+    const title = document.getElementById('consult-modal-title');
+    if (id) {
+      const item = loadConsults().find(x => x.id === id);
+      if (!item) return;
+      title.textContent = '✏️ 상담 편집';
+      document.getElementById('consult-handle').value = item.customerHandle || '';
+      document.getElementById('consult-date').value = item.consultDate || todayStr();
+      document.getElementById('consult-original').value = item.original || '';
+      document.getElementById('consult-summary').value = item.summary || '';
+      document.getElementById('consult-tags').value = (item.tags || []).join(', ');
+      document.getElementById('consult-status').value = item.status || 'done';
+      document.getElementById('consult-notes').value = item.notes || '';
+    } else {
+      title.textContent = '📩 새 상담 추가';
+      document.getElementById('consult-handle').value = '';
+      document.getElementById('consult-date').value = todayStr();
+      document.getElementById('consult-original').value = '';
+      document.getElementById('consult-summary').value = '';
+      document.getElementById('consult-tags').value = '';
+      document.getElementById('consult-status').value = 'done';
+      document.getElementById('consult-notes').value = '';
+    }
+    ov.style.display = 'flex';
+    resetOcrUI();
+    bindOcrInputs();
+    bindSummaryAutoParse();
+    setTimeout(() => document.getElementById('consult-handle').focus(), 50);
+  };
+  window.closeConsultModal = function() {
+    document.getElementById('consult-modal-overlay').style.display = 'none';
+    consultEditingId = null;
+  };
+
+  window.saveConsult = function() {
+    const handle = document.getElementById('consult-handle').value.trim();
+    const date = document.getElementById('consult-date').value;
+    const original = document.getElementById('consult-original').value.trim();
+    const summary = document.getElementById('consult-summary').value.trim();
+    const tagsStr = document.getElementById('consult-tags').value.trim();
+    const status = document.getElementById('consult-status').value;
+    const notes = document.getElementById('consult-notes').value.trim();
+
+    if (!handle && !original) { alert('인스타 핸들 또는 원본 대화 중 하나는 입력해주세요.'); return; }
+
+    const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const arr = loadConsults();
+
+    if (consultEditingId) {
+      const idx = arr.findIndex(x => x.id === consultEditingId);
+      if (idx >= 0) {
+        arr[idx] = { ...arr[idx], customerHandle: handle, consultDate: date, original, summary, tags, status, notes, updatedAt: Date.now() };
+      }
+    } else {
+      arr.push({
+        id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        createdAt: Date.now(),
+        consultDate: date || todayStr(),
+        customerHandle: handle,
+        original, summary, tags, status, notes,
+      });
+    }
+    saveConsults(arr);
+    closeConsultModal();
+    renderConsultStats();
+    renderConsultList();
+  };
+
+  window.deleteConsult = function(id) {
+    if (!confirm('이 상담 기록을 삭제할까요?')) return;
+    const arr = loadConsults().filter(x => x.id !== id);
+    saveConsults(arr);
+    renderConsultStats();
+    renderConsultList();
+  };
+
+  window.setConsultFilter = function(status) {
+    consultStatusFilter = status || '';
+    document.querySelectorAll('.consult-filter-btn').forEach(b => {
+      if (b.dataset.status === consultStatusFilter) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+    renderConsultList();
+  };
+
+  window.clearConsultFiltersAll = function() {
+    consultStatusFilter = '';
+    const s = document.getElementById('consult-search');
+    if (s) s.value = '';
+    document.querySelectorAll('.consult-filter-btn').forEach(b => {
+      if (b.dataset.status === '') b.classList.add('active');
+      else b.classList.remove('active');
+    });
+    renderConsultList();
+  };
+
+  function consultStatusLabel(s) {
+    if (s === 'pending') return '답변 대기';
+    if (s === 'done') return '답변 완료';
+    if (s === 'important') return '⭐ 중요';
+    return '전체';
+  }
+
+  function renderConsultStats() {
+    const arr = loadConsults();
+    const now = new Date();
+    const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const thisMonth = arr.filter(x => (x.consultDate || '').startsWith(ym)).length;
+    const pending = arr.filter(x => x.status === 'pending').length;
+    // 자주 묻는 키워드 TOP 1
+    const tagCount = {};
+    arr.forEach(x => (x.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
+    const topTag = Object.entries(tagCount).sort((a, b) => b[1] - a[1])[0];
+    const topTagStr = topTag ? `${topTag[0]} (${topTag[1]})` : '—';
+
+    const wrap = document.getElementById('consult-stats');
+    if (!wrap) return;
+    wrap.innerHTML = `
+      ${consultStatCard('전체 상담', arr.length + '건', '#2dd4bf')}
+      ${consultStatCard('이번 달', thisMonth + '건', '#3897F0')}
+      ${consultStatCard('답변 대기', pending + '건', pending > 0 ? '#f59e0b' : '#6e7681')}
+      ${consultStatCard('자주 묻는 키워드', topTagStr, '#a87dc5')}
+    `;
+  }
+  function consultStatCard(label, value, color) {
+    return `<div style="background:#0d1117; border:1px solid #1f2530; border-radius:8px; padding:12px 14px;">
+      <div style="font-size:11px; color:#8b949e; letter-spacing:0.05em;">${esc(label)}</div>
+      <div style="font-size:20px; font-weight:700; color:${color}; margin-top:4px;">${esc(value)}</div>
+    </div>`;
+  }
+
+  window.renderConsultList = renderConsultList;
+  window.renderConsultStats = renderConsultStats;
+  function renderConsultList() {
+    const wrap = document.getElementById('consult-list');
+    const empty = document.getElementById('consult-empty');
+    if (!wrap) return;
+
+    const all = loadConsults();
+    let arr = all.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const beforeStatus = arr.length;
+    if (consultStatusFilter) arr = arr.filter(x => x.status === consultStatusFilter);
+    const afterStatus = arr.length;
+
+    const q = (document.getElementById('consult-search')?.value || '').trim().toLowerCase();
+    if (q) {
+      arr = arr.filter(x => {
+        const hay = [x.customerHandle, x.original, x.summary, x.notes, (x.tags || []).join(' ')]
+          .filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    // 결과 카운터 갱신
+    const counterEl = document.getElementById('consult-result-count');
+    if (counterEl) {
+      if (q || consultStatusFilter) {
+        counterEl.textContent = `${arr.length}건 / 전체 ${all.length}건`;
+        counterEl.style.display = 'inline-block';
+      } else {
+        counterEl.textContent = `${all.length}건`;
+        counterEl.style.display = 'inline-block';
+      }
+    }
+
+    if (!arr.length) {
+      wrap.innerHTML = '';
+      empty.style.display = 'block';
+      // 상황별 메시지
+      let msg = '';
+      if (all.length === 0) {
+        msg = '저장된 상담이 없습니다. 우측 상단의 <strong>➕ 새 상담 추가</strong> 버튼으로 시작하세요.';
+      } else if (q && afterStatus === 0) {
+        msg = `<strong>"${esc(q)}"</strong> 에 일치하는 상담이 없습니다. <button class="btn-sm" onclick="clearConsultFiltersAll()" style="margin-left:8px;">필터·검색 초기화</button>`;
+      } else if (q) {
+        msg = `<strong>"${esc(q)}"</strong> 에 일치하는 상담이 없습니다 (현재 필터: <strong>${consultStatusLabel(consultStatusFilter)}</strong>). <button class="btn-sm" onclick="document.getElementById('consult-search').value='';renderConsultList();" style="margin-left:8px;">검색 초기화</button>`;
+      } else if (consultStatusFilter) {
+        msg = `<strong>${consultStatusLabel(consultStatusFilter)}</strong> 상태인 상담이 없습니다. <button class="btn-sm" onclick="setConsultFilter('')" style="margin-left:8px;">전체 보기</button>`;
+      } else {
+        msg = '조건에 맞는 상담이 없습니다.';
+      }
+      empty.innerHTML = msg;
+      return;
+    }
+    empty.style.display = 'none';
+    wrap.innerHTML = arr.map(x => {
+      const statusDot = x.status === 'pending' ? '🟡' : x.status === 'important' ? '⭐' : '🟢';
+      const tags = (x.tags || []).map(t => `<span style="display:inline-block; padding:2px 8px; background:rgba(45,212,191,0.12); color:#2dd4bf; border-radius:10px; font-size:11px; margin-right:4px;">${esc(t)}</span>`).join('');
+      const summaryText = (x.summary || x.original || '').slice(0, 140);
+      return `<div style="background:#0d1117; border:1px solid #1f2530; border-radius:10px; padding:14px 16px; cursor:pointer;" onclick="openConsultModal('${esc(x.id)}')">
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#8b949e; margin-bottom:8px;">
+          <span>${statusDot}</span>
+          <span style="font-weight:700; color:#c9d1d9;">${esc(x.customerHandle || '(핸들 없음)')}</span>
+          <span style="margin-left:auto; font-size:11px;">${esc(x.consultDate || '')}</span>
+        </div>
+        <div style="font-size:13px; color:#c9d1d9; line-height:1.5; margin-bottom:8px; white-space:pre-wrap;">${esc(summaryText)}${x.summary && x.summary.length > 140 ? '…' : ''}</div>
+        ${tags ? `<div style="margin-bottom:6px;">${tags}</div>` : ''}
+        <div style="display:flex; gap:6px; margin-top:10px; justify-content:flex-end;">
+          <button class="btn-sm" onclick="event.stopPropagation();openConsultModal('${esc(x.id)}')">편집</button>
+          <button class="btn-sm danger" onclick="event.stopPropagation();deleteConsult('${esc(x.id)}')">삭제</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─── Claude 사이드바 자동 분석 (Claude for Chrome 확장 사용) ───
+  window.runClaudeSidebar = function() {
+    const original = (document.getElementById('consult-original').value || '').trim();
+    if (!original) {
+      alert('원본 DM 대화를 먼저 입력하거나 스크린샷을 OCR 해주세요.');
+      return;
+    }
+    const command =
+`아래 작업을 자동으로 진행해주세요.
+
+현재 페이지의 #consult-original textarea 에 들어있는 인스타그램 DM 상담 내용을 읽고,
+약사 인플루언서의 1:1 상담 기록 정리 형식으로 요약해주세요.
+
+[출력 형식 — #consult-summary textarea 에 정확히 이대로 입력]
+요약: (2~3줄, Q&A 핵심만. "Q. 질문 / A. 답변" 형식이 좋음)
+태그: 제품명·증상·키워드 5개 이내 (쉼표로 구분)
+
+작업 순서:
+1. #consult-summary textarea 의 value 를 위 형식의 텍스트로 세팅
+2. textarea 에서 'input' 이벤트를 dispatch 해서 자동 파싱(태그 분리)이 트리거되도록 처리
+3. #consult-status select 가 비어있으면 'done' 으로 설정 (선택사항)
+
+제약:
+- 페이지의 다른 입력 / 버튼은 건드리지 말 것
+- 요약은 한국어, 약사가 빠르게 훑어보기 좋게 간결하게`;
+
+    // 클립보드 복사
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(command).catch(() => {});
+    }
+    showClaudeSidebarDialog(command);
+  };
+
+  function showClaudeSidebarDialog(cmd) {
+    let dlg = document.getElementById('claude-sidebar-dialog');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'claude-sidebar-dialog';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:500; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #FF8A00; border-radius:14px; padding:24px 26px; width:560px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 4px; font-size:17px; color:#fff;">🤖 Claude 사이드바로 분석</h3>
+        <p style="margin:0 0 18px; color:#8b949e; font-size:12px;">명령어가 클립보드에 복사됐어요. 아래 순서대로 진행하세요.</p>
+
+        <ol style="margin:0 0 16px; padding-left: 22px; font-size:14px; line-height:1.8;">
+          <li>브라우저 우측의 <strong>Claude 사이드바</strong> 열기 (확장 아이콘 클릭 또는 단축키)</li>
+          <li>입력창 클릭 → <code style="background:#0d1117; padding:2px 6px; border-radius:3px;">⌘V</code> (Mac) / <code style="background:#0d1117; padding:2px 6px; border-radius:3px;">Ctrl+V</code> (Win)</li>
+          <li><strong>Enter</strong> 누르기 → Claude 가 페이지를 읽고 요약을 자동으로 채워줍니다</li>
+          <li><strong>"묻지 않고 실행"</strong> 토글이 켜져 있으면 ✨ 한 번에 완료</li>
+        </ol>
+
+        <details style="margin-bottom:14px;">
+          <summary style="cursor:pointer; color:#8b949e; font-size:12px;">📋 복사된 명령어 보기 / 다시 복사</summary>
+          <pre style="margin-top:8px; padding:12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; font-size:11px; color:#c9d1d9; white-space:pre-wrap; word-break:break-word; max-height:200px; overflow-y:auto;">${esc(cmd)}</pre>
+          <button class="btn-sm" onclick="navigator.clipboard.writeText(\`${cmd.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`).then(() => alert('다시 복사됨'))">📋 다시 복사</button>
+        </details>
+
+        <div style="padding:10px 14px; background:rgba(255,138,0,0.08); border-left:3px solid #FF8A00; border-radius:4px; font-size:12px; color:#c9d1d9; margin-bottom:14px;">
+          ⚠️ Claude 사이드바가 페이지 권한 요청을 띄울 수 있어요. <strong>이 사이트에서 항상 허용</strong> 을 선택하면 매번 묻지 않습니다.
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn-sm" onclick="showClaudeInstallGuide()" style="flex:1;">📖 확장 설치 안 되어 있나요?</button>
+          <button class="btn-sm primary" onclick="document.getElementById('claude-sidebar-dialog').remove()" style="flex:1;">닫기</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.showClaudeInstallGuide = function() {
+    let dlg = document.getElementById('claude-install-dialog');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'claude-install-dialog';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:600; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #FF8A00; border-radius:14px; padding:24px 26px; width:640px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 4px; font-size:18px; color:#fff;">📖 Claude for Chrome 확장 설치 가이드</h3>
+        <p style="margin:0 0 18px; color:#8b949e; font-size:12px;">Claude 사이드바를 처음 쓰신다면 아래 순서대로.</p>
+
+        <ol style="margin:0; padding-left: 22px; font-size:13px; line-height:1.9; color:#c9d1d9;">
+          <li style="margin-bottom:14px;">
+            <strong>Chrome 또는 Edge 브라우저 사용 확인</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">Safari · Firefox 는 미지원. 데스크탑 권장.</div>
+          </li>
+
+          <li style="margin-bottom:14px;">
+            <strong>Claude 구독 플랜 확인</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">
+              · <strong>Max ($100~/월)</strong>: 풀 에이전트 기능 (자동 페이지 조작 ⭐) — 이번 기능에 가장 적합<br>
+              · <strong>Pro ($20/월)</strong>: 기본 채팅 가능<br>
+              · Free: 사용은 가능하나 일부 기능 제한<br>
+              구독 확인: <a href="https://claude.ai/settings" target="_blank" rel="noopener" style="color:#2dd4bf;">claude.ai/settings ↗</a>
+            </div>
+          </li>
+
+          <li style="margin-bottom:14px;">
+            <strong>확장 프로그램 설치</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:4px; line-height:1.7;">
+              아래 두 경로 중 하나로:<br>
+              ① <a href="https://claude.ai/download" target="_blank" rel="noopener" style="color:#2dd4bf;">claude.ai/download ↗</a> 페이지에서 "Get Claude for Chrome" 클릭<br>
+              ② Chrome 웹 스토어 검색: <a href="https://chromewebstore.google.com/search/claude" target="_blank" rel="noopener" style="color:#2dd4bf;">chrome web store "Claude" 검색 ↗</a> → "Claude" by Anthropic 선택<br>
+              → <strong>Chrome에 추가</strong> 버튼 클릭
+            </div>
+          </li>
+
+          <li style="margin-bottom:14px;">
+            <strong>Anthropic 계정으로 로그인</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">확장 설치 직후 브라우저 우상단 확장 아이콘 클릭 → "Sign in" → claude.ai 와 동일한 계정.</div>
+          </li>
+
+          <li style="margin-bottom:14px;">
+            <strong>사이드바 고정 (편의)</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">
+              우상단 퍼즐 아이콘 🧩 → "Claude" 옆 핀 아이콘 클릭 → 툴바에 고정.<br>
+              단축키로도 사이드바 토글 가능 (보통 ⌥ A / Alt+A).
+            </div>
+          </li>
+
+          <li style="margin-bottom:14px;">
+            <strong>이 페이지에 권한 부여</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">
+              Claude 사이드바 첫 사용 시 "<strong>이 사이트에서 Claude 사용 허용</strong>" 팝업 → <strong>허용</strong> 선택.<br>
+              "항상 허용" 옵션이 있으면 체크 — 매번 안 물어봅니다.
+            </div>
+          </li>
+
+          <li>
+            <strong>"묻지 않고 실행" 토글 ON (Max 플랜)</strong>
+            <div style="color:#8b949e; font-size:11px; margin-top:2px;">
+              사이드바 하단의 토글 — Claude 가 페이지 조작을 권한 묻지 않고 자동 실행. <span style="color:#f59e0b;">⚠️ 신뢰하는 페이지에서만 사용.</span>
+            </div>
+          </li>
+        </ol>
+
+        <div style="margin-top:18px; padding:12px 16px; background:rgba(45,212,191,0.08); border-left:3px solid #2dd4bf; border-radius:4px; font-size:12px; color:#c9d1d9;">
+          💡 설치 완료 후 이 대시보드로 돌아와서 <strong>🤖 Claude 사이드바로 분석</strong> 버튼을 누르면, 자동으로 명령어가 복사되고 사이드바에 붙여넣을 안내가 뜹니다.
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:18px;">
+          <button class="btn-sm" onclick="window.open('https://claude.ai/download', '_blank', 'noopener')" style="flex:1;">🌐 claude.ai/download 열기</button>
+          <button class="btn-sm primary" onclick="document.getElementById('claude-install-dialog').remove()" style="flex:1;">닫기</button>
+        </div>
+      </div>
+    `;
+  };
+
+  // ─── 요약본 자동 파싱 (GPT/Claude 출력의 "요약:" + "태그:" 형식 분리) ───
+  // 사용자가 "요약: ...\n태그: ..." 형태로 요약본에 붙여넣으면 자동으로
+  // 태그 라인을 추출해 태그 필드에 채우고, 요약 본문은 정리 (요약:/태그: 라벨 제거)
+  function parseSummaryAndExtractTags() {
+    const summaryEl = document.getElementById('consult-summary');
+    const tagsEl = document.getElementById('consult-tags');
+    if (!summaryEl || !tagsEl) return false;
+    const text = summaryEl.value;
+    if (!text || text.length < 10) return false;
+
+    // 태그 라인 매칭 — "태그:", "Tags:", "Tag:", "키워드:" (한·영, 콜론·: ：·=)
+    const tagMatch = text.match(/(?:^|\n)\s*(?:태그|Tags?|Tag|키워드|Keywords?)\s*[:：=]\s*([^\n]+)/i);
+    if (!tagMatch) return false;
+
+    const tagLine = tagMatch[1].trim();
+    // 쉼표 또는 중점(·) 기준으로 분리. 단, 제품명에 들어간 ·(예: 비타민B·C·D) 는
+    // 짧은 토큰이면 합쳐서 1태그로, 콤마 기준으로만 1차 분리
+    const tags = tagLine.split(/[,，;]\s*/).map(t => t.trim()).filter(Boolean);
+    if (tags.length === 0) return false;
+
+    tagsEl.value = tags.join(', ');
+
+    // 요약 본문 정리 — "요약:" 라벨 제거, "태그:" 라인 제거
+    let clean = text;
+    clean = clean.replace(/^\s*(?:요약|Summary)\s*[:：=]\s*/i, '');
+    clean = clean.replace(/(?:^|\n)\s*(?:태그|Tags?|Tag|키워드|Keywords?)\s*[:：=][^\n]*/gi, '').trim();
+    if (clean !== text) summaryEl.value = clean;
+
+    // 시각적 피드백
+    setOcrStatus(`🏷 태그 ${tags.length}개 자동 추출: ${esc(tags.join(', '))}`, '#5A9A5A');
+    setTimeout(() => setOcrStatus(''), 4000);
+    // tags 필드 살짝 깜빡임
+    tagsEl.style.transition = 'background 0.3s';
+    tagsEl.style.background = 'rgba(45,212,191,0.2)';
+    setTimeout(() => { tagsEl.style.background = '#0d1117'; }, 600);
+    return true;
+  }
+
+  // 요약본에 paste 발생 시 자동 파싱 (debounce 50ms 로 clipboard 가 반영되길 대기)
+  function bindSummaryAutoParse() {
+    const summaryEl = document.getElementById('consult-summary');
+    if (!summaryEl || summaryEl.dataset.parseBound) return;
+    summaryEl.dataset.parseBound = '1';
+    summaryEl.addEventListener('paste', () => {
+      setTimeout(parseSummaryAndExtractTags, 60);
+    });
+    // 직접 타이핑하다가 "태그:" 패턴이 완성된 경우도 대응 — input 디바운스
+    let inputTimer = null;
+    summaryEl.addEventListener('input', () => {
+      if (inputTimer) clearTimeout(inputTimer);
+      inputTimer = setTimeout(parseSummaryAndExtractTags, 800);
+    });
+  }
+
+  // ─── OCR (스크린샷 → 텍스트, 클립보드 붙여넣기 / 파일 업로드 / 드래그) ───
+  let _tessWorker = null;
+  let _tessLoading = false;
+  const _ocrThumbs = []; // {dataUrl, idx}
+
+  function setOcrStatus(html, color) {
+    const el = document.getElementById('ocr-status');
+    if (!el) return;
+    if (!html) { el.style.display = 'none'; return; }
+    el.innerHTML = html;
+    el.style.display = 'block';
+    el.style.borderLeftColor = color || '#2dd4bf';
+    el.style.background = (color || '#2dd4bf') + '14';
+  }
+
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('스크립트 로드 실패: ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureTesseract() {
+    if (_tessWorker) return _tessWorker;
+    if (_tessLoading) {
+      while (_tessLoading) await new Promise(r => setTimeout(r, 100));
+      return _tessWorker;
+    }
+    _tessLoading = true;
+    try {
+      setOcrStatus('📥 한국어 OCR 엔진 다운로드 중... (첫 1회만, 약 15MB)', '#f59e0b');
+      if (!window.Tesseract) {
+        await loadScriptOnce('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+      }
+      _tessWorker = await Tesseract.createWorker('kor', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            const pct = Math.round((m.progress || 0) * 100);
+            setOcrStatus(`🔍 텍스트 인식 중... <strong>${pct}%</strong>`, '#2dd4bf');
+          } else if (m.status) {
+            setOcrStatus(`📥 ${esc(m.status)}... ${Math.round((m.progress || 0) * 100)}%`, '#f59e0b');
+          }
+        },
+      });
+      setOcrStatus('✅ OCR 엔진 준비 완료', '#2dd4bf');
+      setTimeout(() => { const el = document.getElementById('ocr-status'); if (el && el.textContent.includes('준비 완료')) setOcrStatus(''); }, 1500);
+      return _tessWorker;
+    } finally {
+      _tessLoading = false;
+    }
+  }
+
+  async function ocrImageBlob(blob) {
+    const worker = await ensureTesseract();
+    if (!worker) throw new Error('OCR 엔진을 시작할 수 없습니다.');
+    const result = await worker.recognize(blob);
+    return (result && result.data && result.data.text) || '';
+  }
+
+  function addOcrThumb(dataUrl) {
+    const wrap = document.getElementById('ocr-thumbs');
+    if (!wrap) return;
+    const idx = _ocrThumbs.length;
+    _ocrThumbs.push({ dataUrl, idx });
+    const div = document.createElement('div');
+    div.style.cssText = 'position:relative; width:60px; height:60px; border-radius:6px; overflow:hidden; border:1px solid #30363d;';
+    div.innerHTML = `<img src="${dataUrl}" alt="" style="width:100%;height:100%;object-fit:cover;">
+      <button title="제거" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#E84B3C;color:#fff;border:0;font-size:11px;cursor:pointer;line-height:1;">×</button>`;
+    wrap.appendChild(div);
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(blob); });
+  }
+
+  async function processScreenshotBlob(blob) {
+    if (!blob || !blob.type || !blob.type.startsWith('image/')) {
+      setOcrStatus('⚠️ 이미지 파일만 처리됩니다.', '#f59e0b'); return;
+    }
+    const thumb = await blobToDataUrl(blob);
+    addOcrThumb(thumb);
+    try {
+      const text = (await ocrImageBlob(blob)).trim();
+      if (!text) {
+        setOcrStatus('⚠️ 텍스트를 인식하지 못했습니다. 다른 스크린샷을 시도해보세요.', '#f59e0b');
+        return;
+      }
+      const textarea = document.getElementById('consult-original');
+      const existing = textarea.value.trim();
+      textarea.value = existing ? existing + '\n\n' + text : text;
+      setOcrStatus(`✅ ${text.length}자 추출 완료 — 아래 대화창에 추가됨`, '#5A9A5A');
+      setTimeout(() => setOcrStatus(''), 4000);
+    } catch (e) {
+      console.error('[ocr]', e);
+      setOcrStatus('⚠️ OCR 실패: ' + esc(e.message || ''), '#E84B3C');
+    }
+  }
+
+  // paste / drop / click 이벤트 바인딩 — 모달 한 번 열릴 때 동작
+  function bindOcrInputs() {
+    const zone = document.getElementById('ocr-paste-zone');
+    const fileInput = document.getElementById('ocr-file-input');
+    const overlay = document.getElementById('consult-modal-overlay');
+    if (!zone || zone.dataset.bound) return;
+    zone.dataset.bound = '1';
+
+    // 클릭 → 파일 선택
+    zone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      for (const f of files) await processScreenshotBlob(f);
+      e.target.value = '';
+    });
+
+    // 드래그 앤 드롭
+    ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.style.borderColor = '#2dd4bf'; zone.style.background = '#161b22';
+    }));
+    ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.style.borderColor = '#30363d'; zone.style.background = '#0d1117';
+    }));
+    zone.addEventListener('drop', async (e) => {
+      const files = Array.from(e.dataTransfer?.files || []);
+      for (const f of files) await processScreenshotBlob(f);
+    });
+
+    // 클립보드 paste — 모달 어디에서 Cmd+V 해도 이미지 캡처
+    overlay.addEventListener('paste', async (e) => {
+      const items = Array.from(e.clipboardData?.items || []);
+      const imageItems = items.filter(it => it.type && it.type.startsWith('image/'));
+      if (imageItems.length === 0) return; // 일반 텍스트 paste 는 그대로
+      e.preventDefault();
+      for (const it of imageItems) {
+        const blob = it.getAsFile();
+        if (blob) await processScreenshotBlob(blob);
+      }
+    });
+  }
+
+  function resetOcrUI() {
+    const thumbs = document.getElementById('ocr-thumbs');
+    if (thumbs) thumbs.innerHTML = '';
+    _ocrThumbs.length = 0;
+    setOcrStatus('');
+  }
+
+  // 휴리스틱 요약 — Q&A 분리 + 키워드 추출 (외부 API 호출 없음)
+  window.generateHeuristicSummary = function() {
+    const original = document.getElementById('consult-original').value.trim();
+    if (!original) { alert('원본 대화를 먼저 입력해주세요.'); return; }
+
+    // 1) 발화자 마커 / 시각 마커 / 빈 줄 기준으로 turn 분리
+    const SPEAKER_RE = /^(?:Q|A|질문|답변|약사님?|손님|고객|구매자|상담자|상담|문의|회신|me|you|나|상대)[\s:：>\-)\]]/i;
+    const TIME_RE = /^(?:오전|오후)?\s*\d{1,2}\s*[:：]\s*\d{2}|^\d{4}[.-]\d{1,2}[.-]\d{1,2}/;
+    const rawLines = original.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const turns = [];
+    let buffer = '';
+    for (const line of rawLines) {
+      const isMarker = SPEAKER_RE.test(line) || TIME_RE.test(line);
+      if (isMarker) {
+        if (buffer.trim()) turns.push(buffer.trim());
+        // 마커 라인 제거 후 내용 남으면 시작
+        buffer = line.replace(SPEAKER_RE, '').replace(TIME_RE, '').trim();
+      } else {
+        buffer += (buffer ? ' ' : '') + line;
+      }
+    }
+    if (buffer.trim()) turns.push(buffer.trim());
+
+    // turn 가 너무 적으면 (1~2개) — 단일 문단인 경우 → 문장 단위로 다시 쪼개기
+    let units = turns;
+    if (units.length <= 1) {
+      units = original.split(/(?<=[.!?。])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+    }
+
+    // 2) 의문 표현 감지
+    const Q_RE = /[?？]|인가요|할까요|하나요|되나요|될까요|있나요|있을까요|뭔가요|뭐예요|뭐인가요|얼마나|언제|어떻게|어디서|어느|왜|얼만큼|어떤|몇\s*번|몇\s*개|몇\s*살/;
+
+    // 3) Q → 그 다음 모든 비-질문 turn 을 모아서 A 로 (인사말 / 짧은 추임새 제외)
+    const GREETING_RE = /^(?:네[.!?\s]*|예[.!?\s]*|아니요?[.!?\s]*|안녕하세요?[.!?\s]*|반가워요?[.!?\s]*|반갑습니다[.!?\s]*|감사합니다[.!?\s]*|감사해요[.!?\s]*|고맙습니다[.!?\s]*|좋은\s*(?:하루|저녁|아침)\s*되세요?[.!?\s]*|네\s*고객님[.!?\s]*|네\s*약사님[.!?\s]*)$/;
+    const pairs = [];
+    for (let i = 0; i < units.length; i++) {
+      if (!Q_RE.test(units[i])) continue;
+      // 다음 질문이 나올 때까지의 모든 비-질문 turn 을 답변으로 누적
+      const answerParts = [];
+      for (let j = i + 1; j < units.length; j++) {
+        if (Q_RE.test(units[j])) break;
+        const t = units[j].trim();
+        if (!t) continue;
+        // 짧은 인사말 / 추임새 단독은 스킵 (긴 답변이 따라오는 경우 그게 진짜 답변)
+        if (t.length < 12 && GREETING_RE.test(t)) continue;
+        answerParts.push(t);
+        // 너무 길어지면 컷
+        if (answerParts.join(' ').length > 250) break;
+      }
+      const answer = answerParts.join(' ').replace(/\s+/g, ' ').trim();
+      pairs.push({ q: units[i], a: answer || '(답변 미감지)' });
+    }
+
+    // 4) 키워드 (제품·증상·상황)
+    const KEYWORDS = ['비타민D', '비타민C', '비타민', '오메가3', '오메가', '유산균', '프로바이오틱스',
+                       '마그네슘', '칼슘', '아연', '철분', '콜라겐', '루테인', '디오스민', '베르베린',
+                       '복용량', '복용', '부작용', '효능', '임산부', '수유', '식전', '식후',
+                       '환불', '교환', '배송', '반품', '주문', '결제', '재고', '품절'];
+    const found = [];
+    KEYWORDS.forEach(k => { if (original.includes(k) && !found.some(f => f.includes(k) || k.includes(f))) found.push(k); });
+
+    // 5) 요약 빌드
+    let summary = '';
+    if (pairs.length > 0) {
+      // 상위 3개 Q&A 페어 (답변 길이 늘림 — 100자)
+      pairs.slice(0, 3).forEach((p, i) => {
+        const q = truncateText(p.q.replace(/\s+/g, ' '), 80);
+        const a = (p.a && p.a !== '(답변 미감지)') ? truncateText(p.a.replace(/\s+/g, ' '), 120) : '(답변 미감지)';
+        summary += (i > 0 ? '\n\n' : '') + `Q. ${q}\nA. ${a}`;
+      });
+    } else {
+      // Q 감지 실패 시 폴백: 첫 turn + 마지막 turn
+      const first = units[0] || '';
+      const last = units[units.length - 1] || '';
+      if (first) summary += truncateText(first.replace(/\s+/g, ' '), 120);
+      if (last && last !== first) summary += '\n' + truncateText(last.replace(/\s+/g, ' '), 120);
+    }
+    if (found.length > 0) summary += `\n[${found.slice(0, 5).join(' · ')}]`;
+    if (!summary.trim()) summary = original.slice(0, 150).trim() + (original.length > 150 ? '…' : '');
+
+    document.getElementById('consult-summary').value = summary;
+
+    // 자동 태그 (기존 태그 비어있을 때만)
+    const tagsInput = document.getElementById('consult-tags');
+    if (!tagsInput.value.trim() && found.length > 0) {
+      tagsInput.value = found.slice(0, 5).join(', ');
+    }
+  };
+
+  function truncateText(s, n) {
+    if (!s) return '';
+    return s.length > n ? s.slice(0, n - 1).trim() + '…' : s;
+  }
+
+  // 외부 AI 도구 (ChatGPT / Claude) 새 탭으로 열기
+  window.openAITool = function(tool) {
+    const original = document.getElementById('consult-original').value.trim();
+    if (!original) { alert('원본 대화를 먼저 입력해주세요.'); return; }
+    const prompt = `다음 인스타그램 DM 상담 내용을 한 문단(2-3줄)으로 요약해줘. 핵심 질문·답변·처방·태그(제품/증상) 위주로:\n\n---\n${original}\n---\n\n답변 형식:\n요약: (2-3줄)\n태그: 제품명·증상·키워드 5개 이내 (쉼표 구분)`;
+    const url = tool === 'chatgpt'
+      ? 'https://chatgpt.com/?q=' + encodeURIComponent(prompt)
+      : 'https://claude.ai/new?q=' + encodeURIComponent(prompt);
+    window.open(url, '_blank', 'noopener');
+  };
+
+  // 엑셀 내보내기
+  window.exportConsultsExcel = function() {
+    const arr = loadConsults();
+    if (!arr.length) { alert('내보낼 상담이 없습니다.'); return; }
+    const headers = ['상담일', '핸들', '상태', '요약', '태그', '원본', '메모'];
+    const rows = arr.map(x => [
+      x.consultDate || '',
+      x.customerHandle || '',
+      x.status === 'pending' ? '답변 대기' : x.status === 'important' ? '중요' : '답변 완료',
+      x.summary || '',
+      (x.tags || []).join(', '),
+      x.original || '',
+      x.notes || '',
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{wch:12},{wch:18},{wch:10},{wch:50},{wch:25},{wch:60},{wch:25}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '개인상담');
+    XLSX.writeFile(wb, '개인상담_' + getDateStamp() + '.xlsx');
+    showToast('엑셀 파일을 다운로드합니다.');
+  };
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
 
   // Initial paint from cache (Instagram)
   try { renderInstagramPanel(); } catch (e) {}

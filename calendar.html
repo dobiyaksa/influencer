@@ -89,6 +89,260 @@
       background: linear-gradient(135deg, #E0908A, #C96E66);
       box-shadow: 0 2px 10px rgba(200,110,102,0.25);
     }
+    .panel-btn.video {
+      background: linear-gradient(135deg, #6E8FD4, #4F66B0);
+      box-shadow: 0 2px 10px rgba(79,102,176,0.28);
+    }
+    /* Video progress modal */
+    .video-progress-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.55); z-index: 99999;
+      display: none; align-items: center; justify-content: center;
+    }
+    .video-progress-overlay.active { display: flex; }
+    .video-progress-box {
+      background: #fff; border-radius: 16px; padding: 28px 32px;
+      width: min(420px, 92vw); box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .video-progress-title {
+      font-size: 17px; font-weight: 700; color: #2C2620; margin: 0 0 6px;
+    }
+    .video-progress-stage {
+      font-size: 13px; color: #888; margin: 0 0 18px;
+    }
+    .video-progress-bar {
+      width: 100%; height: 10px; background: #f0eceb;
+      border-radius: 6px; overflow: hidden; margin-bottom: 8px;
+    }
+    .video-progress-bar > div {
+      height: 100%; background: linear-gradient(90deg, #6E8FD4, #4F66B0);
+      width: 0%; transition: width 0.15s linear;
+    }
+    .video-progress-meta {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: #888; margin-bottom: 16px;
+    }
+    .video-progress-cancel {
+      width: 100%; padding: 10px; border: 1px solid #d4cfce;
+      background: #fff; border-radius: 10px;
+      font-size: 13px; color: #666; cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .video-progress-cancel:hover { background: #f7f4f3; }
+    .video-toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: #2C2620; color: #fff; padding: 14px 20px;
+      border-radius: 12px; font-size: 13px; line-height: 1.6;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      z-index: 100000; max-width: 480px;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .video-toast a { color: #9EC2FF; text-decoration: underline; }
+    .video-toast .close-x {
+      float: right; margin-left: 12px; cursor: pointer; opacity: 0.6;
+    }
+    /* Custom product add */
+    .panel-btn.add { background: linear-gradient(135deg, #7FC09B, #3F8C5E); box-shadow: 0 2px 10px rgba(63,140,94,0.28); }
+    .panel-btn.add.active { background: linear-gradient(135deg, #E5C84B, #C99D24); }
+    .add-mode-hint {
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,201,86,0.96); color: #2C2620;
+      padding: 12px 24px; border-radius: 24px;
+      font-size: 14px; font-weight: 700; z-index: 200;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      font-family: 'Noto Sans KR', sans-serif;
+      display: none;
+    }
+    .add-mode-hint.active { display: block; }
+    body.add-mode .date-cell { cursor: crosshair; transition: background 0.15s; }
+    body.add-mode .date-cell:hover {
+      background: rgba(var(--accent), 0.18);
+      outline: 2px dashed rgba(var(--accent), 0.7);
+      outline-offset: -2px;
+      border-radius: 6px;
+    }
+    /* User-added product marker */
+    .product-card .custom-mark {
+      position: absolute; top: -2px; left: -2px;
+      background: rgba(var(--accent), 0.85); color: #fff;
+      font-size: 10px; padding: 1px 5px; border-radius: 4px;
+      font-family: 'Noto Sans KR', sans-serif; font-weight: 700;
+      z-index: 3; letter-spacing: 0.3px;
+    }
+    .product-card .custom-del-btn {
+      position: absolute; top: -4px; right: -4px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #E84B3C; color: #fff; border: 2px solid #fff;
+      font-size: 12px; font-weight: 900; cursor: pointer;
+      z-index: 3; display: none; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+    body.add-mode .product-card.is-custom .custom-del-btn { display: flex; }
+    .product-card { position: relative; }
+    /* Control panel — sectioned layout */
+    .ctrl-section { margin-bottom: 16px; }
+    .ctrl-section:last-of-type { margin-bottom: 8px; }
+    .ctrl-section-head {
+      font-size: 10px; color: #a09a97;
+      letter-spacing: 1.4px; text-transform: uppercase;
+      font-weight: 800; margin: 0 0 8px 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ctrl-section-head::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, #e0dbd9, transparent);
+    }
+    .ctrl-section-body {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .ctrl-field {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .ctrl-field-label {
+      font-size: 11px; color: #8b7f78; font-weight: 600; padding-left: 2px;
+    }
+    .ctrl-field input[type="month"],
+    .ctrl-field select {
+      width: 100%; box-sizing: border-box;
+      padding: 9px 11px;
+      border: 1.5px solid #e0dbd9; border-radius: 10px;
+      font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
+      color: #4a4340; outline: none;
+      background: rgba(255,255,255,0.6);
+      cursor: pointer;
+    }
+    .ctrl-field input[type="month"]:focus,
+    .ctrl-field select:focus { border-color: var(--accent-hex, #D4776D); background: #fff; }
+    .ctrl-field-inline {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; background: rgba(255,255,255,0.4);
+      border: 1.5px solid #e0dbd9; border-radius: 10px;
+    }
+    .ctrl-field-inline .ctrl-field-label { padding: 0; }
+    .ctrl-buttons-2col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    }
+    .ctrl-hint {
+      font-size: 11px; color: #777;
+      padding: 8px 10px; background: rgba(229, 200, 75, 0.10);
+      border-radius: 6px; line-height: 1.4;
+      border-left: 3px solid rgba(229, 200, 75, 0.5);
+    }
+    .ctrl-close-btn {
+      width: 100%; padding: 9px; margin-top: 10px;
+      background: transparent; color: #aaa; border: 1px dashed #d0c9c5;
+      border-radius: 10px; font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+    }
+    .ctrl-close-btn:hover { background: #fff; color: #666; border-style: solid; }
+    .panel-btn.logout {
+      background: linear-gradient(135deg, #d4d0ce, #b5afac);
+      box-shadow: 0 2px 8px rgba(180,175,170,0.25);
+    }
+    /* Account info card */
+    .acct-card {
+      background: rgba(255,255,255,0.55); border: 1.5px solid #e0dbd9;
+      border-radius: 12px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .acct-card.logged-in { border-color: rgba(120, 170, 110, 0.4); background: linear-gradient(135deg, rgba(120, 170, 110, 0.08), rgba(255,255,255,0.5)); }
+    .acct-card.logged-out { border-color: rgba(212, 119, 109, 0.35); background: rgba(255, 247, 246, 0.7); }
+    .acct-row { display: flex; align-items: center; gap: 8px; }
+    .acct-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: #c8c2bf;
+    }
+    .acct-card.logged-in .acct-dot { background: #5A9A5A; box-shadow: 0 0 0 3px rgba(90, 154, 90, 0.18); }
+    .acct-card.logged-out .acct-dot { background: #c96e66; }
+    .acct-status {
+      font-size: 11px; font-weight: 700; color: #6b6360;
+      letter-spacing: 0.3px;
+    }
+    .acct-card.logged-in .acct-status { color: #4a7a4a; }
+    .acct-card.logged-out .acct-status { color: #c96e66; }
+    .acct-email {
+      font-size: 13px; font-weight: 700; color: #2C2620;
+      word-break: break-all; line-height: 1.3;
+    }
+    .acct-actions { display: flex; gap: 6px; }
+    .acct-btn {
+      flex: 1; padding: 8px 12px;
+      border-radius: 8px; border: 0;
+      font-size: 12px; font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .acct-btn:hover { opacity: 0.85; }
+    .acct-btn.login {
+      background: linear-gradient(135deg, var(--accent-hex, #D4776D), #B85D54);
+      color: #fff;
+    }
+    .acct-btn.logout {
+      background: rgba(0,0,0,0.04); color: #888;
+      border: 1px solid #d4cfce;
+    }
+    .product-card .sales-link-mark {
+      position: absolute; bottom: -4px; left: 70px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; border: 2px solid rgba(var(--accent), 0.7);
+      font-size: 11px; display: flex; align-items: center; justify-content: center;
+      z-index: 2; pointer-events: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    /* 이미지/영상 캡처 중에만 — UI 전용 마커들 숨김 */
+    body.saving .product-card .custom-mark,
+    body.saving .product-card .custom-del-btn,
+    body.saving .product-card .sales-link-mark { display: none !important; }
+    /* Add modal */
+    .ap-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 400; backdrop-filter: blur(3px);
+    }
+    .ap-overlay.active { display: flex; }
+    .ap-box {
+      background: #fff; border-radius: 16px; padding: 28px 32px;
+      width: 480px; max-width: 94vw; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .ap-title { font-size: 18px; font-weight: 800; color: #2C2620; margin: 0 0 4px; }
+    .ap-sub { font-size: 12px; color: #888; margin: 0 0 18px; }
+    .ap-field { margin-bottom: 14px; }
+    .ap-field label {
+      display: block; font-size: 12px; color: #5b524d;
+      font-weight: 700; margin-bottom: 6px;
+    }
+    .ap-field label .req { color: #E84B3C; margin-left: 2px; }
+    .ap-field input, .ap-field textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 10px 12px; border: 1.5px solid #e0dbd9; border-radius: 8px;
+      font-family: inherit; font-size: 13px; outline: none;
+      background: #fbf8f6; color: #2C2620;
+    }
+    .ap-field input:focus, .ap-field textarea:focus { border-color: rgba(var(--accent), 0.7); background: #fff; }
+    .ap-field textarea { resize: vertical; min-height: 56px; }
+    .ap-field .hint { font-size: 11px; color: #999; margin-top: 4px; line-height: 1.4; }
+    .ap-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ap-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .ap-btn {
+      flex: 1; padding: 11px; border: 0; border-radius: 10px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+    .ap-btn.cancel { background: #eee5e2; color: #666; }
+    .ap-btn.save {
+      background: linear-gradient(135deg, var(--accent-hex, #D4776D), #B85D54);
+      color: #fff;
+    }
+    .ap-btn:hover { opacity: 0.9; }
+    .ap-preview {
+      margin: 10px 0 0; padding: 10px; background: #fbf8f6;
+      border-radius: 8px; display: flex; gap: 10px; align-items: center;
+      font-size: 11px; color: #888;
+    }
+    .ap-preview img { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #ddd; }
     .panel-btn:hover {
       outline: 2.5px solid rgba(var(--accent),0.4);
       outline-offset: 2px;
@@ -453,37 +707,78 @@
 <body>
   <button class="admin-btn" id="admin-btn" onclick="toggleAdmin()" title="관리자">&#128274;</button>
   <div class="control-panel hidden" id="control-panel">
-    <div class="panel-row" style="flex-direction:column;gap:6px;">
-      <div id="panel-login-status" class="panel-login-status logged-out">로그인 필요</div>
-      <div style="display:flex;gap:6px;width:100%;">
-        <button class="panel-btn apply" style="flex:1;" onclick="showLoginModal()">로그인</button>
-        <button class="panel-btn" style="flex:1;background:#e0dbd9;color:#999;" onclick="logoutCalendar()">로그아웃</button>
+
+    <!-- 계정 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">계정</div>
+      <div class="ctrl-section-body">
+        <div id="acct-card" class="acct-card logged-out">
+          <div class="acct-row">
+            <span class="acct-dot"></span>
+            <span class="acct-status" id="acct-status">로그인 필요</span>
+          </div>
+          <div class="acct-email" id="acct-email" style="display:none;">—</div>
+          <div class="acct-actions">
+            <button id="login-toggle-btn" class="acct-btn login" onclick="loginOrLogout()">로그인</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="panel-row">
-      <span class="panel-label">년월 선택</span>
-      <input type="month" id="month-picker" onchange="changeMonth(this.value)" />
+
+    <!-- 일정 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">일정 · 필터</div>
+      <div class="ctrl-section-body">
+        <div class="ctrl-field">
+          <label class="ctrl-field-label" for="month-picker">📅 년월 선택</label>
+          <input type="month" id="month-picker" onchange="changeMonth(this.value)" />
+        </div>
+        <div class="ctrl-field">
+          <label class="ctrl-field-label" for="influencer-filter">👤 약사 필터</label>
+          <select id="influencer-filter" onchange="setInfluencerFilter(this.value)">
+            <option value="">전체</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div class="panel-row">
-      <button id="refresh-btn" class="panel-btn refresh" onclick="loadAndRender()">새로고침</button>
-      <button id="save-btn" class="panel-btn save" onclick="saveImage()">이미지 저장</button>
-      <div class="panel-divider"></div>
-      <span class="panel-label">테마</span>
-      <input type="color" id="color-picker" class="panel-color" value="#D4776D" oninput="applyColor(this.value)" />
-      <div class="panel-divider"></div>
-      <span class="panel-label">폰트</span>
-      <select id="font-picker" onchange="applyFont(this.value)" style="flex:1;padding:8px 10px;border:1.5px solid #e0dbd9;border-radius:10px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:#666;outline:none;background:rgba(255,255,255,0.6);cursor:pointer;">
-        <option value="Jua" style="font-family:'Jua'">주아 (기본)</option>
-        <option value="Noto Sans KR" style="font-family:'Noto Sans KR'">Noto Sans KR (깔끔)</option>
-        <option value="Gamja Flower" style="font-family:'Gamja Flower'">감자꽃 (손글씨)</option>
-        <option value="Bagel Fat One" style="font-family:'Bagel Fat One'">베이글팻원 (통통)</option>
-        <option value="Gaegu" style="font-family:'Gaegu'">개구 (캐주얼)</option>
-      </select>
-      <div class="panel-divider"></div>
-      <span class="panel-hint">텍스트를 클릭하면 수정할 수 있습니다</span>
-      <div class="panel-divider"></div>
-      <button class="panel-btn" style="background:#e0dbd9;color:#999;font-size:11px;padding:6px 14px;width:100%;" onclick="adminLogout()">패널 닫기</button>
+
+    <!-- 작업 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">작업</div>
+      <div class="ctrl-section-body">
+        <div class="ctrl-buttons-2col">
+          <button id="refresh-btn" class="panel-btn refresh" onclick="loadAndRender()">🔄 새로고침</button>
+          <button id="add-product-btn" class="panel-btn add" onclick="toggleAddMode()">➕ 제품 추가</button>
+          <button id="save-btn" class="panel-btn save" onclick="saveImage()">💾 이미지 저장</button>
+          <button id="video-btn" class="panel-btn video" onclick="recordCalendarVideo()">🎬 영상 만들기</button>
+        </div>
+      </div>
     </div>
+
+    <!-- 디자인 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">디자인</div>
+      <div class="ctrl-section-body">
+        <div class="ctrl-field-inline">
+          <span class="ctrl-field-label">🎨 테마</span>
+          <input type="color" id="color-picker" class="panel-color" value="#D4776D" oninput="applyColor(this.value)" style="margin-left:auto;" />
+        </div>
+        <div class="ctrl-field">
+          <label class="ctrl-field-label" for="font-picker">✍️ 폰트</label>
+          <select id="font-picker" onchange="applyFont(this.value)">
+            <option value="Jua" style="font-family:'Jua'">주아 (기본)</option>
+            <option value="Noto Sans KR" style="font-family:'Noto Sans KR'">Noto Sans KR (깔끔)</option>
+            <option value="Gamja Flower" style="font-family:'Gamja Flower'">감자꽃 (손글씨)</option>
+            <option value="Bagel Fat One" style="font-family:'Bagel Fat One'">베이글팻원 (통통)</option>
+            <option value="Gaegu" style="font-family:'Gaegu'">개구 (캐주얼)</option>
+          </select>
+        </div>
+        <div class="ctrl-hint">💡 캘린더의 텍스트를 직접 클릭하면 수정할 수 있어요</div>
+        <button class="ctrl-close-btn" style="margin-top:6px;" onclick="clearEditCache()" title="이전에 입력한 제품명·설명·배지 편집 내용을 모두 초기화">🗑 편집 캐시 초기화</button>
+      </div>
+    </div>
+
+    <button class="ctrl-close-btn" onclick="adminLogout()">패널 닫기</button>
   </div>
   <div id="calendar" class="calendar"></div>
 
@@ -545,10 +840,81 @@
     </div>
   </div>
 
+  <!-- 제품 추가 모달 -->
+  <div id="add-mode-hint" class="add-mode-hint">📍 캘린더의 날짜를 클릭하면 그 자리에 제품이 추가됩니다 · ESC 로 종료</div>
+  <div id="ap-overlay" class="ap-overlay" onclick="if(event.target===this)closeAddProductModal()">
+    <div class="ap-box">
+      <h2 class="ap-title">➕ 제품 추가</h2>
+      <p class="ap-sub" id="ap-sub">선택한 날짜에 사용자 제품을 추가합니다.</p>
+
+      <div class="ap-field">
+        <label>제품명<span class="req">*</span></label>
+        <input type="text" id="ap-name" placeholder="예) 비타민D 3000IU" maxlength="40">
+      </div>
+
+      <div class="ap-field">
+        <label>한 줄 설명</label>
+        <textarea id="ap-desc" placeholder="예) 흡수율 높은 액상 비타민D, 가족 모두" maxlength="80"></textarea>
+      </div>
+
+      <div class="ap-row2">
+        <div class="ap-field">
+          <label>시작일<span class="req">*</span></label>
+          <input type="date" id="ap-start">
+        </div>
+        <div class="ap-field">
+          <label>종료일</label>
+          <input type="date" id="ap-end">
+        </div>
+      </div>
+
+      <div class="ap-field">
+        <label>제품 이미지<span class="req">*</span></label>
+        <div style="display:flex; gap:8px; align-items:stretch;">
+          <input type="url" id="ap-image" placeholder="https://... 또는 파일 선택 ↗" style="flex:1;">
+          <label for="ap-image-file" class="ap-file-btn" style="white-space:nowrap; padding:10px 14px; border:1.5px solid #e0dbd9; border-radius:8px; font-size:12px; font-weight:700; color:#5b524d; background:#fbf8f6; cursor:pointer; display:flex; align-items:center; gap:4px;">📁 파일 선택</label>
+          <input type="file" id="ap-image-file" accept="image/*" style="display:none">
+        </div>
+        <div class="hint">URL 붙여넣기 / 파일 업로드 둘 다 가능. 큰 파일은 자동으로 800×800 으로 압축됩니다.</div>
+        <div class="ap-preview" id="ap-preview" style="display:none">
+          <img id="ap-preview-img" src="" alt="">
+          <span id="ap-preview-name">미리보기</span>
+          <span id="ap-preview-size" style="margin-left:auto; color:#999; font-size:11px;"></span>
+        </div>
+      </div>
+
+      <div class="ap-field">
+        <label>판매 링크</label>
+        <input type="url" id="ap-link" placeholder="https://store.example.com/products/...">
+        <div class="hint">이미지 클릭 시 이 링크가 새 창으로 열립니다.</div>
+      </div>
+
+      <div class="ap-field">
+        <label>배지 (선택)</label>
+        <input type="text" id="ap-badge" placeholder="예) NEW · 신제품 · 한정수량" maxlength="10">
+      </div>
+
+      <div class="ap-actions">
+        <button class="ap-btn cancel" onclick="closeAddProductModal()">취소</button>
+        <button class="ap-btn save" onclick="saveCustomProduct()">저장</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const TOKEN_KEY = 'dashboard_bearer_token';
+    const ADMIN_EMAIL_KEY = 'current_admin_email';
+    const INFLUENCER_FILTER_KEY = 'calendar_influencer_filter';
     const API_BASE = '';
     const ALLOWED_STEPS = ['T4','T6','T8','Y0'];
+
+    // 어드민 이메일 → 약사명 자동 매핑 (소문자 키)
+    const EMAIL_INFLUENCER_MAP = {
+      'anthony@pharma-bros.com': '호프만',
+    };
+    // 현재 약사 필터 — null = 전체, '' = 전체, 'name' = 그 약사만
+    let INFLUENCER_FILTER = (localStorage.getItem(INFLUENCER_FILTER_KEY) || null);
+    if (INFLUENCER_FILTER === 'null' || INFLUENCER_FILTER === '') INFLUENCER_FILTER = null;
 
     let bearerToken = '';
     let SELECTED_YEAR = null;
@@ -594,16 +960,110 @@
       return res.json();
     }
 
+    // JWT payload 파싱 — 토큰에서 이메일/사용자명 추출 (localStorage 캐시 보조)
+    function parseJwtPayload(token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        // base64url → base64
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(b64));
+      } catch (e) { return null; }
+    }
+    function getLoggedInEmail() {
+      // 1순위: 로그인 시 캡처한 이메일 / 어드민 ID
+      const saved = localStorage.getItem(ADMIN_EMAIL_KEY);
+      if (saved) return saved;
+      // 2순위: JWT payload 에서 추출
+      if (!bearerToken) return '';
+      const p = parseJwtPayload(bearerToken);
+      if (!p) return '';
+      try { console.log('[acct] JWT payload:', p); } catch (_) {}
+      const flat = ['adminId','admin_id','email','mail','username','user_name','user','sub','preferred_username','id','userId','user_id','name','account','loginId','login_id'];
+      for (const k of flat) {
+        const v = p[k];
+        if (typeof v === 'string' && v) {
+          try { localStorage.setItem(ADMIN_EMAIL_KEY, v); } catch (e) {}
+          return v;
+        }
+      }
+      // 중첩 user 객체
+      if (p.user && typeof p.user === 'object') {
+        for (const k of ['email','mail','adminId','username','loginId']) {
+          const v = p.user[k];
+          if (typeof v === 'string' && v) {
+            try { localStorage.setItem(ADMIN_EMAIL_KEY, v); } catch (e) {}
+            return v;
+          }
+        }
+      }
+      // 마지막 폴백: payload 안에 '@' 들어간 string 찾기
+      for (const [k, v] of Object.entries(p)) {
+        if (typeof v === 'string' && v.includes('@')) {
+          try { localStorage.setItem(ADMIN_EMAIL_KEY, v); } catch (e) {}
+          return v;
+        }
+      }
+      return '';
+    }
+
     function updateLoginStatus() {
-      const el = document.getElementById('panel-login-status');
-      if (bearerToken && !isTokenExpired(bearerToken)) {
-        el.textContent = '로그인됨';
-        el.className = 'panel-login-status logged-in';
-      } else {
-        el.textContent = '로그인 필요';
-        el.className = 'panel-login-status logged-out';
+      const card = document.getElementById('acct-card');
+      const status = document.getElementById('acct-status');
+      const emailEl = document.getElementById('acct-email');
+      const btn = document.getElementById('login-toggle-btn');
+      const isIn = bearerToken && !isTokenExpired(bearerToken);
+
+      if (card) card.className = 'acct-card ' + (isIn ? 'logged-in' : 'logged-out');
+      if (status) status.textContent = isIn ? '로그인됨' : '로그인 필요';
+
+      if (isIn) {
+        const email = getLoggedInEmail();
+        if (emailEl) {
+          if (email) {
+            emailEl.innerHTML = '👤 ' + esc(email);
+            emailEl.style.display = 'block';
+            emailEl.style.color = '#2C2620';
+            emailEl.style.fontWeight = '700';
+          } else {
+            emailEl.innerHTML = '⚠️ 이메일 정보 확인 불가 — <span style="text-decoration:underline;cursor:pointer;color:#c96e66" onclick="logoutCalendar()">로그아웃 후 재로그인</span> 하면 표시됩니다';
+            emailEl.style.display = 'block';
+            emailEl.style.color = '#888';
+            emailEl.style.fontWeight = '400';
+          }
+        }
+      } else if (emailEl) {
+        emailEl.style.display = 'none';
+      }
+
+      if (btn) {
+        if (isIn) { btn.textContent = '로그아웃'; btn.className = 'acct-btn logout'; }
+        else      { btn.textContent = '로그인';   btn.className = 'acct-btn login'; }
       }
     }
+
+    window.loginOrLogout = function() {
+      if (bearerToken && !isTokenExpired(bearerToken)) logoutCalendar();
+      else showLoginModal();
+    };
+
+    // 이전 약사 캘린더에서 남아있을 수 있는 inline 편집(제품명/설명/배지) 캐시 초기화
+    window.clearEditCache = function() {
+      if (!confirm('이전에 입력한 제품명·설명·배지 편집 내용을 모두 지웁니다. (직접 추가한 제품은 영향 없음). 진행할까요?')) return;
+      try { localStorage.removeItem('edit_store'); } catch (e) {}
+      // 재렌더 — restoreEdits 가 빈 store 를 적용하므로 기본 API 값으로 돌아감
+      if (LOADED_PRODUCTS && LOADED_PRODUCTS.length > 0) renderForCurrentMonth();
+      alert('편집 캐시를 초기화했습니다.');
+    };
+
+    // 페이지 로드 시 1회 — 옛 month-num/month-name 캐시 자동 정리 (picker 와 동기화)
+    try {
+      const store = JSON.parse(localStorage.getItem('edit_store') || '{}');
+      if (store['month-num'] || store['month-name']) {
+        delete store['month-num']; delete store['month-name'];
+        localStorage.setItem('edit_store', JSON.stringify(store));
+      }
+    } catch (e) {}
 
     function showLoginModal() {
       document.getElementById('login-overlay').classList.remove('hidden');
@@ -662,6 +1122,7 @@
         }
         bearerToken = token;
         localStorage.setItem(TOKEN_KEY, token);
+        if (calTfaAdminId) localStorage.setItem(ADMIN_EMAIL_KEY, calTfaAdminId);
         closeLoginModal();
         updateLoginStatus();
         loadAndRender();
@@ -770,6 +1231,7 @@
         }
         bearerToken = token;
         localStorage.setItem(TOKEN_KEY, token);
+        if (calTfaAdminId) localStorage.setItem(ADMIN_EMAIL_KEY, calTfaAdminId);
         closeLoginModal();
         updateLoginStatus();
         loadAndRender();
@@ -791,6 +1253,51 @@
       updateLoginStatus();
       showGuide();
     }
+
+    /* ── 약사 필터 (influencerName + pharmacyName + 괄호안 실명 모두 매칭) ── */
+    function inferDefaultInfluencer() {
+      const email = (localStorage.getItem(ADMIN_EMAIL_KEY) || '').trim().toLowerCase();
+      if (!email) return null;
+      return EMAIL_INFLUENCER_MAP[email] || null;
+    }
+    function getPharmacistNames(p) {
+      const out = new Set();
+      const inf = (p.influencerName || '').trim();
+      if (inf) {
+        out.add(inf);
+        const m = inf.match(/\(([^)]+)\)/);
+        if (m && m[1]) out.add(m[1].trim());
+        const stripped = inf.replace(/\([^)]+\)/, '').trim();
+        if (stripped) out.add(stripped);
+      }
+      const phar = (p.pharmacyName || '').trim();
+      if (phar) out.add(phar);
+      return out;
+    }
+    function planMatchesInfluencer(p) {
+      if (!INFLUENCER_FILTER) return true;
+      return getPharmacistNames(p).has(INFLUENCER_FILTER);
+    }
+    function populateInfluencerDropdown() {
+      const sel = document.getElementById('influencer-filter');
+      if (!sel) return;
+      const counter = new Map();
+      LOADED_PRODUCTS.forEach(p => {
+        getPharmacistNames(p).forEach(n => counter.set(n, (counter.get(n) || 0) + 1));
+      });
+      const names = Array.from(counter.keys()).sort((a,b) => a.localeCompare(b, 'ko'));
+      const current = INFLUENCER_FILTER || '';
+      sel.innerHTML =
+        `<option value="">전체 (${LOADED_PRODUCTS.length}건)</option>` +
+        names.map(n => `<option value="${esc(n)}"${n === current ? ' selected' : ''}>${esc(n)} (${counter.get(n)})</option>`).join('');
+    }
+    window.setInfluencerFilter = function(value) {
+      INFLUENCER_FILTER = value || null;
+      if (INFLUENCER_FILTER) localStorage.setItem(INFLUENCER_FILTER_KEY, INFLUENCER_FILTER);
+      else localStorage.removeItem(INFLUENCER_FILTER_KEY);
+      renderForCurrentMonth();
+    };
+
     const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DAY_HEADERS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
@@ -826,44 +1333,22 @@
       document.getElementById('font-picker').value = saved;
     })();
 
+    // 제품명 짧게 정리 — API title 에서 흔한 브랜드 prefix 제거 + 12자 컷
+    // (이전 약사 전용 하드코딩 매핑은 제거 — 약사별 표시명은 contenteditable 로 직접 편집)
     function getShortName(title) {
-      const map = [
-        ['프로바이오틱스', '분홍이'],
-        ['비타민D', '제가 만든 비타민D'],
-        ['비타민d', '제가 만든 비타민D'],
-        ['마그샷', '마그샷 마그에이드'],
-        ['베르베린', '베르베린 (엄선한 원료사)'],
-        ['오메가3', '오메안비러유'],
-        ['오메가 3', '오메안비러유'],
-        ['디오스민', '디오스민'],
-        ['칼마디', '칼마디'],
-      ];
-      for (const [kw, name] of map) { if (title.includes(kw)) return name; }
-      let c = title.replace(/닥터체크\s*/g,'').replace(/원퍼데이\s*/g,'').replace(/투퍼데이\s*/g,'')
-        .replace(/저스트\s*글로우\s*/g,'').replace(/박약다식\s*/g,'').trim();
-      return c.length > 12 ? c.substring(0,12) : c;
+      let c = (title || '')
+        .replace(/닥터체크\s*/g, '')
+        .replace(/원퍼데이\s*/g, '')
+        .replace(/투퍼데이\s*/g, '')
+        .replace(/저스트\s*글로우\s*/g, '')
+        .replace(/박약다식\s*/g, '')
+        .trim();
+      return c.length > 12 ? c.substring(0, 12) : c;
     }
 
-    function getProductDesc(title) {
-      const map = {
-        '프로바이오틱스': '인기템 깜짝공구\n단 3일!',
-        '비타민D': '샤인머스캣 맛',
-        '마그샷': '제가 배합 참여\n레모나 맛\n100% 유기산 마그네슘 액상!',
-        '베르베린': '혈당과 체중 관리',
-        '오메가3': '고품질\n안비린 오메가 3',
-        '디오스민': '먹는 압박스타킹!\n혈관 꽉 잡아주는\n유명한 그 제품!',
-        '칼마디': '부담없는 가격,\n속편한 칼마디',
-      };
-      for (const [kw, desc] of Object.entries(map)) { if (title.includes(kw)) return desc; }
-      return '';
-    }
-
-    function getBadge(title) {
-      if (title.includes('프로바이오틱스')) return 'HOT';
-      if (title.includes('비타민D')) return '품절대란템';
-      if (title.includes('오메가3')) return 'HOT';
-      return '';
-    }
+    // 설명/배지는 약사마다 다르므로 API 에 없으면 빈값 — 사용자가 직접 클릭해서 입력
+    function getProductDesc(_title) { return ''; }
+    function getBadge(_title) { return ''; }
 
     function parseStartDay(ds) { return new Date(ds).getDate(); }
 
@@ -924,9 +1409,20 @@
             thumbnail: raw.image_url || '',
             startDay: sd.getDate(),
             startYear: sd.getFullYear(),
-            startMonth: sd.getMonth()
+            startMonth: sd.getMonth(),
+            influencerName: raw.influencer_name || '',
+            pharmacyName: raw.pharmacy_name || ''
           };
         });
+        // 첫 로드 시 이메일 기반 기본 필터 추론 (사용자가 저장된 값 없을 때만)
+        if (INFLUENCER_FILTER === null && !localStorage.getItem(INFLUENCER_FILTER_KEY)) {
+          const inferred = inferDefaultInfluencer();
+          if (inferred) {
+            INFLUENCER_FILTER = inferred;
+            localStorage.setItem(INFLUENCER_FILTER_KEY, inferred);
+          }
+        }
+        populateInfluencerDropdown();
         renderForCurrentMonth();
         loadSalesLinks();
       } catch(e) {
@@ -955,8 +1451,16 @@
         year = now.getFullYear();
         month = now.getMonth();
       }
-      const filtered = LOADED_PRODUCTS.filter(p => p.startYear === year && p.startMonth === month);
-      renderCalendar(year, month, filtered);
+      // API 제품 + custom 제품 병합 (같은 날짜에 둘 다 있으면 둘 다 표시)
+      // 약사 필터 적용 — INFLUENCER_FILTER 설정 시 그 약사 plan 만 (influencer/pharmacy 양쪽 검사),
+      // custom 제품은 항상 표시
+      const apiProducts = LOADED_PRODUCTS.filter(p =>
+        p.startYear === year && p.startMonth === month && planMatchesInfluencer(p)
+      );
+      const customProducts = getCustomProducts().filter(p => p.startYear === year && p.startMonth === month);
+      const merged = [...apiProducts, ...customProducts]
+        .sort((a, b) => a.startDay - b.startDay);
+      renderCalendar(year, month, merged);
       attachEditableHandlers();
     }
 
@@ -1027,10 +1531,12 @@
 
       let h = '<div class="calendar-bg"></div>';
 
+      // month-num / month-name 은 picker 에서 자동 계산되는 값이라 contenteditable/persist 하지 않음
+      // (picker 로 월을 바꿔도 옛 캐시가 덮어쓰는 버그 방지)
       h += `<div class="header">
-        <div class="month-num" contenteditable="true" spellcheck="false" data-edit-key="month-num">${mn}</div>
+        <div class="month-num">${mn}</div>
         <div class="header-right">
-          <div class="month-name" contenteditable="true" spellcheck="false" data-edit-key="month-name">${MONTH_NAMES[month]}</div>
+          <div class="month-name">${MONTH_NAMES[month]}</div>
           <div class="calendar-title" contenteditable="true" spellcheck="false" data-edit-key="cal-title">${esc(TITLE)}</div>
           <div class="handle" contenteditable="true" spellcheck="false" data-edit-key="handle">${esc(HANDLE)}</div>
         </div>
@@ -1047,8 +1553,8 @@
         for (let c=0; c<7; c++) {
           const day = week[c], isS = day && startDays.has(day);
           const prod = day?sdm[day]:null;
-          const badge = prod?getBadge(prod.title):'';
-          h += `<div class="date-cell ${isS?'start-date':''}">`;
+          const badge = prod ? (prod.isCustom ? (prod.badge || '') : getBadge(prod.title)) : '';
+          h += `<div class="date-cell ${isS?'start-date':''}" ${day?`data-day="${day}"`:''}>`;
           if (isS) h += '<span class="date-circle"></span>';
           h += `<span style="position:relative;z-index:1">${day||''}</span>`;
           if (isS) {
@@ -1074,10 +1580,25 @@
 
             h += `<div style="grid-column:${dow+1}/span ${span};">`;
             dayProducts.forEach(p => {
-              const sn = getShortName(p.title), desc = getProductDesc(p.title);
+              const sn = p.isCustom ? (p.title || '') : getShortName(p.title);
+              const desc = p.isCustom ? (p.description || '') : getProductDesc(p.title);
               const dh = desc ? desc.split('\n').map(l=>esc(l)).join('<br>') : '';
-              h += `<div class="product-card">
-                <img src="${esc(p.thumbnail)}" alt="${esc(sn)}" data-link="${esc(p.salesLink)}" onclick="if(this.dataset.link&&!window.getSelection().toString())window.open(this.dataset.link,'_blank')" style="cursor:pointer"/>
+              const cls = 'product-card' + (p.isCustom ? ' is-custom' : '');
+              const customExtras = p.isCustom
+                ? `<span class="custom-mark">✏️ 내가 추가</span><span class="custom-del-btn" onclick="event.stopPropagation();deleteCustomProduct('${esc(p.id)}')" title="삭제">×</span>`
+                : '';
+              // 판매 링크: 옛 데이터를 위해 normalizeUrl 한 번 더 적용
+              const safeLink = normalizeUrl(p.salesLink || '');
+              const linkIcon = safeLink
+                ? `<span class="sales-link-mark" title="판매 링크 있음">🔗</span>`
+                : '';
+              const clickHandler = safeLink
+                ? `onclick="openSalesLink(this)" style="cursor:pointer"`
+                : `style="cursor:default"`;
+              h += `<div class="${cls}" data-pid="${esc(p.id || '')}">
+                ${customExtras}
+                <img src="${esc(p.thumbnail)}" alt="${esc(sn)}" data-link="${esc(safeLink)}" ${clickHandler}/>
+                ${linkIcon}
                 <div class="product-info">
                   <div class="product-name" contenteditable="true" spellcheck="false" data-edit-key="pname-${p.startDay}">${esc(sn)}</div>
                   <div class="product-desc" contenteditable="true" spellcheck="false" data-edit-key="pdesc-${p.startDay}">${dh||'설명 입력'}</div>
@@ -1126,6 +1647,7 @@
       btn.textContent = '저장 중...';
       try {
         document.activeElement?.blur();
+        document.body.classList.add('saving'); // ✏️ 내가 추가 / 🔗 / × 등 UI 마커 임시 숨김
         document.querySelectorAll('.product-desc.placeholder').forEach(el=>{el.textContent='';});
         document.querySelectorAll('.date-badge.empty-badge').forEach(el=>{el.classList.add('save-hide');});
         document.querySelectorAll('.date-badge').forEach(el=>{if(!el.textContent.trim())el.classList.add('save-hide');});
@@ -1144,10 +1666,13 @@
           return _origCP.call(this, img, rep);
         };
 
-        cal.style.height = '1350px';
+        // 마지막 주에 제품 추가로 1350px 넘는 경우 잘림 방지 — 자연 콘텐츠 높이 측정
+        const naturalH = Math.max(1350, cal.scrollHeight);
+        cal.style.height = naturalH + 'px';
         cal.style.overflow = 'hidden';
         const canvas = await html2canvas(cal,{
           scale:2, backgroundColor:'#FFFBF9', allowTaint:true,
+          width: 1080, height: naturalH,
         });
         CanvasRenderingContext2D.prototype.createPattern = _origCP;
         cal.style.height = '';
@@ -1159,12 +1684,14 @@
         });
         const link = document.createElement('a');
         link.download='공구캘린더.png'; link.href=canvas.toDataURL('image/png'); link.click();
+        document.body.classList.remove('saving');
         btn.textContent='저장 완료!';
         setTimeout(()=>{btn.textContent='이미지 저장';},2000);
       } catch(e) {
         const c = document.getElementById('calendar');
         if(c){c.style.height='';c.style.overflow='';}
         document.querySelectorAll('.date-badge.save-hide').forEach(el=>{el.classList.remove('save-hide');});
+        document.body.classList.remove('saving');
         btn.textContent='이미지 저장'; alert('저장 실패: '+e.message);
       }
     }
@@ -1289,6 +1816,1209 @@
       }
     }
     initApp();
+
+    /* ───────────────────────────────────────────────────────────────────
+       CUSTOM PRODUCT ADD — 사용자 직접 제품 추가
+       ─────────────────────────────────────────────────────────────────── */
+
+    const CUSTOM_PRODUCTS_KEY = 'custom_products';
+    let _addMode = false;
+
+    function getCustomProducts() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_PRODUCTS_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        // 시작일에서 startYear/Month/Day 파생값 채우기 (저장 안 됐을 수 있음)
+        return arr.map(p => {
+          if (p.startDate && (p.startDay == null || p.startYear == null)) {
+            const d = new Date(p.startDate);
+            return { ...p, startDay: d.getDate(), startYear: d.getFullYear(), startMonth: d.getMonth(), isCustom: true };
+          }
+          return { ...p, isCustom: true };
+        });
+      } catch (e) { return []; }
+    }
+
+    function saveCustomProductsRaw(arr) {
+      try { localStorage.setItem(CUSTOM_PRODUCTS_KEY, JSON.stringify(arr)); } catch (e) {}
+    }
+
+    window.toggleAddMode = function() {
+      _addMode = !_addMode;
+      const btn = document.getElementById('add-product-btn');
+      const hint = document.getElementById('add-mode-hint');
+      if (_addMode) {
+        document.body.classList.add('add-mode');
+        btn.classList.add('active');
+        btn.textContent = '✕ 추가 모드 종료';
+        hint.classList.add('active');
+      } else {
+        document.body.classList.remove('add-mode');
+        btn.classList.remove('active');
+        btn.textContent = '➕ 제품 추가';
+        hint.classList.remove('active');
+      }
+    };
+
+    // 캘린더에서 날짜 셀 클릭 (delegated) — add mode 일 때만 모달 오픈
+    document.getElementById('calendar').addEventListener('click', function(e) {
+      if (!_addMode) return;
+      const cell = e.target.closest('.date-cell');
+      if (!cell) return;
+      const day = parseInt(cell.dataset.day || '', 10);
+      if (!day) return;
+      // contenteditable 영역 클릭은 무시 (편집 가능 셀)
+      if (e.target.closest('[contenteditable="true"]')) return;
+      // 현재 표시 중인 년/월 — month picker 값 우선, 없으면 LOADED_PRODUCTS 첫 항목
+      let y = SELECTED_YEAR, m = SELECTED_MONTH;
+      if (y === null && LOADED_PRODUCTS[0]) {
+        const sd = new Date(LOADED_PRODUCTS[0].startDate);
+        y = sd.getFullYear(); m = sd.getMonth();
+      }
+      if (y === null) { const n = new Date(); y = n.getFullYear(); m = n.getMonth(); }
+      openAddProductModal(y, m, day);
+    });
+
+    window.openAddProductModal = function(year, month, day) {
+      const startStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      document.getElementById('ap-start').value = startStr;
+      document.getElementById('ap-end').value = ''; // 빈 값 = 시작일과 동일
+      document.getElementById('ap-name').value = '';
+      document.getElementById('ap-desc').value = '';
+      document.getElementById('ap-image').value = '';
+      document.getElementById('ap-link').value = '';
+      document.getElementById('ap-badge').value = '';
+      document.getElementById('ap-preview').style.display = 'none';
+      document.getElementById('ap-sub').textContent = `📅 ${month + 1}월 ${day}일 — 이 날짜에 제품을 추가합니다`;
+      document.getElementById('ap-overlay').classList.add('active');
+      setTimeout(() => document.getElementById('ap-name').focus(), 50);
+    };
+
+    window.closeAddProductModal = function() {
+      document.getElementById('ap-overlay').classList.remove('active');
+    };
+
+    // 이미지 URL 미리보기
+    function updateImagePreview(url, sizeText) {
+      const preview = document.getElementById('ap-preview');
+      const previewImg = document.getElementById('ap-preview-img');
+      const sizeEl = document.getElementById('ap-preview-size');
+      if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+        previewImg.src = url;
+        document.getElementById('ap-preview-name').textContent =
+          document.getElementById('ap-name').value || '미리보기';
+        if (sizeEl) sizeEl.textContent = sizeText || '';
+        preview.style.display = 'flex';
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+    document.getElementById('ap-image').addEventListener('input', function(e) {
+      updateImagePreview((e.target.value || '').trim(), '');
+    });
+    document.getElementById('ap-name').addEventListener('input', function(e) {
+      const txt = document.getElementById('ap-preview-name');
+      if (txt) txt.textContent = e.target.value || '미리보기';
+    });
+
+    // 파일 선택 → 자동 압축 (max 800×800, JPEG quality 0.85) → URL 필드 채우기
+    document.getElementById('ap-image-file').addEventListener('change', function(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('이미지 파일만 업로드 가능합니다.'); return; }
+      if (file.size > 20 * 1024 * 1024) { alert('20MB 이하 파일만 업로드 가능합니다.'); return; }
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+          const MAX = 800;
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > MAX || h > MAX) {
+            const r = Math.min(MAX / w, MAX / h);
+            w = Math.round(w * r); h = Math.round(h * r);
+          }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = c.toDataURL('image/jpeg', 0.85);
+          document.getElementById('ap-image').value = dataUrl;
+          const kb = Math.round(dataUrl.length * 0.75 / 1024);
+          updateImagePreview(dataUrl, `${w}×${h} · ${kb}KB`);
+        };
+        img.onerror = function() { alert('이미지를 읽을 수 없습니다. 다른 파일을 시도해주세요.'); };
+        img.src = ev.target.result;
+      };
+      reader.onerror = function() { alert('파일 읽기 실패'); };
+      reader.readAsDataURL(file);
+      // input 재선택 가능하도록 value 초기화
+      e.target.value = '';
+    });
+
+    function normalizeUrl(url) {
+      if (!url) return '';
+      const u = url.trim();
+      if (!u) return '';
+      // 이미 프로토콜이 있거나 data URL / protocol-relative URL 이면 그대로
+      if (/^(https?:|mailto:|tel:|data:)/i.test(u)) return u;
+      if (u.startsWith('//')) return 'https:' + u;
+      // 그 외에는 https:// prefix 자동 추가
+      return 'https://' + u;
+    }
+
+    // 안정적인 판매 링크 열기 — add-mode 일 때나 텍스트 선택 중일 때는 무시
+    window.openSalesLink = function(imgEl) {
+      if (_addMode) return;
+      const sel = window.getSelection();
+      if (sel && sel.toString && sel.toString().length > 0) return;
+      const link = (imgEl && imgEl.dataset && imgEl.dataset.link) || '';
+      if (!link) return;
+      try { window.open(link, '_blank', 'noopener'); } catch (e) {}
+    };
+
+    window.saveCustomProduct = function() {
+      const name = document.getElementById('ap-name').value.trim();
+      const desc = document.getElementById('ap-desc').value.trim();
+      const startDate = document.getElementById('ap-start').value;
+      const endDate = document.getElementById('ap-end').value;
+      const image = document.getElementById('ap-image').value.trim();
+      const link = normalizeUrl(document.getElementById('ap-link').value);
+      const badge = document.getElementById('ap-badge').value.trim();
+
+      if (!name) { alert('제품명을 입력해주세요.'); return; }
+      if (!startDate) { alert('시작일을 선택해주세요.'); return; }
+      if (!image) { alert('이미지 URL 을 입력해주세요.'); return; }
+
+      const sd = new Date(startDate);
+      if (isNaN(sd.getTime())) { alert('시작일 형식이 잘못되었습니다.'); return; }
+
+      const product = {
+        id: 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        title: name,
+        description: desc,
+        startDate: startDate,
+        endDate: endDate || startDate,
+        thumbnail: image,
+        salesLink: link,
+        badge: badge,
+        startDay: sd.getDate(),
+        startYear: sd.getFullYear(),
+        startMonth: sd.getMonth(),
+        isCustom: true,
+        createdAt: Date.now(),
+      };
+      const arr = getCustomProducts();
+      arr.push(product);
+      saveCustomProductsRaw(arr);
+      closeAddProductModal();
+      renderForCurrentMonth();
+    };
+
+    window.deleteCustomProduct = function(id) {
+      if (!confirm('이 제품을 정말 삭제할까요?')) return;
+      const arr = getCustomProducts().filter(p => p.id !== id);
+      saveCustomProductsRaw(arr);
+      renderForCurrentMonth();
+    };
+
+    // ESC 로 add-mode 종료 + 모달 닫기
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      const overlay = document.getElementById('ap-overlay');
+      if (overlay && overlay.classList.contains('active')) {
+        closeAddProductModal();
+        return;
+      }
+      if (_addMode) toggleAddMode();
+    });
+
+    // 로그인 안 된 상태에서도 custom 제품만 있으면 표시되게 — initApp 직후 한 번 더 렌더 시도
+    try {
+      const customs = getCustomProducts();
+      if (customs.length > 0 && (!LOADED_PRODUCTS || LOADED_PRODUCTS.length === 0)) {
+        // LOADED_PRODUCTS 가 비어있으면 첫 custom 의 월 기준으로 보여주기
+        if (SELECTED_YEAR === null) {
+          SELECTED_YEAR = customs[0].startYear;
+          SELECTED_MONTH = customs[0].startMonth;
+        }
+        renderForCurrentMonth();
+      }
+    } catch (e) {}
+
+    /* ───────────────────────────────────────────────────────────────────
+       VIDEO GENERATION — 제품 팝업 애니메이션 영상 + AI 영상 프롬프트
+       ─────────────────────────────────────────────────────────────────── */
+
+    const VIDEO_INTRO_MS = 2500;
+    const VIDEO_PER_PRODUCT_MS = 4000;
+    const VIDEO_OUTRO_MS = 2000;
+    const VIDEO_FPS = 30;
+    const VIDEO_W = 1080, VIDEO_H = 1350;
+
+    let _videoCancelled = false;
+    let _videoActiveRecorder = null;
+
+    function showVideoProgress(stageText) {
+      let ov = document.getElementById('video-progress-overlay');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'video-progress-overlay';
+        ov.className = 'video-progress-overlay';
+        ov.innerHTML = `
+          <div class="video-progress-box">
+            <div class="video-progress-title">🎬 영상 만들기</div>
+            <div class="video-progress-stage" id="video-progress-stage">${esc(stageText || '준비 중...')}</div>
+            <div class="video-progress-bar"><div id="video-progress-fill"></div></div>
+            <div class="video-progress-meta">
+              <span id="video-progress-percent">0%</span>
+              <span id="video-progress-eta">예상 ~25초</span>
+            </div>
+            <button class="video-progress-cancel" onclick="cancelVideoRecord()">취소</button>
+          </div>
+        `;
+        document.body.appendChild(ov);
+      } else {
+        document.getElementById('video-progress-stage').textContent = stageText || '준비 중...';
+      }
+      ov.classList.add('active');
+      _videoCancelled = false;
+    }
+
+    function updateVideoProgress(pct, stageText, etaText) {
+      const fill = document.getElementById('video-progress-fill');
+      const pctEl = document.getElementById('video-progress-percent');
+      const stEl = document.getElementById('video-progress-stage');
+      const etaEl = document.getElementById('video-progress-eta');
+      if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+      if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+      if (stageText && stEl) stEl.textContent = stageText;
+      if (etaText && etaEl) etaEl.textContent = etaText;
+    }
+
+    function hideVideoProgress() {
+      const ov = document.getElementById('video-progress-overlay');
+      if (ov) ov.classList.remove('active');
+    }
+
+    window.cancelVideoRecord = function() {
+      _videoCancelled = true;
+      try { if (_videoActiveRecorder && _videoActiveRecorder.state !== 'inactive') _videoActiveRecorder.stop(); } catch(e){}
+      hideVideoProgress();
+    };
+
+    function showVideoToast(html, durationMs) {
+      const old = document.querySelector('.video-toast');
+      if (old) old.remove();
+      const t = document.createElement('div');
+      t.className = 'video-toast';
+      t.innerHTML = `<span class="close-x" onclick="this.parentElement.remove()">✕</span>` + html;
+      document.body.appendChild(t);
+      if (durationMs) setTimeout(() => { try { t.remove(); } catch(e){} }, durationMs);
+    }
+
+    /* ── 이미지 사전 로드 ── */
+    async function loadImageData(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          // Fallback via convertImgSrc helper (3-tier CORS)
+          const probe = document.createElement('img');
+          probe.src = src;
+          probe.onload = async () => {
+            const dataUrl = await convertImgSrc(probe);
+            const img2 = new Image();
+            img2.onload = () => resolve(img2);
+            img2.onerror = () => resolve(null);
+            img2.src = dataUrl;
+          };
+          probe.onerror = () => resolve(null);
+        };
+        img.src = src;
+      });
+    }
+
+    /* ── DOM 에서 제품 카드 정보 수집 ── */
+    async function prepareProductSequence() {
+      const calEl = document.getElementById('calendar');
+      const calRect = calEl.getBoundingClientRect();
+      // calendar 의 디자인 1080×1350 vs 화면 표시 크기 — 좌표 보정용 스케일
+      const scaleX = VIDEO_W / calRect.width;
+      const scaleY = VIDEO_H / calRect.height;
+
+      // 현재 표시 중인 연/월 — 시작일을 "5월 7일" 형태로 만들기 위해 필요
+      let curYear = SELECTED_YEAR, curMonth = SELECTED_MONTH;
+      if (curYear === null && LOADED_PRODUCTS[0]) {
+        const sd = new Date(LOADED_PRODUCTS[0].startDate);
+        curYear = sd.getFullYear(); curMonth = sd.getMonth();
+      }
+      if (curYear === null) { const n = new Date(); curYear = n.getFullYear(); curMonth = n.getMonth(); }
+
+      const cards = Array.from(calEl.querySelectorAll('.product-card'));
+      const sequence = [];
+      for (const card of cards) {
+        const r = card.getBoundingClientRect();
+        const imgEl = card.querySelector('img');
+        const nameEl = card.querySelector('.product-name');
+        const descEl = card.querySelector('.product-desc');
+        if (!imgEl) continue;
+        const name = (nameEl?.textContent || '').trim();
+        const desc = (descEl?.textContent || '').trim();
+        // 시작일 추출 — pname-{day} 의 day 가 그 제품의 공구 시작일
+        let day = null;
+        const key = nameEl?.dataset?.editKey || '';
+        const m = key.match(/pname-(\d+)/);
+        if (m) day = parseInt(m[1], 10);
+        const dayLabel = day ? `${curMonth + 1}월 ${day}일` : '';
+        sequence.push({
+          imgSrc: imgEl.src,
+          name, desc, day, dayLabel,
+          // VIDEO 캔버스 좌표계로 변환된 슬롯 위치 (카드 좌상단 + 폭/높이)
+          x: (r.left - calRect.left) * scaleX,
+          y: (r.top - calRect.top) * scaleY,
+          w: r.width * scaleX,
+          h: r.height * scaleY,
+        });
+      }
+      // 이미지 사전 로드 (실패 시 null)
+      for (let i = 0; i < sequence.length; i++) {
+        if (_videoCancelled) return [];
+        sequence[i].img = await loadImageData(sequence[i].imgSrc);
+        updateVideoProgress(5 + (i / Math.max(1, sequence.length)) * 15,
+          `이미지 로딩 ${i+1}/${sequence.length}`);
+      }
+      return sequence.filter(s => s.img);
+    }
+
+    /* ── easing 함수 ── */
+    /* ── 인트로 타이틀 카드 — 캘린더 헤더(월·약사 공동구매 일정·핸들) 강조 ── */
+    function drawIntroTitleCard(ctx, alpha) {
+      if (alpha <= 0) return;
+      try {
+        const monthNum = (document.querySelector('.month-num')?.textContent || '').trim() || '00';
+        const monthName = (document.querySelector('.month-name')?.textContent || '').trim() || '';
+        const title = (document.querySelector('.calendar-title')?.textContent || '').trim() || '공동구매 일정';
+        const handle = (document.querySelector('.handle')?.textContent || '').trim() || '';
+        const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+        const fontFamily = (localStorage.getItem('selected_font') || 'Jua') + ', "Noto Sans KR", sans-serif';
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 배경 — accent 그라데이션
+        const grad = ctx.createLinearGradient(0, 0, 0, VIDEO_H);
+        grad.addColorStop(0, accent);
+        grad.addColorStop(1, hexBlend(accent, '#FFFBF9', 0.6));
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+
+        // 데코 월번호 — 좌측에 큰 흐릿한 숫자 (안전한 크기 360px)
+        ctx.save();
+        ctx.font = `bold 360px ${fontFamily}`;
+        ctx.fillStyle = 'rgba(255,255,255,0.30)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(monthNum, 30, VIDEO_H * 0.30);
+        ctx.restore();
+
+        // 월명 (영문)
+        if (monthName) {
+          ctx.fillStyle = '#fff';
+          ctx.font = `italic 96px Georgia, "Inter", serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(monthName, VIDEO_W / 2, VIDEO_H * 0.45);
+        }
+
+        // 캘린더 타이틀 — 가장 큰 강조
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const titleFontSize = title.length > 14 ? 72 : 88;
+        ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
+        const lines = wrapCanvasText(ctx, title, ctx.font, VIDEO_W - 100, 2);
+        const titleY = VIDEO_H * 0.60;
+        const lineH = titleFontSize + 12;
+        lines.forEach((ln, i) => ctx.fillText(ln, VIDEO_W / 2, titleY + i * lineH));
+
+        // 핸들
+        if (handle) {
+          ctx.font = `42px "Inter", "Noto Sans KR", sans-serif`;
+          ctx.fillStyle = 'rgba(255,255,255,0.88)';
+          const hY = titleY + (lines.length) * lineH + 60;
+          ctx.fillText(handle, VIDEO_W / 2, hY);
+        }
+
+        ctx.restore();
+      } catch (e) {
+        try { console.warn('[video] title card error:', e); } catch (_) {}
+        // 폴백: 단순 페이드인 (이전 동작)
+        ctx.save();
+        ctx.fillStyle = `rgba(255,251,249,${alpha})`;
+        ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+        ctx.restore();
+      }
+    }
+
+    function wrapCanvasText(ctx, text, font, maxWidth, maxLines) {
+      ctx.save();
+      ctx.font = font;
+      const chars = (text || '').split('');
+      const lines = [];
+      let line = '';
+      for (const ch of chars) {
+        const test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = ch;
+          if (lines.length >= maxLines) break;
+        } else {
+          line = test;
+        }
+      }
+      if (lines.length < maxLines && line) lines.push(line);
+      ctx.restore();
+      return lines;
+    }
+
+    function hexBlend(hex1, hex2, ratio) {
+      const p = (h) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+      const a = p(hex1), b = p(hex2);
+      const mix = a.map((v, i) => Math.round(v + (b[i] - v) * ratio));
+      return '#' + mix.map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function easeOutBack(t) {
+      const c1 = 1.70158, c3 = c1 + 1;
+      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
+    function easeInQuad(t) { return t * t; }
+
+    /* ── 인트로 상단 액센트 띠 — 슬라이드 다운 ── */
+    function drawIntroBanner(ctx, t) {
+      const slideDur = 500;
+      const slideT = Math.min(1, t / slideDur);
+      const easedT = 1 - Math.pow(1 - slideT, 3);
+      const H = 80;
+      const y = -H + (H + 10) * easedT;
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+      const fontFamily = (localStorage.getItem('selected_font') || 'Jua') + ', "Noto Sans KR", sans-serif';
+      const monthName = (document.querySelector('.month-name')?.textContent || '').trim();
+      const monthNum = (document.querySelector('.month-num')?.textContent || '').trim();
+      const title = (document.querySelector('.calendar-title')?.textContent || '').trim();
+      const handle = (document.querySelector('.handle')?.textContent || '').trim();
+
+      ctx.save();
+      // 띠 배경 (그라데이션)
+      const grad = ctx.createLinearGradient(0, y, 0, y + H);
+      grad.addColorStop(0, accent);
+      grad.addColorStop(1, hexBlend(accent, '#FFFBF9', 0.25));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y, VIDEO_W, H);
+      // 텍스트
+      ctx.fillStyle = '#fff';
+      ctx.textBaseline = 'middle';
+      ctx.font = `bold 30px ${fontFamily}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`${monthNum} ${monthName}  ·  ${title}`, 40, y + H / 2);
+      ctx.font = `400 24px "Inter", "Noto Sans KR", sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.textAlign = 'right';
+      ctx.fillText(handle, VIDEO_W - 40, y + H / 2);
+      ctx.restore();
+    }
+
+    /* ── 인트로 — 각 제품 자리 cascade 펄스 (날짜 동그라미 강조) ── */
+    function drawDatePulse(ctx, p, t01) {
+      const cx = p.x + p.w / 2;
+      const cy = p.y + p.h / 2;
+      const baseSize = Math.min(p.w, p.h);
+      // 펄스: 작게 시작 → 크게 → 사라짐
+      const radius = baseSize * 0.55 * (0.7 + t01 * 0.8);
+      const alpha = (1 - t01) * 0.55;
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 4 * (1 - t01) + 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /* ── 진행 표시 (상단 우측 작은 도트) ── */
+    function drawProgressDots(ctx, total, currentIdx, localT) {
+      const dotSize = 8;
+      const gap = 12;
+      const totalW = total * dotSize + (total - 1) * gap;
+      const startX = (VIDEO_W - totalW) / 2;
+      const y = 28;
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+      ctx.save();
+      for (let i = 0; i < total; i++) {
+        const x = startX + i * (dotSize + gap);
+        if (i < currentIdx) {
+          ctx.fillStyle = accent + 'CC'; // 완료
+        } else if (i === currentIdx) {
+          ctx.fillStyle = accent; // 현재
+          // 진행 바
+          ctx.save();
+          ctx.fillStyle = accent + '40';
+          ctx.fillRect(x, y - 1, dotSize, 2);
+          ctx.fillStyle = accent;
+          ctx.fillRect(x, y - 1, dotSize * localT, 2);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = 'rgba(0,0,0,0.15)'; // 아직
+        }
+        ctx.beginPath();
+        ctx.arc(x + dotSize / 2, y + dotSize / 2, dotSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* ── 제품 스포트라이트 — 제자리에서 큰 확대 + 강한 글로우 + accent 링 + 미세 펄스
+       핵심: 캘린더 가독성은 유지하면서 제품에 시선이 강하게 꽂히도록 ── */
+    function drawProductSpotlight(ctx, p, t01) {
+      const TARGET_SCALE = 2.05;             // 1.65 → 2.05 로 확대
+      const POP_RANGE = TARGET_SCALE - 1;
+
+      // 페이즈: pop in / hold (with subtle breathing) / pop out
+      let scale, glowAlpha, holdT = 0;
+      if (t01 < 0.15) {
+        const k = easeOutBack(t01 / 0.15);
+        scale = 1 + POP_RANGE * k;
+        glowAlpha = k;
+      } else if (t01 < 0.85) {
+        // hold 페이즈에 미세 호흡(breathing) — ±2% 사이드 사이클
+        holdT = (t01 - 0.15) / 0.70;
+        const breath = Math.sin(holdT * Math.PI * 2.5) * 0.025;
+        scale = TARGET_SCALE + breath * TARGET_SCALE;
+        glowAlpha = 1;
+      } else {
+        const k = easeInQuad((t01 - 0.85) / 0.15);
+        scale = TARGET_SCALE - POP_RANGE * k;
+        glowAlpha = 1 - k;
+      }
+
+      const homeCx = p.x + p.w / 2;
+      const homeCy = p.y + p.h / 2;
+      const lift = -50 * (scale - 1) / POP_RANGE;     // 살짝 더 들어올림
+      const cx = homeCx;
+      const cy = homeCy + lift;
+
+      const baseSize = Math.min(p.w, p.h);
+      const boxSize = baseSize * scale;
+      const imgW = p.img.naturalWidth || p.img.width || 1;
+      const imgH = p.img.naturalHeight || p.img.height || 1;
+      const ratio = imgW / imgH;
+      let drawW, drawH;
+      if (ratio >= 1) { drawW = boxSize; drawH = boxSize / ratio; }
+      else            { drawH = boxSize; drawW = boxSize * ratio; }
+
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+
+      // (1) 캔버스 가장자리 비네팅 — 화면 외곽만 살짝 어둡게, 제품 영역은 그대로
+      if (glowAlpha > 0.05) {
+        ctx.save();
+        ctx.globalAlpha = glowAlpha * 0.35;
+        const vRadius = Math.max(VIDEO_W, VIDEO_H) * 0.7;
+        const vGrad = ctx.createRadialGradient(cx, cy, vRadius * 0.45, cx, cy, vRadius);
+        vGrad.accentColorStop = null;
+        vGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        vGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
+        vGrad.addColorStop(1, 'rgba(0,0,0,0.45)');
+        ctx.fillStyle = vGrad;
+        ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+        ctx.restore();
+      }
+
+      // (2) 강한 라디얼 글로우 (제품 뒤)
+      if (glowAlpha > 0.05) {
+        const r = Math.max(drawW, drawH) * 1.1;
+        ctx.save();
+        ctx.globalAlpha = glowAlpha * 0.95;
+        const gGrad = ctx.createRadialGradient(cx, cy, r * 0.25, cx, cy, r);
+        gGrad.addColorStop(0, accent + 'AA');     // 진한 중심
+        gGrad.addColorStop(0.35, accent + '55');
+        gGrad.addColorStop(0.7, accent + '15');
+        gGrad.addColorStop(1, accent + '00');
+        ctx.fillStyle = gGrad;
+        ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+        ctx.restore();
+      }
+
+      // (3) 제품 이미지 — 깊은 그림자
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 40 * Math.min(1, (scale - 1) / POP_RANGE);
+      ctx.shadowOffsetY = 14;
+      try { ctx.drawImage(p.img, cx - drawW / 2, cy - drawH / 2, drawW, drawH); } catch (e) {}
+      ctx.restore();
+
+      // (4) accent 컬러 링 테두리 — 이미지 외곽에 얇게
+      if (glowAlpha > 0.05) {
+        ctx.save();
+        ctx.globalAlpha = glowAlpha * 0.85;
+        const ringPad = 14;
+        const rW = drawW + ringPad * 2;
+        const rH = drawH + ringPad * 2;
+        const rX = cx - rW / 2;
+        const rY = cy - rH / 2;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 5;
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(rX, rY, rW, rH, 18);
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(rX, rY, rW, rH);
+        }
+        ctx.restore();
+      }
+
+      // (5) 텍스트 풍선 — 위/아래 자동
+      if (t01 > 0.1 && t01 < 0.9) {
+        const balloonAlpha = Math.min(1, (t01 - 0.1) / 0.12) * Math.min(1, (0.9 - t01) / 0.12);
+        drawProductBalloon(ctx, p, cx, cy, drawW, drawH, balloonAlpha);
+      }
+    }
+
+    function drawProductBalloon(ctx, p, cx, cy, drawW, drawH, alpha) {
+      if (alpha <= 0) return;
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+      const fontFamily = (localStorage.getItem('selected_font') || 'Jua') + ', "Noto Sans KR", sans-serif';
+
+      // 풍선 크기
+      const balloonW = Math.min(700, VIDEO_W - 80);
+      const balloonH = p.desc ? 200 : 130;
+      const balloonX = (VIDEO_W - balloonW) / 2;
+      // 제품이 캔버스 아래쪽(60% 이하)이면 풍선을 위로, 아니면 아래로
+      const showAbove = cy > VIDEO_H * 0.55;
+      const margin = 40;
+      let balloonY;
+      if (showAbove) {
+        balloonY = (cy - drawH / 2) - balloonH - margin;
+        if (balloonY < 80) balloonY = 80; // 진행 dots 밑
+      } else {
+        balloonY = (cy + drawH / 2) + margin;
+        if (balloonY + balloonH > VIDEO_H - 20) balloonY = VIDEO_H - balloonH - 20;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      // 풍선 배경 (반투명 베이지)
+      ctx.fillStyle = 'rgba(255, 251, 249, 0.96)';
+      ctx.strokeStyle = accent + '55';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 6;
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(balloonX, balloonY, balloonW, balloonH, 18);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(balloonX, balloonY, balloonW, balloonH);
+      }
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 날짜 칩 — 풍선 상단 가장자리에 걸침
+      if (p.dayLabel) {
+        ctx.font = `bold 26px ${fontFamily}`;
+        const chipText = `${p.dayLabel} OPEN`;
+        const tw = ctx.measureText(chipText).width;
+        const chipPad = 22, chipH = 44;
+        const chipW = tw + chipPad * 2;
+        const chipX = balloonX + (balloonW - chipW) / 2;
+        const chipY = balloonY - chipH / 2;
+        ctx.fillStyle = accent;
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(chipX, chipY, chipW, chipH, 22);
+          ctx.fill();
+        } else {
+          ctx.fillRect(chipX, chipY, chipW, chipH);
+        }
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(chipText, balloonX + balloonW / 2, chipY + chipH / 2 + 1);
+      }
+
+      // 제품명
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'center';
+      ctx.font = `bold 44px ${fontFamily}`;
+      ctx.fillStyle = '#2C2620';
+      const nameY = balloonY + (p.desc ? 80 : 85);
+      ctx.fillText(p.name || '', balloonX + balloonW / 2, nameY);
+
+      // 설명 (있을 때만)
+      if (p.desc) {
+        ctx.font = `26px ${fontFamily}`;
+        ctx.fillStyle = '#6B5D54';
+        const lines = wrapCanvasText(ctx, p.desc, ctx.font, balloonW - 80, 2);
+        lines.forEach((ln, i) => {
+          ctx.fillText(ln, balloonX + balloonW / 2, nameY + 40 + i * 32);
+        });
+      }
+      ctx.restore();
+    }
+
+    /* (LEGACY) drawPopOut — 더 이상 사용 안 함, 호환 위해 유지 */
+    function drawPopOut(ctx, p, t01) {
+      const TARGET_BOX = 320;            // 중앙에 도달했을 때 이미지 박스 한 변
+      const TARGET_CX = VIDEO_W / 2;
+      const TARGET_CY = VIDEO_H / 2 - 70; // 중앙에서 살짝 위로 — 아래에 텍스트 공간
+      const homeCx = p.x + p.w / 2;
+      const homeCy = p.y + p.h / 2;
+
+      // 4000ms 페이즈 기준 분할 — pop/return 은 ~500ms 절대 시간 유지, hold 만 2배로
+      // pop:    0     ~ 0.125 (500ms)
+      // hold:   0.125 ~ 0.85  (2900ms — 이전 1375ms 대비 약 2.1배)
+      // return: 0.85  ~ 0.975 (500ms)
+      // settle: 0.975 ~ 1.0   (100ms)
+      let cx, cy, boxSize;
+      if (t01 < 0.125) {
+        const k = easeOutBack(t01 / 0.125);
+        cx = homeCx + (TARGET_CX - homeCx) * k;
+        cy = homeCy + (TARGET_CY - homeCy) * k;
+        boxSize = Math.min(p.w, p.h) + (TARGET_BOX - Math.min(p.w, p.h)) * k;
+      } else if (t01 < 0.85) {
+        cx = TARGET_CX; cy = TARGET_CY; boxSize = TARGET_BOX;
+      } else if (t01 < 0.975) {
+        const k = easeInQuad((t01 - 0.85) / 0.125);
+        cx = TARGET_CX + (homeCx - TARGET_CX) * k;
+        cy = TARGET_CY + (homeCy - TARGET_CY) * k;
+        boxSize = TARGET_BOX + (Math.min(p.w, p.h) - TARGET_BOX) * k;
+      } else {
+        return;
+      }
+
+      // 이미지 종횡비 유지하면서 boxSize × boxSize 박스 안에 contain
+      const imgW = p.img.naturalWidth || p.img.width || 1;
+      const imgH = p.img.naturalHeight || p.img.height || 1;
+      const ratio = imgW / imgH;
+      let drawW, drawH;
+      if (ratio >= 1) { drawW = boxSize; drawH = boxSize / ratio; }
+      else            { drawH = boxSize; drawW = boxSize * ratio; }
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 28;
+      ctx.shadowOffsetY = 8;
+      try { ctx.drawImage(p.img, cx - drawW / 2, cy - drawH / 2, drawW, drawH); } catch (e) {}
+      ctx.restore();
+
+      // 텍스트: hold 페이즈에 페이드인 — 박스 위 날짜 칩 / 박스 아래 이름·설명
+      // hold 가 0.125~0.85 이므로 페이드 0.125~0.185 in, 0.79~0.85 out
+      if (t01 > 0.125 && t01 < 0.85) {
+        const textAlpha = Math.min(1, (t01 - 0.125) / 0.06) * Math.min(1, (0.85 - t01) / 0.06);
+        const TEXT_Y = TARGET_CY + TARGET_BOX / 2 + 60;
+        const fontFamily = (localStorage.getItem('selected_font') || 'Jua') + ', "Noto Sans KR", sans-serif';
+        const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-hex') || '#D4776D').trim() || '#D4776D';
+
+        // 1) 날짜 칩 — 이미지 박스 위쪽
+        if (p.dayLabel) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, textAlpha);
+          ctx.font = `bold 32px ${fontFamily}`;
+          const chipText = `${p.dayLabel} OPEN`;
+          const tw = ctx.measureText(chipText).width;
+          const chipPadX = 22, chipH = 52;
+          const chipW = tw + chipPadX * 2;
+          const chipX = VIDEO_W / 2 - chipW / 2;
+          const chipY = TARGET_CY - TARGET_BOX / 2 - chipH - 28;
+          ctx.fillStyle = accent;
+          if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(chipX, chipY, chipW, chipH, 26);
+            ctx.fill();
+          } else {
+            ctx.fillRect(chipX, chipY, chipW, chipH);
+          }
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(chipText, VIDEO_W / 2, chipY + chipH / 2 + 1);
+          ctx.restore();
+        }
+
+        // 2) 이름·설명
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, textAlpha);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        // 이름
+        ctx.font = `bold 52px ${fontFamily}`;
+        ctx.fillStyle = '#2C2620';
+        ctx.fillText(p.name || '', VIDEO_W / 2, TEXT_Y);
+        // 설명 (최대 2줄, 한 줄 maxW 자동 줄바꿈)
+        if (p.desc) {
+          ctx.font = `26px ${fontFamily}`;
+          ctx.fillStyle = '#6B5D54';
+          const maxW = VIDEO_W - 160;
+          const chars = (p.desc || '').replace(/\s+/g, ' ').split('');
+          const lines = [];
+          let line = '';
+          for (const ch of chars) {
+            const test = line + ch;
+            if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = ch; }
+            else line = test;
+          }
+          if (line) lines.push(line);
+          lines.slice(0, 2).forEach((ln, i) => {
+            ctx.fillText(ln, VIDEO_W / 2, TEXT_Y + 60 + i * 36);
+          });
+        }
+        ctx.restore();
+      }
+    }
+
+    /* ── 메인 영상 녹화 진입점 ── */
+    window.recordCalendarVideo = async function() {
+      const btn = document.getElementById('video-btn');
+      if (btn) btn.disabled = true;
+      try {
+        // 0. 사전 점검
+        if (!LOADED_PRODUCTS || LOADED_PRODUCTS.length === 0) {
+          alert('먼저 캘린더를 로드하세요 (로그인 + 새로고침).');
+          if (btn) btn.disabled = false; return;
+        }
+        showVideoProgress('준비 중...');
+        updateVideoProgress(2, '폰트 로딩 중...');
+        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
+
+        // 1. 캘린더 DOM 의 제품 카드 정보 수집 + 이미지 사전 로드
+        updateVideoProgress(5, '제품 데이터 수집 중...');
+        const products = await prepareProductSequence();
+        if (_videoCancelled) { if (btn) btn.disabled = false; return; }
+        if (products.length === 0) {
+          alert('영상화할 제품이 없습니다.');
+          hideVideoProgress(); if (btn) btn.disabled = false; return;
+        }
+
+        // 2. 캘린더 전체 한 번 html2canvas — 정적 배경으로 사용
+        updateVideoProgress(20, '캘린더 스냅샷 생성 중...');
+        const cal = document.getElementById('calendar');
+        document.body.classList.add('saving'); // ✏️/🔗/× UI 마커 임시 숨김
+        const placeholders = Array.from(cal.querySelectorAll('.product-desc.placeholder'));
+        placeholders.forEach(el => { el.dataset._txt = el.textContent; el.textContent = ''; });
+        const emptyBadges = Array.from(cal.querySelectorAll('.date-badge.empty-badge'));
+        emptyBadges.forEach(el => el.classList.add('save-hide'));
+        // CORS 이미지 사전 변환 (saveImage 와 동일 패턴)
+        const imgs = cal.querySelectorAll('img');
+        const origSrcs = [];
+        for (const img of imgs) {
+          origSrcs.push(img.src);
+          img.src = await convertImgSrc(img);
+        }
+        await new Promise(r => setTimeout(r, 80));
+        const _origCP = CanvasRenderingContext2D.prototype.createPattern;
+        CanvasRenderingContext2D.prototype.createPattern = function(img, rep) {
+          if (img && (img.width === 0 || img.height === 0)) return null;
+          return _origCP.call(this, img, rep);
+        };
+        // 마지막 주에 제품 추가로 1350 넘는 경우 짤림 방지
+        const videoNaturalH = Math.max(1350, cal.scrollHeight);
+        cal.style.height = videoNaturalH + 'px'; cal.style.overflow = 'hidden';
+        const snap = await html2canvas(cal, { scale: 2, backgroundColor: '#FFFBF9', allowTaint: true, width: 1080, height: videoNaturalH });
+        CanvasRenderingContext2D.prototype.createPattern = _origCP;
+        cal.style.height = ''; cal.style.overflow = '';
+        imgs.forEach((img, i) => { img.src = origSrcs[i]; });
+        emptyBadges.forEach(el => el.classList.remove('save-hide'));
+        placeholders.forEach(el => { el.textContent = el.dataset._txt || ''; delete el.dataset._txt; });
+        document.body.classList.remove('saving');
+        if (_videoCancelled) { if (btn) btn.disabled = false; return; }
+
+        // 3. 출력 canvas + MediaRecorder
+        updateVideoProgress(30, '녹화 준비 중...');
+        const out = document.createElement('canvas');
+        out.width = VIDEO_W; out.height = VIDEO_H;
+        // 캔버스를 DOM 에 부착 (오프스크린) — 일부 브라우저는 detached 캔버스의 captureStream 을 잘 처리 못함
+        out.style.cssText = 'position:fixed;left:-99999px;top:-99999px;width:1080px;height:1350px;pointer-events:none;';
+        document.body.appendChild(out);
+        const ctx = out.getContext('2d');
+
+        // ⚠️ captureStream 호출 전에 캔버스를 먼저 그려둔다 — 빈 캔버스로 stream 을 만들면 0 byte 결과
+        ctx.fillStyle = '#FFFBF9';
+        ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+        if (snap) { try { ctx.drawImage(snap, 0, 0, VIDEO_W, VIDEO_H); } catch (e) {} }
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        const stream = out.captureStream(VIDEO_FPS);
+        const tracks = stream.getVideoTracks ? stream.getVideoTracks() : [];
+        try { console.log('[video] stream video tracks:', tracks.length, tracks[0]); } catch (_) {}
+        if (!tracks.length) {
+          try { document.body.removeChild(out); } catch (e) {}
+          alert('영상 스트림을 만들 수 없습니다. Chrome/Edge 데스크탑에서 다시 시도해보세요.');
+          hideVideoProgress(); if (btn) btn.disabled = false; return;
+        }
+
+        const mimeCandidates = [
+          'video/webm; codecs=vp9',
+          'video/webm; codecs=vp8',
+          'video/webm',
+          'video/mp4; codecs=avc1',
+          'video/mp4',
+        ];
+        let mime = mimeCandidates.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+        if (!mime) {
+          try { document.body.removeChild(out); } catch (e) {}
+          alert('이 브라우저는 영상 녹화를 지원하지 않습니다. Chrome 또는 Edge 데스크탑을 권장합니다.');
+          hideVideoProgress(); if (btn) btn.disabled = false; return;
+        }
+        try { console.log('[video] using mime:', mime); } catch (_) {}
+        const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2_500_000 });
+        _videoActiveRecorder = recorder;
+        const chunks = [];
+        recorder.ondataavailable = e => {
+          if (e.data && e.data.size) chunks.push(e.data);
+          try { console.log('[video] chunk:', e.data && e.data.size, 'bytes, total chunks:', chunks.length); } catch (_) {}
+        };
+        recorder.onerror = (e) => { try { console.error('[video] recorder error:', e); } catch (_) {} };
+        const stoppedPromise = new Promise(res => { recorder.onstop = res; });
+
+        recorder.start(1000); // 1초마다 chunk — 중간 끊김 / 빈 파일 위험 감소
+        try { console.log('[video] recorder state after start:', recorder.state); } catch (_) {}
+
+        // 4. 애니메이션 루프
+        const N = products.length;
+        const TOTAL = VIDEO_INTRO_MS + N * VIDEO_PER_PRODUCT_MS + VIDEO_OUTRO_MS;
+        const start = performance.now();
+        let rafId = null;
+
+        function frame() {
+          if (_videoCancelled) { try { recorder.stop(); } catch(e){} return; }
+          const t = performance.now() - start;
+          if (t >= TOTAL) {
+            try { if (recorder.state === 'recording' && recorder.requestData) recorder.requestData(); } catch(e){}
+            try { recorder.stop(); } catch(e){}
+            return;
+          }
+
+          // 모든 드로잉은 try/catch — 한 페이즈가 에러나도 녹화는 계속 진행해서 파일 깨짐 방지
+          try {
+            ctx.fillStyle = '#FFFBF9';
+            ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+            // snap 이 2x 스케일이므로 drawImage 시 캔버스 크기에 맞게 축소
+            if (snap) ctx.drawImage(snap, 0, 0, VIDEO_W, VIDEO_H);
+
+            // 인트로 — 캘린더는 처음부터 보이고, 상단 액센트 띠가 슬라이드 다운
+            if (t < VIDEO_INTRO_MS) {
+              // 0~600ms: 캘린더 자체 페이드인
+              if (t < 600) {
+                const k = 1 - t / 600;
+                ctx.fillStyle = `rgba(255,251,249,${k})`;
+                ctx.fillRect(0, 0, VIDEO_W, VIDEO_H);
+              }
+              try { drawIntroBanner(ctx, t); } catch (e) { console.warn('[video] intro banner:', e); }
+              if (t > 600 && products.length > 0) {
+                const cascadeStart = 600;
+                const cascadeDur = VIDEO_INTRO_MS - 800;
+                const per = cascadeDur / products.length;
+                products.forEach((p, i) => {
+                  const pStart = cascadeStart + i * per * 0.6;
+                  const localT = (t - pStart) / 400;
+                  if (localT > 0 && localT < 1) {
+                    try { drawDatePulse(ctx, p, localT); } catch (e) { /* skip pulse */ }
+                  }
+                });
+              }
+            } else if (t < VIDEO_INTRO_MS + N * VIDEO_PER_PRODUCT_MS) {
+              const phase = Math.floor((t - VIDEO_INTRO_MS) / VIDEO_PER_PRODUCT_MS);
+              const local = ((t - VIDEO_INTRO_MS) % VIDEO_PER_PRODUCT_MS) / VIDEO_PER_PRODUCT_MS;
+              const p = products[phase];
+              if (p) {
+                try { drawProductSpotlight(ctx, p, local); } catch (e) { console.warn('[video] spotlight:', e); }
+              }
+              try { drawProgressDots(ctx, products.length, phase, local); } catch (e) { /* skip dots */ }
+            }
+            // 아웃트로: 스냅샷만 보임
+          } catch (e) {
+            try { console.error('[video] frame draw error:', e); } catch (_) {}
+          }
+
+          try { updateVideoProgress(30 + (t / TOTAL) * 65, '녹화 중...',
+            `${Math.max(0, Math.ceil((TOTAL - t) / 1000))}초 남음`); } catch (e) {}
+          // rAF 는 무조건 다시 예약 — 드로잉 에러가 나도 녹화가 끝까지 진행되도록
+          rafId = requestAnimationFrame(frame);
+        }
+        rafId = requestAnimationFrame(frame);
+
+        await stoppedPromise;
+        if (rafId) cancelAnimationFrame(rafId);
+        _videoActiveRecorder = null;
+        // 캔버스 DOM 정리
+        try { document.body.removeChild(out); } catch (e) {}
+        if (_videoCancelled) { hideVideoProgress(); if (btn) btn.disabled = false; return; }
+
+        // 5. 다운로드 — 영상
+        updateVideoProgress(96, '파일 저장 중...');
+        const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+        const blob = new Blob(chunks, { type: mime });
+        try { console.log('[video] final blob:', blob.size, 'bytes from', chunks.length, 'chunks · mime:', mime); } catch (_) {}
+        if (!blob.size) {
+          hideVideoProgress();
+          alert('녹화 데이터가 비어 있습니다 (0 bytes). 브라우저 콘솔(F12)을 열고 [video] 로그를 확인 후 알려주세요. Chrome/Edge 데스크탑에서 다시 시도해보세요.');
+          if (btn) btn.disabled = false;
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const dateTag = getMonthTag();
+        const a = document.createElement('a');
+        a.href = url; a.download = `공구캘린더_${dateTag}_영상.${ext}`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+        // (이전: AI 영상 프롬프트 .txt 자동 다운로드 → 사용 빈도 낮아 자동 다운로드 제거.
+        //  필요하면 콘솔에서 downloadVideoPrompt() 호출 가능)
+        updateVideoProgress(100, '완료!');
+        setTimeout(() => hideVideoProgress(), 600);
+
+        // 7. 안내 toast
+        const toastHtml = ext === 'mp4'
+          ? `✅ 영상(.mp4) 다운로드 완료. 인스타에 바로 업로드 가능합니다.`
+          : `✅ 영상(.webm) 다운로드 완료.<br>
+             인스타그램은 MP4 만 지원합니다. 변환:
+             <a href="https://cloudconvert.com/webm-to-mp4" target="_blank" rel="noopener">CloudConvert ↗</a> ·
+             <a href="https://www.adobe.com/express/feature/video/convert/webm-to-mp4" target="_blank" rel="noopener">Adobe Express ↗</a>`;
+        showVideoToast(toastHtml, 15000);
+      } catch (e) {
+        console.error('[video] error:', e);
+        alert('영상 생성 실패: ' + (e && e.message || e));
+        hideVideoProgress();
+      } finally {
+        if (btn) btn.disabled = false;
+        document.body.classList.remove('saving'); // 안전망 — 에러 시에도 마커 복구
+      }
+    };
+
+    function getMonthTag() {
+      let y = SELECTED_YEAR, m = SELECTED_MONTH;
+      if (y === null && LOADED_PRODUCTS[0]) {
+        const sd = new Date(LOADED_PRODUCTS[0].startDate);
+        y = sd.getFullYear(); m = sd.getMonth();
+      }
+      if (y === null) { const n = new Date(); y = n.getFullYear(); m = n.getMonth(); }
+      return y + '-' + String(m + 1).padStart(2, '0');
+    }
+
+    /* ── AI 영상 생성 도구용 프롬프트 ──
+       (자동 다운로드 안 함. 필요하면 브라우저 콘솔에서 downloadVideoPrompt() 호출) ── */
+    window.downloadVideoPrompt = async function() {
+      try {
+        const products = await prepareProductSequence();
+        if (!products.length) { alert('제품 데이터를 먼저 로드해주세요.'); return; }
+        const text = generateVideoPrompt(products);
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `공구캘린더_${getMonthTag()}_영상프롬프트.txt`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } catch (e) { console.error('[prompt] error:', e); alert('프롬프트 생성 실패: ' + (e?.message || e)); }
+    };
+
+    function generateVideoPrompt(products) {
+      let y = SELECTED_YEAR, m = SELECTED_MONTH;
+      if (y === null && LOADED_PRODUCTS[0]) {
+        const sd = new Date(LOADED_PRODUCTS[0].startDate);
+        y = sd.getFullYear(); m = sd.getMonth();
+      }
+      if (y === null) { const n = new Date(); y = n.getFullYear(); m = n.getMonth(); }
+      const monthName = MONTH_NAMES[m] || '';
+      const monthNum = String(m + 1).padStart(2, '0');
+      const handle = (document.querySelector('.handle')?.textContent || HANDLE).trim();
+      const title = (document.querySelector('.calendar-title')?.textContent || TITLE).trim();
+      const accentHex = localStorage.getItem('selected_color') || '#D4776D';
+      const fontName = localStorage.getItem('selected_font') || 'Jua';
+      // 제품 리스트 — DOM 순서대로 (시작일 정렬됨)
+      const productLines = products.map((p, i) => {
+        const date = guessProductDate(p, i);
+        return `   - ${monthName} ${date}: ${p.name}${p.desc ? ' — ' + p.desc.replace(/\n+/g, ', ') : ''}`;
+      }).join('\n');
+      const duration = Math.round((VIDEO_INTRO_MS + products.length * VIDEO_PER_PRODUCT_MS + VIDEO_OUTRO_MS) / 1000);
+      return [
+        `[VIDEO PROMPT for AI generation tools — Runway / Pika / Veo / Sora]`,
+        ``,
+        `A vertical 4:5 aspect ratio (1080×1350) promotional video for a Korean`,
+        `pharmacist influencer's monthly group-buy schedule of health supplements,`,
+        `to be posted on Instagram. Soft beige/cream paper-texture background with`,
+        `clean minimalist design. Accent color ${accentHex} used throughout for`,
+        `headers, date badges, and subtle highlights.`,
+        ``,
+        `ON-SCREEN HEADER (top): large "${monthNum} ${monthName}" month indicator in`,
+        `elegant serif typography, with sub-title "${title}" and handle "${handle}".`,
+        ``,
+        `LAYOUT: A 7-column × 5-row monthly grid showing dates of ${monthName} ${y}.`,
+        `Each date that has a group-buy launch shows a circular ${accentHex} badge`,
+        `around the date number, followed by a product card with a product photo`,
+        `(square thumbnail) and short text (product name + 1-line description).`,
+        ``,
+        `ANIMATION SEQUENCE (~${duration} seconds total):`,
+        `1. (0-2s) Calendar appears with all dates and product cards visible,`,
+        `   soft fade-in.`,
+        `2. (2~${duration - 2}s) Each product in chronological order pops out from its`,
+        `   calendar slot toward the center of the screen, scales 3x larger, holds`,
+        `   for ~1 second showing its name and description in large readable Korean`,
+        `   typography, then smoothly returns to its original slot. Easing:`,
+        `   ease-out-back on the way out, ease-in-quad on return.`,
+        `   Products to animate (in order):`,
+        productLines,
+        `3. (${duration - 2}~${duration}s) All products settled back into calendar grid,`,
+        `   final wide shot holds for 2 seconds.`,
+        ``,
+        `STYLE: Light, airy, natural, healthy-living aesthetic. Korean health-`,
+        `supplement influencer brand identity. Subtle paper-grain texture. No`,
+        `harsh shadows. Smooth motion blur on pop transitions. Product photography`,
+        `remains crisp (no AI hallucination — use exact product reference images`,
+        `attached separately).`,
+        ``,
+        `TYPOGRAPHY: ${fontName} for headers, modern Korean sans-serif`,
+        `(Pretendard / Noto Sans KR style) for product names and descriptions.`,
+        `Bold weight on product name (~64px during pop-out), regular weight on`,
+        `description (~32px).`,
+        ``,
+        `CAMERA: Static framing, no panning. Subtle parallax depth as products`,
+        `pop out (background slightly blurs out of focus during pop-out moments).`,
+        ``,
+        `AUDIO: Soft, gentle background music (acoustic guitar + soft piano,`,
+        `healthy lifestyle vibe). Subtle "pop" sound on each product appearance.`,
+        `Volume low so on-screen text remains primary.`,
+        ``,
+        `OUTPUT: 1080×1350 (4:5), 30fps, ~${duration} seconds, MP4 H.264, suitable`,
+        `for Instagram feed video (also crops cleanly to 9:16 Reels with side bars).`,
+        ``,
+        `REFERENCE IMAGES: Attach the exact product package photos for each item`,
+        `in the list above so the AI does not hallucinate package designs.`,
+      ].join('\n');
+    }
+
+    function guessProductDate(_p, idx) {
+      // products 는 DOM 순서(=시작일 순) — LOADED_PRODUCTS 의 그 달 정렬과 매칭 시도
+      let y = SELECTED_YEAR, m = SELECTED_MONTH;
+      if (y === null && LOADED_PRODUCTS[0]) {
+        const sd = new Date(LOADED_PRODUCTS[0].startDate);
+        y = sd.getFullYear(); m = sd.getMonth();
+      }
+      if (y === null) return '';
+      const monthProducts = LOADED_PRODUCTS
+        .filter(p => p.startYear === y && p.startMonth === m)
+        .sort((a, b) => a.startDay - b.startDay);
+      const matched = monthProducts[idx];
+      return matched ? matched.startDay + '일' : '';
+    }
   </script>
 </body>
 </html>
