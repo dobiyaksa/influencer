@@ -320,6 +320,10 @@
     .btn-sm:hover { border-color: var(--teal); color: var(--teal); }
     .btn-sm.active { background: var(--teal); color: #0d1117; border-color: var(--teal); font-weight: 700; }
     .consult-filter-btn.active { background: var(--teal); color: #0d1117; border-color: var(--teal); }
+    @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .ig-mode-btn { transition: background 0.15s, color 0.15s; }
+    .ig-mode-btn.active { background: var(--teal) !important; color: #0d1117 !important; font-weight: 700; }
+    .ig-mode-btn:not(.active):hover { background: rgba(255,255,255,0.04); }
 
     .btn-sm.primary {
       background: var(--teal);
@@ -1643,6 +1647,9 @@
       <a class="sidebar-item" href="#contents" data-view="contents">
         <span class="icon">📷</span><span>인스타그램</span>
       </a>
+      <a class="sidebar-item" href="#ig-search" data-view="ig-search">
+        <span class="icon">🔍</span><span>인스타그램 해시태그 검색</span>
+      </a>
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-group-label">직원 관리</div>
@@ -2053,6 +2060,42 @@
           </div>
         </div>
 
+        <!-- 인스타 댓글 당첨자 추출 -->
+        <div class="dash-card" style="padding:20px 24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div>
+              <h3 style="margin:0; font-size:15px; color:#fff;">🎯 인스타 게시물에서 당첨자 핸들 추출</h3>
+              <p style="margin:4px 0 0; color:#8b949e; font-size:12px;">
+                Claude for Chrome 가 게시물 댓글 트리를 읽어, <strong>게시 작성자가 "당첨" 키워드로 답글 단 댓글 작성자</strong> 의 핸들만 수집합니다.
+              </p>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:10px; align-items:end;">
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">📷 게시물 URL</label>
+              <input type="url" id="wx-post-url" placeholder="https://www.instagram.com/p/..."
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">📝 당첨 키워드</label>
+              <input type="text" id="wx-keyword" value="당첨" placeholder="당첨 / 당첨자 / 🎉"
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">👤 게시 작성자</label>
+              <input type="text" id="wx-author" placeholder="@yakstory119"
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <button class="btn-sm primary" onclick="runWinnerExtract()" style="padding:10px 14px; white-space:nowrap;">🤖 Claude 로 추출</button>
+          </div>
+          <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-sm" onclick="showWinnerPasteDialog()">📋 결과 JSON 직접 붙여넣기</button>
+            <button class="btn-sm" onclick="showWinnerGuide()">📖 사용법</button>
+            <button class="btn-sm" onclick="clearWinnerCache()" style="margin-left:auto;">🗑 추출 기록 초기화</button>
+          </div>
+          <div id="wx-results" style="margin-top:14px;"></div>
+        </div>
+
         <!-- 샘플 엑셀 로더 / 뷰 -->
         <div class="dash-card ew-card" style="padding:20px 24px;">
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
@@ -2283,6 +2326,84 @@
           <div id="contents-grid-wrap">
             <div class="ig-empty">인스타 아이디과 토큰을 설정하면 컨텐츠가 표시됩니다.</div>
           </div>
+        </div>
+      </section>
+
+      <!-- 인스타그램 해시태그 검색 -->
+      <section class="view" id="view-ig-search">
+        <div class="dash-card" style="padding:22px 24px;">
+          <h2 style="margin:0 0 6px; font-size:22px; color:#fff;">🔍 인스타그램 해시태그 검색</h2>
+          <p style="margin:0; color:#8b949e; font-size:13px;">
+            제품명·성분명·해시태그로 최근 노출된 인스타 게시글을 모아 보여줍니다.
+            Claude for Chrome 확장이 instagram.com 에 직접 가서 데이터를 수집하므로 정확합니다.
+          </p>
+        </div>
+
+        <!-- 검색 폼 -->
+        <div class="dash-card" style="padding:20px 24px;">
+          <div style="display:grid; grid-template-columns: 1fr 180px 120px auto; gap:10px; align-items:end;">
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">검색어</label>
+              <input type="text" id="ig-search-query" placeholder="예) YDY뉴트리션, #한독테라큐, #오메가3"
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:14px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">기간</label>
+              <select id="ig-search-range"
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+                <option value="7">최근 1주</option>
+                <option value="14" selected>최근 2주</option>
+                <option value="30">최근 1개월</option>
+                <option value="90">최근 3개월</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; color:#8b949e; font-weight:700; display:block; margin-bottom:4px;">최대 개수</label>
+              <input type="number" id="ig-search-max" value="10" min="5" max="200"
+                style="width:100%; box-sizing:border-box; padding:9px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:13px;">
+            </div>
+            <button class="btn-sm primary" onclick="runIgSearch()" style="padding:10px 18px; font-size:13px; white-space:nowrap;">🤖 Claude 사이드바로 검색</button>
+          </div>
+          <!-- 모드 토글 -->
+          <div style="display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:11px; color:#8b949e; font-weight:700;">수집 모드:</span>
+            <div style="display:flex; gap:2px; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:3px;">
+              <button id="ig-mode-fast" class="ig-mode-btn active" onclick="setIgSearchMode('fast')"
+                style="padding:6px 14px; background:transparent; border:0; color:#c9d1d9; font-size:12px; font-family:inherit; cursor:pointer; border-radius:5px;">
+                ⚡ 빠른 모드
+              </button>
+              <button id="ig-mode-accurate" class="ig-mode-btn" onclick="setIgSearchMode('accurate')"
+                style="padding:6px 14px; background:transparent; border:0; color:#c9d1d9; font-size:12px; font-family:inherit; cursor:pointer; border-radius:5px;">
+                🔬 정확 모드
+              </button>
+            </div>
+            <span id="ig-mode-desc" style="font-size:11px; color:#8b949e;">
+              ⚡ 첫 화면만 빠르게 — 10개 ≈ 30초~1분 / 캡션·좋아요·댓글수만
+            </span>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+            <button class="btn-sm" onclick="showIgSearchManualPaste()" title="Claude 가 navigate back 실패한 경우 직접 JSON 붙여넣기">📋 결과 JSON 직접 붙여넣기</button>
+            <button class="btn-sm" onclick="showIgSearchGuide()" title="사용법 보기">📖 사용법</button>
+            <button class="btn-sm" onclick="clearIgSearchHistory()" title="저장된 검색 기록 모두 삭제" style="margin-left:auto;">🗑 기록 초기화</button>
+          </div>
+        </div>
+
+        <!-- 결과 영역 -->
+        <div class="dash-card" style="padding:20px 24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <h3 id="ig-search-result-title" style="margin:0; font-size:15px; color:#fff;">검색 결과</h3>
+            <span id="ig-search-result-meta" style="font-size:11px; color:#8b949e;"></span>
+          </div>
+          <div id="ig-search-results"></div>
+          <div id="ig-search-empty" style="padding:50px 20px; text-align:center; color:#6e7681; font-size:13px;">
+            아직 검색 결과가 없습니다. 위 검색창에 키워드를 입력하고 <strong>🤖 Claude 사이드바로 검색</strong> 을 눌러보세요.
+          </div>
+        </div>
+
+        <!-- 검색 기록 -->
+        <div class="dash-card" style="padding:20px 24px;">
+          <h3 style="margin:0 0 12px; font-size:14px; color:#fff;">📜 최근 검색</h3>
+          <div id="ig-search-history" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
         </div>
       </section>
     </main>
@@ -2550,7 +2671,7 @@
   };
 
   // === View Router ===
-  const VALID_VIEWS = ['dashboard', 'schedule', 'products', 'sellers', 'sales', 'customers', 'consult', 'staff', 'attendance', 'contents'];
+  const VALID_VIEWS = ['dashboard', 'schedule', 'products', 'sellers', 'sales', 'customers', 'consult', 'staff', 'attendance', 'contents', 'ig-search'];
   let currentView = null;
 
   const VIEW_INITIALIZERS = {
@@ -2599,6 +2720,9 @@
       if (instagramState.handle && instagramState.token && !instagramState.posts) {
         fetchInstagramContent();
       }
+    },
+    'ig-search': function initIgSearchView() {
+      try { renderIgSearchHistory(); renderIgSearchResults(); } catch (e) { /* later defined */ }
     },
   };
 
@@ -5064,6 +5188,65 @@
     return (result && result.data && result.data.text) || '';
   }
 
+  // 이미지 반전 — 어두운 배경 + 밝은 글씨 영역 (인스타 DM 파란 말풍선 등) 인식률 향상용
+  async function invertImageBlob(blob) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const data = ctx.getImageData(0, 0, c.width, c.height);
+          const d = data.data;
+          for (let i = 0; i < d.length; i += 4) {
+            d[i] = 255 - d[i];
+            d[i + 1] = 255 - d[i + 1];
+            d[i + 2] = 255 - d[i + 2];
+          }
+          ctx.putImageData(data, 0, 0);
+          c.toBlob((b) => b ? resolve(b) : reject(new Error('blob 변환 실패')), 'image/png');
+        } catch (e) { reject(e); }
+      };
+      img.onerror = () => reject(new Error('이미지 로딩 실패'));
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+
+  // 한국어 문자 정규화 — 비교용 (대소문자·공백·문장부호 무시)
+  function normKr(s) {
+    return (s || '').replace(/[\s.,!?·。！？、:;'"`()\[\]{}<>\-+*/\\#$%&^_=|~@]/g, '').toLowerCase();
+  }
+  // 두 라인의 한글 문자 jaccard 유사도 (0~1)
+  function lineSimilarity(a, b) {
+    const A = new Set(normKr(a)); const B = new Set(normKr(b));
+    if (A.size === 0 || B.size === 0) return 0;
+    let inter = 0; A.forEach(c => { if (B.has(c)) inter++; });
+    const union = A.size + B.size - inter;
+    return union > 0 ? inter / union : 0;
+  }
+
+  // 두 OCR 결과를 라인 단위로 병합 — 중복·근사 중복 제거
+  function mergeOcrTexts(text1, text2) {
+    const split = (t) => (t || '').split(/\n+/).map(l => l.trim()).filter(l => l.length >= 2);
+    const lines = [...split(text1)];
+    for (const ln of split(text2)) {
+      // 너무 짧거나 의미 없는 라인 (특수문자만 등) 스킵
+      if (normKr(ln).length < 2) continue;
+      // 이미 있는 라인과 매우 유사하면 스킵
+      const dup = lines.some(existing => {
+        if (normKr(existing) === normKr(ln)) return true;
+        const ne = normKr(existing), nl = normKr(ln);
+        if (ne.includes(nl) || nl.includes(ne)) return true;
+        return lineSimilarity(existing, ln) > 0.75;
+      });
+      if (!dup) lines.push(ln);
+    }
+    return lines.join('\n');
+  }
+
   function addOcrThumb(dataUrl) {
     const wrap = document.getElementById('ocr-thumbs');
     if (!wrap) return;
@@ -5087,16 +5270,33 @@
     const thumb = await blobToDataUrl(blob);
     addOcrThumb(thumb);
     try {
-      const text = (await ocrImageBlob(blob)).trim();
-      if (!text) {
-        setOcrStatus('⚠️ 텍스트를 인식하지 못했습니다. 다른 스크린샷을 시도해보세요.', '#f59e0b');
+      // 1차 OCR — 원본 이미지 (밝은 말풍선 + 어두운 글씨 영역 인식)
+      setOcrStatus('🔍 OCR 1/2 — 원본 이미지 분석...', '#2dd4bf');
+      const text1 = (await ocrImageBlob(blob)).trim();
+
+      // 2차 OCR — 반전 이미지 (어두운 말풍선/파란 말풍선의 흰 글씨 영역 인식)
+      setOcrStatus('🔍 OCR 2/2 — 반전 이미지 분석 (밝은 글씨 영역)...', '#2dd4bf');
+      let text2 = '';
+      try {
+        const invBlob = await invertImageBlob(blob);
+        text2 = (await ocrImageBlob(invBlob)).trim();
+      } catch (e) {
+        try { console.warn('[ocr] invert pass failed:', e); } catch (_) {}
+      }
+
+      const merged = mergeOcrTexts(text1, text2);
+      if (!merged) {
+        setOcrStatus('⚠️ 텍스트를 인식하지 못했습니다. 더 선명한 스크린샷을 시도해보세요.', '#f59e0b');
         return;
       }
       const textarea = document.getElementById('consult-original');
       const existing = textarea.value.trim();
-      textarea.value = existing ? existing + '\n\n' + text : text;
-      setOcrStatus(`✅ ${text.length}자 추출 완료 — 아래 대화창에 추가됨`, '#5A9A5A');
-      setTimeout(() => setOcrStatus(''), 4000);
+      textarea.value = existing ? existing + '\n\n' + merged : merged;
+      const t1Lines = text1.split(/\n+/).filter(l => l.trim().length >= 2).length;
+      const t2Lines = text2.split(/\n+/).filter(l => l.trim().length >= 2).length;
+      const finalLines = merged.split(/\n+/).length;
+      setOcrStatus(`✅ ${merged.length}자 / ${finalLines}줄 추출 — 원본 ${t1Lines}줄 + 반전 ${t2Lines}줄 병합`, '#5A9A5A');
+      setTimeout(() => setOcrStatus(''), 5000);
     } catch (e) {
       console.error('[ocr]', e);
       setOcrStatus('⚠️ OCR 실패: ' + esc(e.message || ''), '#E84B3C');
@@ -5282,6 +5482,923 @@
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
+
+  /* ───────────────────────────────────────────────────────────────────
+     INSTAGRAM CONTENT SEARCH — Claude 사이드바 연동
+     ─────────────────────────────────────────────────────────────────── */
+  var IG_SEARCH_HISTORY_KEY = 'ig_search_history';
+  var IG_SEARCH_CURRENT_KEY = 'ig_search_current';
+  var IG_SEARCH_MODE_KEY = 'ig_search_mode';
+  var IG_SNAPSHOTS_KEY = 'ig_search_snapshots';
+  var _igSearchMode = localStorage.getItem(IG_SEARCH_MODE_KEY) || 'fast';
+
+  // ── 스냅샷 관리 — 메인 데이터와 분리해서 저장 (localStorage 부담 분산) ──
+  function loadIgSnapshots() {
+    try { return JSON.parse(localStorage.getItem(IG_SNAPSHOTS_KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function saveIgSnapshots(map) {
+    try { localStorage.setItem(IG_SNAPSHOTS_KEY, JSON.stringify(map)); }
+    catch (e) {
+      // 용량 초과 시 가장 오래된 50% 잘라내고 재시도
+      try {
+        const entries = Object.entries(map);
+        const half = entries.slice(Math.floor(entries.length / 2));
+        const trimmed = Object.fromEntries(half);
+        localStorage.setItem(IG_SNAPSHOTS_KEY, JSON.stringify(trimmed));
+      } catch (e2) {}
+    }
+  }
+  function mergeIgSnapshots(newSnaps) {
+    if (!newSnaps || typeof newSnaps !== 'object') return;
+    const cur = loadIgSnapshots();
+    let added = 0;
+    for (const [k, v] of Object.entries(newSnaps)) {
+      if (typeof v === 'string' && v.startsWith('data:') && v.length > 50) {
+        cur[k] = v; added++;
+      }
+    }
+    saveIgSnapshots(cur);
+    return added;
+  }
+  function getSnapshotForPost(p) {
+    if (!p) return '';
+    if (p.thumbnailDataUrl && p.thumbnailDataUrl.startsWith('data:')) return p.thumbnailDataUrl;
+    const snaps = loadIgSnapshots();
+    return snaps[p.url] || '';
+  }
+  // 게시글 URL → 일관된 그라데이션 색상 (스냅샷 없을 때 placeholder 용)
+  function urlToGradient(url) {
+    let h = 0;
+    for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) | 0;
+    const h1 = Math.abs(h) % 360;
+    const h2 = (h1 + 40) % 360;
+    return `linear-gradient(135deg, hsl(${h1}, 55%, 40%), hsl(${h2}, 60%, 22%))`;
+  }
+
+  window.setIgSearchMode = function(mode) {
+    _igSearchMode = (mode === 'accurate') ? 'accurate' : 'fast';
+    try { localStorage.setItem(IG_SEARCH_MODE_KEY, _igSearchMode); } catch (e) {}
+    const fast = document.getElementById('ig-mode-fast');
+    const acc = document.getElementById('ig-mode-accurate');
+    const desc = document.getElementById('ig-mode-desc');
+    const maxInput = document.getElementById('ig-search-max');
+    if (fast && acc) {
+      fast.classList.toggle('active', _igSearchMode === 'fast');
+      acc.classList.toggle('active', _igSearchMode === 'accurate');
+    }
+    if (desc) {
+      desc.innerHTML = (_igSearchMode === 'fast')
+        ? '⚡ 첫 화면만 빠르게 — 최대 6개 ≈ 20~40초 / 캡션·좋아요·댓글수만'
+        : '🔬 게시물마다 클릭해서 풀 데이터 수집 — 10~30개 ≈ 3~5분 / 영상 조회수·해시태그까지';
+    }
+    // 모드별 max 제약 — 빠른 모드는 6 상한, 정확 모드는 100 상한
+    if (maxInput) {
+      const cur = parseInt(maxInput.value, 10) || 0;
+      if (_igSearchMode === 'fast') {
+        maxInput.max = '6';
+        maxInput.min = '1';
+        if (cur > 6 || cur < 1) maxInput.value = '6';
+      } else {
+        maxInput.max = '100';
+        maxInput.min = '5';
+        if (cur < 10) maxInput.value = '20';
+      }
+    }
+  };
+
+  // 페이지 로드 시 저장된 모드 복원
+  setTimeout(() => { try { setIgSearchMode(_igSearchMode); } catch (e) {} }, 100);
+
+  // 다른 탭에서 결과가 저장되면 자동 동기화 (Claude 가 새 탭/창에서 작업한 경우)
+  window.addEventListener('storage', (e) => {
+    if (e.key === IG_SEARCH_CURRENT_KEY && e.newValue) {
+      try {
+        renderIgSearchResults();
+        renderIgSearchHistory();
+        const data = JSON.parse(e.newValue);
+        const cnt = data && data.posts ? data.posts.length : 0;
+        showToast(`✅ Claude 작업 완료 — ${cnt}개 게시글 도착`);
+        const el = document.getElementById('ig-search-results');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {}
+    }
+  });
+
+  // 검색 진행 중 표시 — 버튼 클릭 시 활성화, 결과 받으면 자동 해제
+  let _igPendingPollTimer = null;
+  let _igPendingStartedAt = 0;
+  function showIgSearchPending() {
+    const wrap = document.getElementById('ig-search-results');
+    const empty = document.getElementById('ig-search-empty');
+    const titleEl = document.getElementById('ig-search-result-title');
+    if (!wrap) return;
+    if (empty) empty.style.display = 'none';
+    if (titleEl) titleEl.innerHTML = '⏳ Claude 작업 진행 중...';
+    const reqStr = new Date().toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    wrap.style.cssText = '';
+    wrap.innerHTML = `
+      <div style="padding:50px 20px; text-align:center; background:#0d1117; border:1px dashed #FF8A00; border-radius:10px;">
+        <div style="font-size:36px; margin-bottom:10px;">⏳</div>
+        <div style="font-size:14px; color:#c9d1d9; margin-bottom:8px;">Claude 가 인스타그램에서 데이터를 수집 중입니다</div>
+        <div style="font-size:12px; color:#8b949e;">완료되면 자동으로 결과가 표시됩니다. 다른 탭에서 작업 중이어도 안전합니다.</div>
+        <div style="margin-top:14px; font-size:11px; color:#6e7681; font-variant-numeric: tabular-nums;">
+          요청 시각: <span style="color:#c9d1d9">${esc(reqStr)}</span><br>
+          <span id="ig-pending-elapsed">경과 시간: 0초</span>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="btn-sm" onclick="cancelIgPendingPoll()">취소 / 대기 해제</button>
+        </div>
+      </div>
+    `;
+    _igPendingStartedAt = Date.now();
+    if (_igPendingPollTimer) clearInterval(_igPendingPollTimer);
+    _igPendingPollTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - _igPendingStartedAt) / 1000);
+      const el = document.getElementById('ig-pending-elapsed');
+      if (el) el.textContent = `경과 시간: ${elapsed}초`;
+      // 폴링 fallback — 같은 탭에서 storage event 가 안 잡힐 때 캐시 직접 체크
+      try {
+        const cur = loadIgSearchCurrent();
+        if (cur && cur.receivedAt && cur.receivedAt > _igPendingStartedAt - 500) {
+          stopIgPendingPoll();
+          renderIgSearchResults();
+          renderIgSearchHistory();
+        }
+      } catch (e) {}
+    }, 1000);
+  }
+  function stopIgPendingPoll() {
+    if (_igPendingPollTimer) { clearInterval(_igPendingPollTimer); _igPendingPollTimer = null; }
+  }
+  window.cancelIgPendingPoll = function() {
+    stopIgPendingPoll();
+    renderIgSearchResults(); // 기존 캐시 또는 empty state 로 복귀
+  };
+
+  function loadIgSearchHistory() {
+    try { return JSON.parse(localStorage.getItem(IG_SEARCH_HISTORY_KEY) || '[]') || []; }
+    catch (e) { return []; }
+  }
+  function saveIgSearchHistory(arr) {
+    try { localStorage.setItem(IG_SEARCH_HISTORY_KEY, JSON.stringify(arr.slice(0, 30))); } catch (e) {}
+  }
+  function loadIgSearchCurrent() {
+    try { return JSON.parse(localStorage.getItem(IG_SEARCH_CURRENT_KEY) || 'null'); }
+    catch (e) { return null; }
+  }
+  function saveIgSearchCurrent(data) {
+    try { localStorage.setItem(IG_SEARCH_CURRENT_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  window.runIgSearch = function() {
+    const queryRaw = (document.getElementById('ig-search-query').value || '').trim();
+    if (!queryRaw) { alert('검색어를 입력해주세요. (예: #오늘도맑아연, 비타민D)'); return; }
+    const days = parseInt(document.getElementById('ig-search-range').value, 10) || 14;
+    let maxCount = parseInt(document.getElementById('ig-search-max').value, 10) || 10;
+    // 빠른 모드는 최대 6 강제
+    if (_igSearchMode === 'fast' && maxCount > 6) {
+      maxCount = 6;
+      document.getElementById('ig-search-max').value = '6';
+    }
+
+    // 해시태그 자동 정리 — # 있으면 그대로, 없고 공백 없으면 단어로
+    const isHashtag = queryRaw.startsWith('#');
+    const cleanQuery = queryRaw.replace(/^#+/, '');
+    const today = todayStr();
+    const since = new Date(Date.now() - days * 86400000);
+    const sinceStr = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
+
+    const callbackOrigin = location.origin + location.pathname + '#ig-search';
+
+    const isFast = (_igSearchMode === 'fast');
+    const modeLabel = isFast ? '⚡ 빠른 모드' : '🔬 정확 모드';
+    const startUrl = isHashtag
+      ? `https://www.instagram.com/explore/tags/${encodeURIComponent(cleanQuery)}/`
+      : `instagram.com 검색창에 "${cleanQuery}" 입력`;
+
+    const fastBody =
+`[수행 순서 — 빠른 모드]
+1. 새 탭으로 ${startUrl} 접속
+2. 화면에 보이는 그리드(보통 9~12개)에서 상위 ${maxCount}개만:
+   - 첫 게시물 클릭 → 우측 화살표 → 키 또는 → 버튼으로 다음 게시물 이동 (뒤로가기 금지)
+   - 한 게시물당 최대 5초만 머물기 — 데이터 안 보이면 0 처리하고 다음
+3. 각 게시물 수집 정보:
+   {
+     "url":         "게시글 절대 URL",
+     "author":      "@핸들",
+     "date":        "YYYY-MM-DD or ''",
+     "thumbnail":   "Instagram CDN 썸네일 URL",
+     "thumbnailDataUrl": "★★★필수★★★ 게시물 메인 이미지 영역만 캡처한 base64 data URL. 정확히 'data:image/jpeg;base64,...' 또는 'data:image/png;base64,...' 형식. 300x300 픽셀 / JPEG 0.5 품질 권장 (한 장 약 10~30KB). 캡처 못 하면 빈 문자열 '' 명시.",
+     "caption":     "캡션 (200자 컷)",
+     "likes":       숫자,
+     "comments":    숫자,
+     "mediaType":   "photo" | "video" | "carousel" | "reel"
+   }
+4. ${sinceStr} 이전 / 비공개 / 광고는 즉시 스킵
+5. ${maxCount}개 채우면 즉시 중단
+
+[스냅샷 캡처 — 가장 중요한 단계]
+- 게시물 상세 진입 시 보이는 main image area 만 작게 캡처 (전체 페이지 X)
+- 결과는 반드시 base64 data URL 문자열 그대로 thumbnailDataUrl 에 채움
+- Instagram CDN URL 은 외부 도메인에서 99% 실패하므로 data URL 이 유일한 확실한 방법
+- 캡처 실패해도 다음 항목은 계속 시도 (한 건 실패가 전체 중단으로 이어지지 않음)
+
+[속도 우선 제약]
+- 댓글 펼치기·답글 보기·해시태그 클릭 절대 금지
+- 스크롤 최소화 (첫 화면 분량만)
+- 영상 조회수 수집 X (영상 재생 안 함)`;
+
+    const accurateBody =
+`[수행 순서 — 정확 모드]
+1. 새 탭으로 ${startUrl} 접속
+2. 스크롤하며 그리드 로드 → 게시물 카드 하나씩 클릭해서 들어가 풀 데이터 수집:
+   - 게시물 페이지에서 댓글 영역 일부 펼쳐서 캡션·해시태그 모두 확보
+   - 영상/릴스면 조회수 표시 영역 확인
+   - 메인 이미지 영역 스크린샷 → base64 data URL 변환 (Instagram CDN URL 은 외부 도메인 로드 실패 우려)
+   - 정확히 수집 후 뒤로가기 또는 X 닫기로 그리드 복귀
+3. 각 게시물 수집 정보 (풀 데이터):
+   {
+     "url":         "게시글 절대 URL",
+     "author":      "@핸들",
+     "date":        "YYYY-MM-DD",
+     "thumbnail":   "Instagram CDN 썸네일 URL",
+     "thumbnailDataUrl": "★메인 이미지 영역 스크린샷 base64 data URL (필수). 가로 800px 이하·JPEG 0.75 품질 권장.",
+     "caption":     "캡션 전체 (최대 400자, 줄바꿈 보존)",
+     "likes":       숫자,
+     "comments":    숫자,
+     "videoViews":  숫자 (영상/릴스인 경우, 없으면 0),
+     "mediaType":   "photo" | "video" | "carousel" | "reel",
+     "hashtags":    [캡션에서 추출한 #태그 배열]
+   }
+4. ${sinceStr} 이전 게시물 / 비공개 / 차단된 게시물은 스킵 (광고는 mediaType 뒤에 "(ad)" 표기 가능)
+5. 무한 스크롤로 ${maxCount}개까지 수집
+
+[정확도 우선 제약]
+- 각 게시물에 충분한 시간 사용 — 모든 필드 정확히 채움
+- 캡션 줄바꿈은 '\\n' 으로 보존
+- 게시일은 hover 시 보이는 절대 시각 우선
+- thumbnailDataUrl 누락 금지 — Instagram CDN URL 만 주면 외부 도메인에서 깨질 수 있음`;
+
+    const cmd =
+`다음 작업을 ${modeLabel} 로 수행해주세요.
+
+[검색 정보]
+- 검색어: "${queryRaw}"  (${isHashtag ? '해시태그' : '키워드'})
+- 기간: ${sinceStr} ~ ${today} (최근 ${days}일)
+- 최대 수집: ${maxCount}건
+- 모드: ${modeLabel}
+
+${isFast ? fastBody : accurateBody}
+
+[공통 마무리]
+6. 수집 완료 후 우리 페이지로 navigate back: ${callbackOrigin}
+7. 페이지 로드 후 호출:
+   window.receiveInstagramResults({
+     "query": "${queryRaw}", "days": ${days},
+     "since": "${sinceStr}", "until": "${today}",
+     "mode": "${_igSearchMode}",
+     "posts": [/* 위 객체 배열 */]
+   })
+
+[기타]
+- 본인 계정으로 로그인된 상태에서만 가능 (필요시 로그인 먼저)
+- navigate back 실패 시 결과 JSON 을 채팅에 그대로 출력 (사용자가 페이지의 "📋 결과 JSON 직접 붙여넣기" 로 수동 가져갈 수 있도록)`;
+
+    // 클립보드 복사
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+    // 요청 시각 기록 — receiveInstagramResults 에서 소요 시간 계산용
+    window._igLastRequestedAt = Date.now();
+    try { localStorage.setItem('ig_search_requested_at', String(window._igLastRequestedAt)); } catch (e) {}
+    showIgSearchCommandDialog(cmd);
+    showIgSearchPending();
+  };
+
+  function showIgSearchCommandDialog(cmd) {
+    // 큰 모달 대신 작고 자동 사라지는 floating toast — 한 번 더 단축키 누르면 끝
+    const isMac = /Mac|iPad|iPhone/i.test(navigator.platform || navigator.userAgent || '');
+    const shortcut = isMac ? '⌥ A' : 'Alt+A';
+    const pasteKey = isMac ? '⌘ V' : 'Ctrl+V';
+
+    const old = document.getElementById('ig-search-cmd-toast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'ig-search-cmd-toast';
+    t.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:600; background:#161b22; border:1.5px solid #FF8A00; border-radius:12px; padding:14px 16px; width:340px; box-shadow:0 12px 36px rgba(0,0,0,0.4); font-family:"Noto Sans KR", sans-serif; color:#c9d1d9; animation:slideInRight 0.3s ease-out;';
+    t.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+        <div style="font-size:13px; font-weight:700; color:#FF8A00;">✅ 명령 복사 완료</div>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:transparent; border:0; color:#8b949e; cursor:pointer; font-size:14px; padding:0; line-height:1;">✕</button>
+      </div>
+      <div style="font-size:12px; line-height:1.6; color:#c9d1d9;">
+        <div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">1</span>
+          <span>사이드바 열기 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">${shortcut}</kbd></span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">2</span>
+          <span>붙여넣기 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">${pasteKey}</kbd></span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">3</span>
+          <span>실행 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">Enter</kbd></span>
+        </div>
+      </div>
+      <div style="margin-top:10px; padding-top:8px; border-top:1px solid #1f2530; display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn-sm" onclick="igReCopyCommand()" style="flex:1; font-size:11px;">📋 명령 다시 복사</button>
+        <button class="btn-sm" onclick="document.getElementById('ig-search-cmd-toast').remove(); showIgSearchManualPaste();" style="flex:1; font-size:11px;">📥 JSON 붙여넣기</button>
+      </div>
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer; color:#6e7681; font-size:10px;">사이드바 단축키 설정 / 명령 미리보기</summary>
+        <div style="margin-top:6px; font-size:11px; color:#8b949e; line-height:1.5;">
+          단축키 변경: <code style="background:#0d1117; padding:1px 4px; border-radius:3px;">chrome://extensions/shortcuts</code> 에서 Claude 항목 수정
+        </div>
+        <pre style="margin-top:6px; padding:8px; background:#0d1117; border:1px solid #30363d; border-radius:4px; font-size:10px; color:#c9d1d9; white-space:pre-wrap; word-break:break-word; max-height:160px; overflow-y:auto;">${esc(cmd)}</pre>
+      </details>
+    `;
+    document.body.appendChild(t);
+    // store command for re-copy
+    window._lastIgSearchCommand = cmd;
+    // 60초 후 자동 사라짐
+    setTimeout(() => { try { t.remove(); } catch (e) {} }, 60000);
+  }
+
+  window.igReCopyCommand = function() {
+    const cmd = window._lastIgSearchCommand;
+    if (!cmd) return;
+    navigator.clipboard.writeText(cmd).then(() => {
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✅ 복사됨';
+      setTimeout(() => { btn.textContent = orig; }, 1200);
+    }).catch(() => alert('클립보드 복사 실패'));
+  };
+
+  // Claude 가 호출하는 함수 — 결과 받음
+  window.receiveInstagramResults = function(data) {
+    try { stopIgPendingPoll(); } catch (e) {}
+    if (!data || typeof data !== 'object') { console.warn('[ig-search] 잘못된 데이터'); return; }
+    if (!Array.isArray(data.posts)) { console.warn('[ig-search] posts 배열 없음'); return; }
+    // 요청 시각 — 메모리 또는 localStorage 폴백 (다른 탭에서 호출된 경우 대비)
+    let requestedAt = window._igLastRequestedAt || 0;
+    if (!requestedAt) {
+      try { requestedAt = parseInt(localStorage.getItem('ig_search_requested_at') || '0', 10) || 0; } catch (e) {}
+    }
+    // 스냅샷 추출 — 메인 데이터에서 빼고 별도 저장
+    const snapshots = {};
+    let snapCount = 0;
+    const cleanPosts = data.posts.map(p => {
+      const copy = { ...p };
+      if (copy.thumbnailDataUrl && typeof copy.thumbnailDataUrl === 'string' && copy.thumbnailDataUrl.startsWith('data:') && copy.url) {
+        snapshots[copy.url] = copy.thumbnailDataUrl;
+        delete copy.thumbnailDataUrl;
+        snapCount++;
+      }
+      return copy;
+    });
+    if (snapCount > 0) mergeIgSnapshots(snapshots);
+
+    const enriched = {
+      ...data,
+      posts: cleanPosts,
+      requestedAt: requestedAt || null,
+      receivedAt: Date.now(),
+      snapshotCount: snapCount,
+    };
+    saveIgSearchCurrent(enriched);
+    // 검색 기록에 추가
+    const history = loadIgSearchHistory();
+    history.unshift({ query: data.query, days: data.days, count: data.posts.length, snapshotCount: snapCount, requestedAt: enriched.requestedAt, receivedAt: enriched.receivedAt });
+    // 같은 query 의 옛 기록 제거 (최신만 유지)
+    const seen = new Set();
+    const dedup = history.filter(h => {
+      const key = h.query + '|' + h.days;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+    saveIgSearchHistory(dedup);
+    renderIgSearchResults();
+    renderIgSearchHistory();
+    showToast(`✅ ${data.posts.length}개 게시글 수집 완료`);
+    // 결과 영역으로 스크롤
+    setTimeout(() => {
+      const el = document.getElementById('ig-search-results');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  // 결과 JSON 수동 붙여넣기 다이얼로그
+  window.showIgSearchManualPaste = function() {
+    let dlg = document.getElementById('ig-paste-dlg');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'ig-paste-dlg';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:500; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px 26px; width:620px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 8px; font-size:17px; color:#fff;">📋 결과 JSON 직접 붙여넣기</h3>
+        <p style="margin:0 0 12px; color:#8b949e; font-size:12px;">
+          Claude 채팅에서 받은 JSON 결과를 그대로 붙여넣으세요. <code>{ query, days, posts: [...] }</code> 형식.
+        </p>
+        <textarea id="ig-paste-area" rows="14" placeholder='{ "query": "#오늘도맑아연", "days": 14, "posts": [{ "url": "...", "author": "@...", "date": "2026-05-20", "thumbnail": "...", "caption": "...", "likes": 234, "comments": 12, "mediaType": "photo" }, ... ] }'
+          style="width:100%; box-sizing:border-box; padding:10px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:12px; font-family:ui-monospace, monospace; resize:vertical;"></textarea>
+        <div id="ig-paste-err" style="display:none; margin-top:8px; color:#E84B3C; font-size:12px;"></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn-sm" onclick="document.getElementById('ig-paste-dlg').remove()" style="flex:1;">취소</button>
+          <button class="btn-sm primary" onclick="parseIgPasteAndRender()" style="flex:2;">결과 가져오기</button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('ig-paste-area').focus(), 50);
+  };
+  window.parseIgPasteAndRender = function() {
+    const text = document.getElementById('ig-paste-area').value.trim();
+    const err = document.getElementById('ig-paste-err');
+    if (!text) { err.style.display = 'block'; err.textContent = 'JSON 내용을 입력해주세요.'; return; }
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) {
+      // JSON 앞뒤에 ```json 마크다운 fence 가 붙은 경우 자동 제거
+      const stripped = text.replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '').trim();
+      try { data = JSON.parse(stripped); }
+      catch (e2) { err.style.display = 'block'; err.textContent = 'JSON 파싱 실패: ' + e.message; return; }
+    }
+    if (!data || !Array.isArray(data.posts)) {
+      err.style.display = 'block'; err.textContent = '"posts" 배열이 없습니다.'; return;
+    }
+    document.getElementById('ig-paste-dlg').remove();
+    receiveInstagramResults(data);
+  };
+
+  // 사용법 다이얼로그
+  window.showIgSearchGuide = function() {
+    let dlg = document.getElementById('ig-guide-dlg');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'ig-guide-dlg';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:500; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px 26px; width:640px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 12px; font-size:18px; color:#fff;">📖 인스타그램 해시태그 검색 사용법</h3>
+        <ol style="margin:0; padding-left: 22px; font-size:13px; line-height:1.9;">
+          <li>본인 인스타 계정으로 <strong>이미 로그인된 Chrome 브라우저</strong> 사용 (Claude 사이드바도 같은 브라우저)</li>
+          <li>검색어 입력 형식:
+            <ul style="margin:4px 0; padding-left:18px; font-size:12px; color:#8b949e;">
+              <li>해시태그: <code style="background:#0d1117; padding:1px 4px; border-radius:3px;">#오늘도맑아연</code> — 정확한 태그 페이지로 직행</li>
+              <li>일반 키워드: <code style="background:#0d1117; padding:1px 4px; border-radius:3px;">비타민D</code> — 인스타 검색</li>
+              <li>제품명·성분명·브랜드명 모두 가능</li>
+            </ul>
+          </li>
+          <li>기간: 너무 길게 잡으면 시간 오래 걸림 (2주 권장)</li>
+          <li><strong>🤖 Claude 사이드바로 검색</strong> 클릭 → 명령어 자동 복사 → 사이드바에 ⌘V → Enter</li>
+          <li>Claude 가 instagram.com 으로 이동해 데이터 수집 (1~5분, 게시글 수 따라)</li>
+          <li>완료 후 자동으로 이 페이지로 돌아와 카드 표시 + localStorage 저장</li>
+          <li>실패 시 Claude 채팅에서 JSON 복사 → <strong>📋 결과 JSON 직접 붙여넣기</strong></li>
+        </ol>
+        <div style="margin-top:14px; padding:10px 14px; background:rgba(45,212,191,0.08); border-left:3px solid #2dd4bf; border-radius:4px; font-size:12px;">
+          💡 <strong>Max 플랜 + "묻지 않고 실행"</strong> 토글 ON 이면 한 번에 완전 자동 처리. 일반 Pro 는 단계마다 확인 팝업이 나옵니다.
+        </div>
+        <div style="margin-top:10px; padding:10px 14px; background:rgba(248,113,113,0.08); border-left:3px solid #E84B3C; border-radius:4px; font-size:12px;">
+          ⚠️ instagram.com 이용약관에 따라 대량/자동 스크래핑은 제한될 수 있습니다. <strong>본인 화면에서 직접 볼 수 있는 정보만</strong> 수집하므로 보통 문제 없지만, 짧은 시간에 100건 이상 같은 과도한 요청은 피해주세요.
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn-sm primary" onclick="document.getElementById('ig-guide-dlg').remove()" style="width:100%;">닫기</button>
+        </div>
+      </div>
+    `;
+  };
+
+  window.clearIgSearchHistory = function() {
+    if (!confirm('저장된 모든 검색 기록·결과·스냅샷을 삭제할까요?')) return;
+    try { localStorage.removeItem(IG_SEARCH_HISTORY_KEY); } catch (e) {}
+    try { localStorage.removeItem(IG_SEARCH_CURRENT_KEY); } catch (e) {}
+    try { localStorage.removeItem(IG_SNAPSHOTS_KEY); } catch (e) {}
+    renderIgSearchHistory();
+    renderIgSearchResults();
+  };
+
+  // ── 렌더링 ──
+  function renderIgSearchResults() {
+    const wrap = document.getElementById('ig-search-results');
+    const empty = document.getElementById('ig-search-empty');
+    const titleEl = document.getElementById('ig-search-result-title');
+    const metaEl = document.getElementById('ig-search-result-meta');
+    if (!wrap) return;
+    const data = loadIgSearchCurrent();
+    if (!data || !data.posts || data.posts.length === 0) {
+      wrap.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      if (titleEl) titleEl.textContent = '검색 결과';
+      if (metaEl) metaEl.textContent = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    if (titleEl) titleEl.innerHTML = `검색 결과: <span style="color:#2dd4bf">${esc(data.query)}</span>`;
+    if (metaEl) {
+      const fmt = (ts) => ts ? new Date(ts).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+      const reqWhen = fmt(data.requestedAt);
+      const recWhen = fmt(data.receivedAt);
+      let timing = '';
+      if (data.requestedAt && data.receivedAt) {
+        const sec = Math.max(1, Math.round((data.receivedAt - data.requestedAt) / 1000));
+        const m = Math.floor(sec / 60), s = sec % 60;
+        const dur = m > 0 ? `${m}분 ${s}초` : `${s}초`;
+        timing = ` · 요청 <span style="color:#c9d1d9">${esc(reqWhen)}</span> → 완료 <span style="color:#c9d1d9">${esc(recWhen)}</span> · 소요 <strong style="color:#FF8A00">${esc(dur)}</strong>`;
+      } else if (recWhen) {
+        timing = ` · 수집 ${esc(recWhen)}`;
+      }
+      const snapBadge = (data.snapshotCount != null)
+        ? ` · 📸 <strong style="color:${data.snapshotCount > 0 ? '#2dd4bf' : '#6e7681'}">${data.snapshotCount}/${data.posts.length}</strong>`
+        : '';
+      metaEl.innerHTML = `${data.posts.length}개${snapBadge} · ${esc(data.since || '?')} ~ ${esc(data.until || '?')} · 최신순${timing}`;
+    }
+    // 최신순 정렬 — date 가 없으면 끝으로
+    const sorted = data.posts.slice().sort((a, b) => {
+      const da = (a.date || '').toString();
+      const db = (b.date || '').toString();
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.localeCompare(da);
+    });
+    wrap.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;';
+    wrap.innerHTML = sorted.map((p, i) => igPostCard(p, i)).join('');
+  }
+
+  function igPostCard(p, idx) {
+    const likes = Number(p.likes) || 0;
+    const comments = Number(p.comments) || 0;
+    const views = Number(p.videoViews) || 0;
+    const caption = (p.caption || '').slice(0, 200);
+    const mediaIcon = (p.mediaType || '').includes('reel') ? '🎬'
+                    : (p.mediaType || '').includes('video') ? '▶️'
+                    : (p.mediaType || '').includes('carousel') ? '🖼️🖼️'
+                    : '📷';
+    // 썸네일 우선순위:
+    //   1) inline thumbnailDataUrl (옛 데이터 호환)
+    //   2) 별도 저장된 snapshots[url]
+    //   3) Instagram CDN URL → img-proxy 경유
+    //   4) URL hash 기반 그라데이션 placeholder
+    let thumbUrl = getSnapshotForPost(p);
+    let isDataUrl = !!thumbUrl;
+    if (!thumbUrl && p.thumbnail) {
+      thumbUrl = igProxyImg(p.thumbnail);
+    }
+    const gradient = urlToGradient(p.url || (p.author || '') + (p.date || ''));
+    const safeAuthor = esc(p.author || '@unknown');
+    const safeUrl = esc(p.url || '');
+    // 이미지 로드 실패 시 보일 fallback — URL 해시 그라데이션 + 작성자 + 미디어 아이콘
+    const fallbackHtml = `<div style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:8px; background:${gradient}; color:#fff; padding:14px; text-align:center;">
+      <div style="font-size:48px; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3));">${mediaIcon}</div>
+      <div style="font-size:13px; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,0.4);">${safeAuthor}</div>
+      <div style="font-size:10px; opacity:0.8; text-shadow:0 1px 2px rgba(0,0,0,0.3);">${isDataUrl ? '' : '스냅샷 없음'}</div>
+      ${safeUrl ? `<a href="${safeUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#fff; text-decoration:none; padding:4px 12px; background:rgba(0,0,0,0.35); border-radius:12px; margin-top:4px; backdrop-filter:blur(4px);">인스타에서 보기 ↗</a>` : ''}
+    </div>`;
+    return `<div style="background:#0d1117; border:1px solid #1f2530; border-radius:10px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="position:relative; width:100%; aspect-ratio:1/1; background:${gradient};">
+        ${thumbUrl
+          ? `<img src="${esc(thumbUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">${fallbackHtml}`
+          : fallbackHtml.replace("display:none", "display:flex")}
+        <span style="position:absolute; top:6px; right:6px; padding:2px 8px; background:rgba(0,0,0,0.7); color:#fff; border-radius:10px; font-size:11px; z-index:2;">${mediaIcon}</span>
+        ${isDataUrl ? `<span style="position:absolute; top:6px; left:6px; padding:2px 6px; background:rgba(45,212,191,0.85); color:#0d1117; border-radius:8px; font-size:10px; font-weight:700; z-index:2;" title="Claude 가 캡처한 스냅샷">📸</span>` : ''}
+      </div>
+      <div style="padding:10px 12px; display:flex; flex-direction:column; gap:6px; flex:1;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:12px;">
+          <strong style="color:#c9d1d9;">${esc(p.author || '@unknown')}</strong>
+          <span style="color:#6e7681; font-size:11px; margin-left:auto;">${esc(p.date || '')}</span>
+        </div>
+        <div style="font-size:12px; color:#8b949e; line-height:1.4; white-space:pre-wrap; word-break:break-word; flex:1;">${esc(caption)}${(p.caption||'').length > 200 ? '…' : ''}</div>
+        <div style="display:flex; gap:10px; font-size:11px; color:#8b949e; padding-top:6px; border-top:1px solid #1f2530;">
+          <span title="좋아요">❤ ${igFormatCount(likes)}</span>
+          <span title="댓글">💬 ${igFormatCount(comments)}</span>
+          ${views > 0 ? `<span title="조회">👁 ${igFormatCount(views)}</span>` : ''}
+          ${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="margin-left:auto; color:#2dd4bf; text-decoration:none;">원본 ↗</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderIgSearchHistory() {
+    const wrap = document.getElementById('ig-search-history');
+    if (!wrap) return;
+    const arr = loadIgSearchHistory();
+    if (!arr.length) {
+      wrap.innerHTML = '<span style="font-size:12px; color:#6e7681;">아직 검색 기록 없음</span>';
+      return;
+    }
+    wrap.innerHTML = arr.map(h => {
+      const when = h.receivedAt ? new Date(h.receivedAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
+      let dur = '';
+      if (h.requestedAt && h.receivedAt) {
+        const sec = Math.max(1, Math.round((h.receivedAt - h.requestedAt) / 1000));
+        const m = Math.floor(sec / 60), s = sec % 60;
+        dur = ` · ⏱ ${m > 0 ? m + '분' + s + '초' : s + '초'}`;
+      }
+      return `<button class="btn-sm" onclick="reIgSearch('${esc(h.query)}', ${h.days})" style="font-size:12px;" title="${esc(when)}${esc(dur)}">
+        <strong>${esc(h.query)}</strong>
+        <span style="color:#6e7681; margin-left:4px;">${h.days}일 · ${h.count}건 · ${when}${dur}</span>
+      </button>`;
+    }).join('');
+  }
+  window.reIgSearch = function(q, days) {
+    document.getElementById('ig-search-query').value = q;
+    document.getElementById('ig-search-range').value = String(days);
+    runIgSearch();
+  };
+
+  // 페이지 로드 시 1회 — 캐시된 결과 있으면 자동 표시 (view 진입 후)
+  setTimeout(() => { try { renderIgSearchHistory(); renderIgSearchResults(); } catch (e) {} }, 200);
+
+  /* ───────────────────────────────────────────────────────────────────
+     WINNER EXTRACT — 인스타 게시물 댓글에서 당첨자 핸들 추출
+     ─────────────────────────────────────────────────────────────────── */
+  var WINNER_CACHE_KEY = 'wx_winners_cache';
+  function loadWinnerCache() {
+    try { return JSON.parse(localStorage.getItem(WINNER_CACHE_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function saveWinnerCache(data) {
+    try { localStorage.setItem(WINNER_CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  window.runWinnerExtract = function() {
+    const postUrl = (document.getElementById('wx-post-url').value || '').trim();
+    const keyword = (document.getElementById('wx-keyword').value || '당첨').trim();
+    const author = (document.getElementById('wx-author').value || '').trim();
+    if (!postUrl || !postUrl.startsWith('http')) {
+      alert('인스타 게시물 URL 을 정확히 입력해주세요. (예: https://www.instagram.com/p/...)');
+      return;
+    }
+    const callbackOrigin = location.origin + location.pathname + '#customers';
+    const authorLine = author
+      ? `- 게시 작성자: ${author} (이 핸들이 단 답글만 "당첨 답글" 로 인정)`
+      : `- 게시 작성자: (게시물 페이지 상단의 작성자 핸들 자동 파악)`;
+
+    const cmd =
+`다음 작업을 자동으로 수행해주세요.
+
+[목표]
+인스타그램 게시물의 모든 댓글·답글을 분석해, 게시 작성자가 "${keyword}" 키워드로 답글 단 댓글의 작성자(=당첨자) 핸들만 수집합니다.
+
+[입력]
+- 게시물 URL: ${postUrl}
+- 당첨 키워드: "${keyword}" (대소문자/공백 무시, 부분 일치)
+${authorLine}
+
+[수행 순서]
+1. ${postUrl} 새 탭으로 접속
+2. 댓글 영역에서 "댓글 더 보기" / "답글 N개 보기" 모두 펼침 (필요시 반복 클릭)
+3. 모든 댓글 트리 순회:
+   - 각 1단 댓글마다 그 아래 답글 검사
+   - 답글 작성자가 위 [게시 작성자] 와 일치하고
+   - 답글 텍스트에 "${keyword}" 가 포함되면 → 부모 댓글 작성자 = 당첨자
+4. 수집 항목 (객체 배열):
+   {
+     "handle":      "당첨자 인스타 핸들 (@포함)",
+     "commentText": "당첨자가 단 원본 댓글 (300자 컷)",
+     "replyText":   "게시 작성자의 당첨 답글 (200자 컷)",
+     "commentedAt": "원본 댓글 시각 (인스타 표시 그대로 또는 YYYY-MM-DD)",
+     "repliedAt":   "답글 시각",
+     "likes":       원본 댓글 좋아요 수 (있으면)
+   }
+5. 중복 핸들 제거 (같은 사람이 여러 댓글로 당첨돼도 1번만)
+6. 우리 페이지로 navigate back: ${callbackOrigin}
+7. 페이지 로드 후 다음 함수 호출:
+   window.receiveWinnerHandles({
+     "postUrl": "${postUrl}",
+     "keyword": "${keyword}",
+     "author":  "${author || '(auto)'}",
+     "winners": [/* 위 형식 객체 배열 */]
+   })
+
+[제약]
+- 비공개 댓글·삭제된 댓글은 스킵
+- 게시 작성자 본인의 1단 댓글은 후보에서 제외 (자기 자신을 당첨자로 만들지 않음)
+- navigate back 실패하면 JSON 결과를 채팅에 그대로 출력 (사용자가 우리 페이지의 "📋 결과 JSON 직접 붙여넣기" 로 수동 가져갈 수 있도록)`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+    window._lastIgSearchCommand = cmd; // 토스트의 "다시 복사" 버튼 호환
+    showWinnerCommandToast(cmd);
+  };
+
+  function showWinnerCommandToast(cmd) {
+    // IG 검색과 같은 floating toast 패턴 재사용
+    const isMac = /Mac|iPad|iPhone/i.test(navigator.platform || navigator.userAgent || '');
+    const shortcut = isMac ? '⌥ A' : 'Alt+A';
+    const pasteKey = isMac ? '⌘ V' : 'Ctrl+V';
+    const old = document.getElementById('wx-cmd-toast'); if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'wx-cmd-toast';
+    t.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:600; background:#161b22; border:1.5px solid #FF8A00; border-radius:12px; padding:14px 16px; width:340px; box-shadow:0 12px 36px rgba(0,0,0,0.4); font-family:"Noto Sans KR", sans-serif; color:#c9d1d9; animation:slideInRight 0.3s ease-out;';
+    t.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+        <div style="font-size:13px; font-weight:700; color:#FF8A00;">✅ 명령 복사됨 — 당첨자 추출 준비</div>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:transparent; border:0; color:#8b949e; cursor:pointer; font-size:14px; padding:0; line-height:1;">✕</button>
+      </div>
+      <div style="font-size:12px; line-height:1.6;">
+        <div>❶ 사이드바 열기 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">${shortcut}</kbd></div>
+        <div>❷ 붙여넣기 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">${pasteKey}</kbd></div>
+        <div>❸ 실행 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">Enter</kbd></div>
+      </div>
+      <div style="margin-top:10px; padding-top:8px; border-top:1px solid #1f2530; display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn-sm" onclick="navigator.clipboard.writeText(window._lastIgSearchCommand||'').then(()=>this.textContent='✅ 복사됨')" style="flex:1; font-size:11px;">📋 다시 복사</button>
+        <button class="btn-sm" onclick="document.getElementById('wx-cmd-toast').remove(); showWinnerPasteDialog();" style="flex:1; font-size:11px;">📥 JSON 직접 입력</button>
+      </div>
+    `;
+    document.body.appendChild(t);
+    setTimeout(() => { try { t.remove(); } catch (e) {} }, 60000);
+  }
+
+  // Claude 가 호출할 콜백
+  window.receiveWinnerHandles = function(data) {
+    if (!data || !Array.isArray(data.winners)) { console.warn('[winner] 잘못된 데이터'); return; }
+    // 중복 dedupe (같은 handle 1번)
+    const seen = new Set();
+    const uniq = [];
+    for (const w of data.winners) {
+      const h = (w.handle || '').trim().toLowerCase();
+      if (!h || seen.has(h)) continue;
+      seen.add(h); uniq.push(w);
+    }
+    const enriched = { ...data, winners: uniq, extractedAt: Date.now() };
+    saveWinnerCache(enriched);
+    renderWinnerResults();
+    showToast(`✅ ${uniq.length}명 당첨자 핸들 추출 완료`);
+    setTimeout(() => {
+      const el = document.getElementById('wx-results');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  window.showWinnerPasteDialog = function() {
+    let dlg = document.getElementById('wx-paste-dlg');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'wx-paste-dlg';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:600; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px 26px; width:620px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 8px; font-size:17px; color:#fff;">📋 당첨자 JSON 직접 붙여넣기</h3>
+        <p style="margin:0 0 12px; color:#8b949e; font-size:12px;">
+          Claude 채팅에서 받은 JSON 결과를 그대로 붙여넣으세요. 형식: <code>{ winners: [{ handle, commentText, replyText, ... }, ...] }</code>
+        </p>
+        <textarea id="wx-paste-area" rows="14" placeholder='{ "postUrl": "...", "keyword": "당첨", "winners": [{ "handle": "@user1", "commentText": "참여해요!", "replyText": "당첨되었습니다 🎉" }, ... ] }'
+          style="width:100%; box-sizing:border-box; padding:10px 12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:12px; font-family:ui-monospace, monospace; resize:vertical;"></textarea>
+        <div id="wx-paste-err" style="display:none; margin-top:8px; color:#E84B3C; font-size:12px;"></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn-sm" onclick="document.getElementById('wx-paste-dlg').remove()" style="flex:1;">취소</button>
+          <button class="btn-sm primary" onclick="parseWxPaste()" style="flex:2;">결과 가져오기</button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('wx-paste-area').focus(), 50);
+  };
+  window.parseWxPaste = function() {
+    const text = document.getElementById('wx-paste-area').value.trim();
+    const err = document.getElementById('wx-paste-err');
+    if (!text) { err.style.display = 'block'; err.textContent = 'JSON 내용을 입력해주세요.'; return; }
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) {
+      const stripped = text.replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '').trim();
+      try { data = JSON.parse(stripped); }
+      catch (e2) { err.style.display = 'block'; err.textContent = 'JSON 파싱 실패: ' + e.message; return; }
+    }
+    if (!data || !Array.isArray(data.winners)) {
+      err.style.display = 'block'; err.textContent = '"winners" 배열이 없습니다.'; return;
+    }
+    document.getElementById('wx-paste-dlg').remove();
+    receiveWinnerHandles(data);
+  };
+
+  window.showWinnerGuide = function() {
+    let dlg = document.getElementById('wx-guide-dlg');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'wx-guide-dlg';
+      dlg.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:600; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);';
+      dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = `
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px 26px; width:600px; max-width:94vw; max-height:90vh; overflow-y:auto; color:#c9d1d9; font-family:'Noto Sans KR', sans-serif;">
+        <h3 style="margin:0 0 12px; font-size:18px; color:#fff;">📖 댓글 당첨자 추출 사용법</h3>
+        <p style="margin:0 0 12px; font-size:13px; color:#c9d1d9; line-height:1.7;">
+          이벤트 게시물의 댓글에 본인이 직접 <strong>"당첨되었습니다"</strong> 같은 답글을 단 경우, 그 답글을 받은 댓글 작성자의 핸들만 자동 수집합니다.
+        </p>
+        <ol style="margin:0; padding-left: 22px; font-size:13px; line-height:1.9;">
+          <li><strong>이벤트 게시물 URL</strong> 입력 (예: <code style="font-size:11px; background:#0d1117; padding:1px 4px; border-radius:3px;">https://www.instagram.com/p/ABC123/</code>)</li>
+          <li><strong>당첨 키워드</strong> 입력 — 본인이 답글에 자주 쓰는 표현. 부분 일치 OK:
+            <ul style="margin:4px 0; padding-left:18px; color:#8b949e; font-size:12px;">
+              <li><code>당첨</code> — 가장 폭넓게 매칭 (당첨/당첨자/당첨되었습니다 모두 해당)</li>
+              <li><code>당첨되었습니다</code> — 정확히 이 문구만</li>
+              <li><code>🎉</code> — 이모지 매칭도 가능</li>
+            </ul>
+          </li>
+          <li><strong>게시 작성자 핸들</strong> 입력 (본인 @yakstory119) — 누구의 답글만 인정할지 명확히</li>
+          <li><strong>🤖 Claude 로 추출</strong> 클릭 → 토스트 안내대로 사이드바에서 실행</li>
+          <li>Claude 가 게시물 → 댓글 펼침 → 답글 트리 분석 → 당첨자 핸들만 추출 후 우리 페이지로 반환</li>
+          <li>결과 표에서 <strong>CSV 다운로드 / 클립보드 복사</strong> 가능 → 배송지 수집 폼 전송 시 사용</li>
+        </ol>
+        <div style="margin-top:14px; padding:10px 14px; background:rgba(45,212,191,0.08); border-left:3px solid #2dd4bf; border-radius:4px; font-size:12px;">
+          💡 추출된 핸들 목록을 <strong>이벤트 응답 폼</strong>(event.html) 의 사전 입력 안내에 활용하거나, 직접 DM 으로 배송지 요청 시 사용하세요.
+        </div>
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn-sm primary" onclick="document.getElementById('wx-guide-dlg').remove()" style="flex:1;">닫기</button>
+        </div>
+      </div>
+    `;
+  };
+
+  window.clearWinnerCache = function() {
+    if (!confirm('저장된 추출 결과를 삭제할까요?')) return;
+    try { localStorage.removeItem(WINNER_CACHE_KEY); } catch (e) {}
+    renderWinnerResults();
+  };
+
+  function renderWinnerResults() {
+    const wrap = document.getElementById('wx-results');
+    if (!wrap) return;
+    const data = loadWinnerCache();
+    if (!data || !data.winners || !data.winners.length) {
+      wrap.innerHTML = '<div style="padding:24px; text-align:center; color:#6e7681; font-size:13px;">아직 추출된 결과가 없습니다.</div>';
+      return;
+    }
+    const meta = data.extractedAt ? new Date(data.extractedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const handles = data.winners.map(w => w.handle).filter(Boolean).join(', ');
+    wrap.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+        <div style="font-size:13px;">
+          <strong style="color:#2dd4bf;">${data.winners.length}명</strong> 당첨자 추출 완료
+          <span style="color:#6e7681; font-size:11px; margin-left:6px;">키워드: "${esc(data.keyword || '')}" · ${esc(meta)}</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-sm" onclick="copyWinnerHandles()">📋 핸들만 복사</button>
+          <button class="btn-sm primary" onclick="downloadWinnerCSV()">📥 CSV</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto; border:1px solid #1f2530; border-radius:8px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:#161b22;">
+              <th style="padding:8px 10px; text-align:left; color:#8b949e; font-weight:700; border-bottom:1px solid #1f2530;">#</th>
+              <th style="padding:8px 10px; text-align:left; color:#8b949e; font-weight:700; border-bottom:1px solid #1f2530;">핸들</th>
+              <th style="padding:8px 10px; text-align:left; color:#8b949e; font-weight:700; border-bottom:1px solid #1f2530;">원본 댓글</th>
+              <th style="padding:8px 10px; text-align:left; color:#8b949e; font-weight:700; border-bottom:1px solid #1f2530;">당첨 답글</th>
+              <th style="padding:8px 10px; text-align:left; color:#8b949e; font-weight:700; border-bottom:1px solid #1f2530;">시각</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.winners.map((w, i) => `<tr style="border-bottom:1px solid #1f2530;">
+              <td style="padding:8px 10px; color:#6e7681;">${i+1}</td>
+              <td style="padding:8px 10px; color:#2dd4bf; font-weight:700; white-space:nowrap;">${esc(w.handle || '')}</td>
+              <td style="padding:8px 10px; color:#c9d1d9; max-width:280px; word-break:break-word;">${esc((w.commentText || '').slice(0, 120))}${(w.commentText||'').length > 120 ? '…' : ''}</td>
+              <td style="padding:8px 10px; color:#8b949e; max-width:200px; word-break:break-word;">${esc((w.replyText || '').slice(0, 80))}${(w.replyText||'').length > 80 ? '…' : ''}</td>
+              <td style="padding:8px 10px; color:#6e7681; font-size:11px; white-space:nowrap;">${esc(w.commentedAt || w.repliedAt || '')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  window.copyWinnerHandles = function() {
+    const data = loadWinnerCache();
+    if (!data || !data.winners) return;
+    const handles = data.winners.map(w => w.handle).filter(Boolean).join('\n');
+    navigator.clipboard.writeText(handles)
+      .then(() => showToast(`${data.winners.length}개 핸들 클립보드 복사 완료`))
+      .catch(() => prompt('복사 실패. 직접 복사하세요:', handles));
+  };
+
+  window.downloadWinnerCSV = function() {
+    const data = loadWinnerCache();
+    if (!data || !data.winners) return;
+    const headers = ['#', '핸들', '원본 댓글', '당첨 답글', '댓글 시각', '답글 시각', '좋아요'];
+    const rows = data.winners.map((w, i) => [i+1, w.handle || '', w.commentText || '', w.replyText || '', w.commentedAt || '', w.repliedAt || '', w.likes || '']);
+    const csv = [headers, ...rows].map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `당첨자_${getDateStamp()}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  };
+
+  // 페이지 로드 시 캐시 있으면 자동 표시
+  setTimeout(() => { try { renderWinnerResults(); } catch (e) {} }, 200);
 
   // Initial paint from cache (Instagram)
   try { renderInstagramPanel(); } catch (e) {}
