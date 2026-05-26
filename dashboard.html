@@ -2556,17 +2556,21 @@
           <div style="display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap;">
             <span style="font-size:11px; color:#8b949e; font-weight:700;">수집 모드:</span>
             <div style="display:flex; gap:2px; background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:3px;">
-              <button id="ig-mode-fast" class="ig-mode-btn active" onclick="setIgSearchMode('fast')"
+              <button id="ig-mode-ultra" class="ig-mode-btn" onclick="setIgSearchMode('ultra')"
                 style="padding:6px 14px; background:transparent; border:0; color:#c9d1d9; font-size:12px; font-family:inherit; cursor:pointer; border-radius:5px;">
-                ⚡ 빠른 모드
+                ⚡⚡ 초고속
+              </button>
+              <button id="ig-mode-fast" class="ig-mode-btn" onclick="setIgSearchMode('fast')"
+                style="padding:6px 14px; background:transparent; border:0; color:#c9d1d9; font-size:12px; font-family:inherit; cursor:pointer; border-radius:5px;">
+                ⚡ 빠름
               </button>
               <button id="ig-mode-accurate" class="ig-mode-btn" onclick="setIgSearchMode('accurate')"
                 style="padding:6px 14px; background:transparent; border:0; color:#c9d1d9; font-size:12px; font-family:inherit; cursor:pointer; border-radius:5px;">
-                🔬 정확 모드
+                🔬 정확
               </button>
             </div>
             <span id="ig-mode-desc" style="font-size:11px; color:#8b949e;">
-              ⚡ 첫 화면만 빠르게 — 10개 ≈ 30초~1분 / 캡션·좋아요·댓글수만
+              ⚡⚡ DOM 일괄 + 클립보드 전송 — 5개 ≈ 10~15초 / 시각·캡처·복귀 X
             </span>
           </div>
           <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center;">
@@ -3004,11 +3008,39 @@
     },
     'threads-search': function initThreadsSearchView() {
       try { renderThreadsSearchHistory(); renderThreadsSearchResults(); } catch (e) { /* later defined */ }
+      // 폼 값 복원 — pending → last form → current 순서로 priority
+      try {
+        const TH_LF = 'threads_search_last_form';
+        let formState = null;
+        try {
+          const pend = (typeof loadThPending === 'function') ? loadThPending() : null;
+          if (pend && pend.query) formState = { query: pend.query, tab: pend.tab, maxCount: pend.maxCount };
+        } catch (e) {}
+        if (!formState) {
+          try {
+            const raw = localStorage.getItem(TH_LF);
+            if (raw) formState = JSON.parse(raw);
+          } catch (e) {}
+        }
+        if (!formState) {
+          try {
+            const cur = (typeof loadThSearchCurrent === 'function') ? loadThSearchCurrent() : null;
+            if (cur && cur.query) formState = { query: cur.query, tab: cur.tab };
+          } catch (e) {}
+        }
+        if (formState) {
+          const q = document.getElementById('th-search-query');
+          const tabEl = document.getElementById('th-search-tab');
+          const maxEl = document.getElementById('th-search-max');
+          if (q && formState.query != null) q.value = formState.query;
+          if (tabEl && formState.tab) tabEl.value = formState.tab;
+          if (maxEl && formState.maxCount) maxEl.value = String(formState.maxCount);
+        }
+      } catch (e) {}
       // 같은 탭에서 navigate back 으로 페이지가 새로 로드된 경우, pending 상태 복원
       try {
         const pend = (typeof loadThPending === 'function') ? loadThPending() : null;
         if (pend && pend.startedAt) {
-          // 이미 결과가 도착해 있으면 (receivedAt > startedAt) 무시
           const cur = (typeof loadThSearchCurrent === 'function') ? loadThSearchCurrent() : null;
           if (!cur || !cur.receivedAt || cur.receivedAt < pend.startedAt) {
             showThreadsSearchPending(pend.startedAt);
@@ -3833,7 +3865,9 @@
   }
 
   function router() {
-    const hash = (location.hash.replace('#', '') || 'dashboard');
+    const raw = (location.hash.replace('#', '') || 'dashboard');
+    // 해시에 ?param=value 형태가 붙은 경우 view 이름만 추출 (예: threads-search?_thd=BASE64)
+    const hash = raw.split('?')[0] || 'dashboard';
     const name = VALID_VIEWS.includes(hash) ? hash : 'dashboard';
     showView(name);
     const init = VIEW_INITIALIZERS[name];
@@ -5882,7 +5916,7 @@
   var IG_SEARCH_CURRENT_KEY = 'ig_search_current';
   var IG_SEARCH_MODE_KEY = 'ig_search_mode';
   var IG_SNAPSHOTS_KEY = 'ig_search_snapshots';
-  var _igSearchMode = localStorage.getItem(IG_SEARCH_MODE_KEY) || 'fast';
+  var _igSearchMode = localStorage.getItem(IG_SEARCH_MODE_KEY) || 'ultra';
 
   // ── 스냅샷 관리 — 메인 데이터와 분리해서 저장 (localStorage 부담 분산) ──
   function loadIgSnapshots() {
@@ -5929,25 +5963,36 @@
   }
 
   window.setIgSearchMode = function(mode) {
-    _igSearchMode = (mode === 'accurate') ? 'accurate' : 'fast';
+    _igSearchMode = (mode === 'accurate') ? 'accurate' : (mode === 'fast' ? 'fast' : 'ultra');
     try { localStorage.setItem(IG_SEARCH_MODE_KEY, _igSearchMode); } catch (e) {}
+    const ultra = document.getElementById('ig-mode-ultra');
     const fast = document.getElementById('ig-mode-fast');
     const acc = document.getElementById('ig-mode-accurate');
     const desc = document.getElementById('ig-mode-desc');
     const maxInput = document.getElementById('ig-search-max');
-    if (fast && acc) {
-      fast.classList.toggle('active', _igSearchMode === 'fast');
-      acc.classList.toggle('active', _igSearchMode === 'accurate');
-    }
+    [ultra, fast, acc].forEach(b => {
+      if (!b) return;
+      const m = b.id.replace('ig-mode-', '');
+      const active = (m === _igSearchMode);
+      b.classList.toggle('active', active);
+      b.style.background = active ? '#FF8A00' : 'transparent';
+      b.style.color = active ? '#0d1117' : '#c9d1d9';
+      b.style.fontWeight = active ? '700' : '400';
+    });
     if (desc) {
-      desc.innerHTML = (_igSearchMode === 'fast')
+      desc.innerHTML = (_igSearchMode === 'ultra')
+        ? '⚡⚡ DOM 일괄 + 클립보드 전송 — 5개 ≈ 10~15초 / 시각·캡처·복귀 X'
+        : (_igSearchMode === 'fast')
         ? '⚡ 첫 화면만 빠르게 — 최대 6개 ≈ 20~40초 / 캡션·좋아요·댓글수만'
         : '🔬 게시물마다 클릭해서 풀 데이터 수집 — 10~30개 ≈ 3~5분 / 영상 조회수·해시태그까지';
     }
-    // 모드별 max 제약 — 빠른 모드는 6 상한, 정확 모드는 100 상한
     if (maxInput) {
       const cur = parseInt(maxInput.value, 10) || 0;
-      if (_igSearchMode === 'fast') {
+      if (_igSearchMode === 'ultra') {
+        maxInput.max = '10';
+        maxInput.min = '1';
+        if (cur > 10 || cur < 1) maxInput.value = '5';
+      } else if (_igSearchMode === 'fast') {
         maxInput.max = '6';
         maxInput.min = '1';
         if (cur > 6 || cur < 1) maxInput.value = '6';
@@ -6061,13 +6106,16 @@
     const since = new Date(Date.now() - days * 86400000);
     const sinceStr = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
 
-    const callbackOrigin = location.origin + location.pathname + '#ig-search';
+    const callbackOriginBase = location.origin + location.pathname;
+    const callbackOrigin = callbackOriginBase + '#ig-search';
 
+    const isUltra = (_igSearchMode === 'ultra');
     const isFast = (_igSearchMode === 'fast');
-    const modeLabel = isFast ? '⚡ 빠른 모드' : '🔬 정확 모드';
+    const modeLabel = isUltra ? '⚡⚡ 초고속' : (isFast ? '⚡ 빠른 모드' : '🔬 정확 모드');
     const startUrl = isHashtag
       ? `https://www.instagram.com/explore/tags/${encodeURIComponent(cleanQuery)}/`
       : `instagram.com 검색창에 "${cleanQuery}" 입력`;
+    const startUrlHashtag = `https://www.instagram.com/explore/tags/${encodeURIComponent(cleanQuery)}/`;
 
     const fastBody =
 `[수행 순서 — 빠른 모드]
@@ -6132,7 +6180,69 @@
 - 게시일은 hover 시 보이는 절대 시각 우선
 - thumbnailDataUrl 누락 금지 — Instagram CDN URL 만 주면 외부 도메인에서 깨질 수 있음`;
 
-    const cmd =
+    let cmd;
+    if (isUltra) {
+      // ── 초고속: JS 가 base64 반환 → Claude 가 명시적으로 navigate back ──
+      cmd =
+`Instagram ${isHashtag ? '해시태그 #' + cleanQuery : '키워드 "' + queryRaw + '"'} ${maxCount}건 추출.
+
+1. 현재 탭을 ${startUrlHashtag} 로 이동.
+2. 그리드 로드 후 다음 JS 실행. **JS 는 base64 인코딩된 결과 문자열을 return 함** (clipboard 복사도 같이):
+
+\`\`\`js
+(async function(){
+  const MAX=${maxCount};
+  const out=[],seen=new Set();
+  const sel='a[href*="/p/"], a[href*="/reel/"]';
+  function harvest(){
+    for(const a of document.querySelectorAll(sel)){
+      if(out.length>=MAX)return;
+      const h=a.href.split('?')[0];if(seen.has(h)||!/\\/(p|reel)\\//.test(h))continue;seen.add(h);
+      const img=a.querySelector('img');
+      const thumb=img?img.src:'';
+      const mediaType=/\\/reel\\//.test(h)?'reel':(a.querySelector('video,svg[aria-label*="Carousel"]')?'carousel':'photo');
+      const alt=img?(img.getAttribute('alt')||''):'';
+      out.push({url:h,author:'',date:'',thumbnail:thumb,thumbnailDataUrl:'',caption:alt.slice(0,200),likes:0,comments:0,mediaType});
+    }
+  }
+  // 페이징 — MAX 채울 때까지 스크롤 + 재추출 반복
+  let stall=0,last=0;
+  for(let i=0;i<20&&out.length<MAX;i++){
+    harvest();
+    if(out.length>=MAX)break;
+    if(out.length===last){stall++;if(stall>=2)break;}else{stall=0;}
+    last=out.length;
+    window.scrollTo(0,document.body.scrollHeight);
+    await new Promise(r=>setTimeout(r,700));
+  }
+  const payload=JSON.stringify({query:"${queryRaw}",days:${days},since:"${sinceStr}",until:"${today}",mode:"ultra",posts:out.slice(0,MAX)});
+  try{await navigator.clipboard.writeText(payload);}catch(e){}
+  // base64 인코딩된 문자열을 반환 — Claude 가 이걸로 dashboard URL 만들어 navigate
+  const b64=btoa(unescape(encodeURIComponent(payload)));
+  // setTimeout 으로도 동시 시도 (둘 중 하나라도 성공하면 OK)
+  const dest='${callbackOriginBase}'+'#ig-search?_igd='+encodeURIComponent(b64);
+  setTimeout(()=>{ try { location.assign(dest); } catch(e){} }, 200);
+  return b64;
+})()
+\`\`\`
+
+3. **반드시 수행 — 결과를 dashboard 결과창에 넣는 핵심 단계**:
+   위 JS 의 return 값(base64 문자열, 예: "eyJxdW...") 을 받아서 같은 탭을 다음 URL 로 navigate back:
+   \`${callbackOriginBase}#ig-search?_igd=<JS 가 반환한 base64 문자열을 그대로 붙임>\`
+
+4. 채팅엔 "✅ ${queryRaw} N건 완료 — dashboard 복귀" 한 줄.
+
+[절대 금지 — 속도 저하 원인]
+- take_screenshot / 스크린샷 / 페이지 캡처 일체 X
+- read_image / vision / 시각 인식 X
+- 게시물 클릭 / 상세 진입 / 댓글 펼치기 X
+- JS 실행 후 추가 도구 호출 X (JS 가 알아서 navigate back 함)
+- 한 번의 navigate + 한 번의 JS + 한 줄 보고로 끝.
+
+[기타]
+- 본인 계정 로그인 상태 가정.`;
+    } else {
+      cmd =
 `다음 작업을 ${modeLabel} 로 수행해주세요.
 
 [검색 정보]
@@ -6142,6 +6252,10 @@
 - 모드: ${modeLabel}
 
 ${isFast ? fastBody : accurateBody}
+
+[절대 금지 — 속도 저하]
+- take_screenshot / 시각 vision 도구 호출 (썸네일 캡처는 JS 내부에서만).
+- 단계 사이마다 페이지 재확인 X. browser_batch 한 묶음 안에서 끝.
 
 [공통 마무리]
 6. 수집 완료 후 우리 페이지로 navigate back: ${callbackOrigin}
@@ -6154,8 +6268,9 @@ ${isFast ? fastBody : accurateBody}
    })
 
 [기타]
-- 본인 계정으로 로그인된 상태에서만 가능 (필요시 로그인 먼저)
-- navigate back 실패 시 결과 JSON 을 채팅에 그대로 출력 (사용자가 페이지의 "📋 결과 JSON 직접 붙여넣기" 로 수동 가져갈 수 있도록)`;
+- 본인 계정으로 로그인된 상태에서만 가능
+- navigate back 실패 시 결과 JSON 을 채팅에 그대로 출력 → "📋 결과 JSON 직접 붙여넣기" 로 수동 가져감`;
+    }
 
     // 클립보드 복사
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -6282,7 +6397,44 @@ ${isFast ? fastBody : accurateBody}
   };
 
   // 결과 JSON 수동 붙여넣기 다이얼로그
-  window.showIgSearchManualPaste = function() {
+  // ── 클립보드에서 자동 import 시도 (Claude 가 navigator.clipboard.writeText 로 복사한 경우) ──
+  async function tryIgImportFromClipboard() {
+    if (!navigator.clipboard || !navigator.clipboard.readText) return false;
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim().startsWith('{') || !text.includes('posts')) return false;
+      const data = JSON.parse(text);
+      if (data && Array.isArray(data.posts) && data.query) {
+        receiveInstagramResults(data);
+        if (typeof showToast === 'function') showToast(`✅ 클립보드에서 ${data.posts.length}개 IG 게시물 import`);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  window.tryIgImportFromClipboard = tryIgImportFromClipboard;
+
+  // 페이지가 focus 받을 때 IG pending 이 있으면 자동 import 시도
+  let _igAutoImportArmed = false;
+  function armIgAutoImport() {
+    if (_igAutoImportArmed) return;
+    _igAutoImportArmed = true;
+    const handler = async () => {
+      const reqAt = Number(localStorage.getItem('ig_search_requested_at') || 0);
+      if (!reqAt) return;
+      // 결과가 이미 도착했으면 skip
+      const cur = loadIgSearchCurrent();
+      if (cur && cur.receivedAt && cur.receivedAt > reqAt - 500) return;
+      tryIgImportFromClipboard();
+    };
+    window.addEventListener('focus', handler);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) handler(); });
+  }
+  setTimeout(armIgAutoImport, 300);
+
+  window.showIgSearchManualPaste = async function() {
+    // 1) 클립보드 우선 시도
+    if (await tryIgImportFromClipboard()) return;
     let dlg = document.getElementById('ig-paste-dlg');
     if (!dlg) {
       dlg = document.createElement('div');
@@ -6990,69 +7142,107 @@ ${authorLine}
   // ---- 프롬프트 빌드 ----
   function buildGpApplyPrompt(s) {
     const productName = GP_HARDCODED_PRODUCT_NAME;   // 테스트용 하드코딩
-    const lines = [];
-    lines.push('다음 작업을 Claude for Chrome 사이드바에서 자동 수행해주세요.');
-    lines.push('');
-    lines.push('[목표]');
-    lines.push('파마브로스 어드민에 로그인하여 "' + productName + '" 의 ' + (s.applySample ? '샘플 신청 + ' : '') + '공동구매 신청을 등록합니다.');
-    lines.push('');
-    lines.push('[로그인 자격증명]');
-    lines.push('- URL: ' + GP_ADMIN_URL);
-    lines.push('- ID:  ' + s.adminEmail);
-    lines.push('- PW:  ' + s.adminPassword);
-    lines.push('');
-    lines.push('[수행 단계]');
-    lines.push('1. 위 URL 새 탭으로 접속, 로그인');
-    lines.push('2. 좌측 메뉴 "공구 상품 관리" 클릭');
-    lines.push('3. 제품 검색창에 "' + productName + '" 입력 → 목록에서 해당 제품 행의 체크박스를 선택 (행 클릭이 아니라 좌측 체크박스 체크)');
-    lines.push('4. 상세 페이지에서 "신청하기" 버튼 클릭');
+    const callbackOrigin = location.origin + location.pathname + '#products';
+    // 폼 전체를 한 번에 채우는 JS payload — Claude 가 이 JSON 을 그대로 페이지에서 실행
+    const payload = {
+      productName: productName,
+      sample: s.applySample ? {
+        type: s.sampleType, qty: String(s.sampleQty),
+        shipName: s.shipName, shipPhone: s.shipPhone, shipAddr: s.shipAddr, shipNote: s.shipNote
+      } : null,
+      groupBuy: {
+        startDate: s.startDate, startTime: s.startTime,
+        endDate: s.endDate, endTime: s.endTime,
+        preEvent: s.preEvent, buyerEvent: s.buyerEvent,
+        comment: s.comment
+      }
+    };
+    const payloadJson = JSON.stringify(payload, null, 2);
 
-    let step = 5;
-    if (s.applySample) {
-      lines.push(step++ + '. 모달에서 "샘플 신청" 탭/체크박스 선택');
-      lines.push(step++ + '. 신청 유형: "' + s.sampleType + '"  /  수량: ' + s.sampleQty);
-      lines.push(step++ + '. 배송 정보:');
-      lines.push('   - 이름:    ' + s.shipName);
-      lines.push('   - 연락처:  ' + s.shipPhone);
-      lines.push('   - 주소:    ' + s.shipAddr);
-      lines.push(step++ + '. 요청 사항: "' + s.shipNote + '"');
-      lines.push(step++ + '. "신청하기" 클릭 → 샘플 신청 완료 확인');
-    }
-
-    lines.push(step++ + '. 이어서 "공동구매 신청" 폼으로 이동 (또는 동일 제품에서 "공동구매 신청" 버튼 클릭)');
-    lines.push(step++ + '. 진행 일정:');
-    lines.push('   - 시작: ' + s.startDate + ' ' + s.startTime);
-    lines.push('   - 종료: ' + s.endDate + ' ' + s.endTime);
-    lines.push(step++ + '. 이벤트 선택:');
-    if (s.preEvent) {
-      lines.push('   ✅ 사전 이벤트');
-      lines.push('      - 당첨 대상: ' + s.preEvent.target);
-      lines.push('      - 당첨 인원: ' + s.preEvent.count + '명');
-      lines.push('      - 당첨 방식: ' + s.preEvent.method);
-      lines.push('      - 당첨 상품: ' + s.preEvent.prize);
-    } else {
-      lines.push('   ☐ 사전 이벤트 (선택 안함)');
-    }
-    if (s.buyerEvent) {
-      lines.push('   ✅ 구매자 이벤트');
-      lines.push('      - 당첨 대상: ' + s.buyerEvent.target);
-      lines.push('      - 당첨 인원: ' + s.buyerEvent.count + '명');
-      lines.push('      - 당첨 방식: ' + s.buyerEvent.method);
-      lines.push('      - 당첨 상품: ' + s.buyerEvent.prize);
-    } else {
-      lines.push('   ☐ 구매자 이벤트 (선택 안함)');
-    }
-    lines.push(step++ + '. 코멘트: "' + s.comment + '"');
-    lines.push(step++ + '. "신청하기" 클릭 → 공동구매 신청 완료 확인');
-    lines.push('');
-    lines.push('[완료 조건]');
-    lines.push('- 신청 성공 토스트 또는 페이지 이동 확인');
-    lines.push('- 결과(성공 메시지 또는 오류) 를 채팅에 한 줄로 보고');
-    lines.push('');
-    lines.push('[안전]');
-    lines.push('- 다른 제품/메뉴 건드리지 말 것');
-    lines.push('- 신청 단계 중 의외의 모달/팝업 뜨면 사용자에게 알리고 일시정지');
-    return lines.join('\n');
+    return [
+      '다음 작업을 Claude for Chrome 사이드바에서 ⚡ 빠르게 수행해주세요.',
+      '왕복 최소화 / DOM 일괄 / 시각 인식 최소화 가 핵심입니다.',
+      '',
+      '[목표]',
+      '파마브로스 어드민에 로그인하여 "' + productName + '" 의 ' + (s.applySample ? '샘플 신청 + ' : '') + '공동구매 신청을 등록합니다.',
+      '',
+      '[로그인 자격증명]',
+      '- URL: ' + GP_ADMIN_URL,
+      '- ID:  ' + s.adminEmail,
+      '- PW:  ' + s.adminPassword,
+      '',
+      '[속도 최적화 4원칙 — 반드시 지킬 것]',
+      '① 로그인 탭 재사용: 현재 열린 탭 중 stg-admin.store.friendly-pharmacist.com 도메인이 이미 로그인돼 있으면 그 탭 재사용. 재로그인 X.',
+      '② URL 직접 접근: 좌측 메뉴 "공구 상품 관리" 는 클릭하지 말고 menu link 의 href 를 location.assign 으로 바로 이동. 검색은 URL 쿼리(?keyword= 또는 ?search=)가 가능하면 우선 사용.',
+      '③ browser_batch 일괄: 검색→체크→신청하기→폼 채우기→제출 같은 다단계는 browser_batch 한 묶음으로. 사이사이 시각 확인 X, DOM 상태로만 판단.',
+      '④ get_page_text + find 병렬: 모달이 열렸는지·필드명이 매칭되는지 확인은 get_page_text + find 로 한 번에. 스크린샷 캡처 X.',
+      '',
+      '[폼 입력 페이로드 — Claude 가 페이지에서 이 객체대로 일괄 채움]',
+      '```json',
+      payloadJson,
+      '```',
+      '',
+      '[수행 — 일괄]',
+      '1. (로그인 탭 없으면) 현재 탭을 ' + GP_ADMIN_URL + ' 로 이동 → 로그인 폼 자동 입력 (id, pw 1회씩 .value = + dispatchEvent("input")) → 로그인 버튼 클릭.',
+      '   ※ 글자 한 자씩 타이핑하지 말 것. fireEvent/typing 시뮬레이션 비용이 크다.',
+      '2. 로그인 후 좌측 메뉴 "공구 상품 관리" 의 href 를 DOM 에서 찾아 location.assign 로 즉시 이동 (메뉴 클릭 → 애니메이션 대기 X).',
+      '3. 제품 목록 페이지에서 검색 input (placeholder/label/name 에 "검색"/"제품"/"keyword" 매칭) 을 찾아 .value = "' + productName + '" 설정 + input/change 이벤트 dispatch + Enter keydown — 모두 browser_batch 안에서.',
+      '4. 검색 결과 행에서 제품명이 "' + productName + '" 인 행의 **좌측 체크박스를 .click() 으로 단일 클릭** (행 전체 클릭 X). querySelectorAll("tr") 순회 + textContent 매칭이 가장 빠름.',
+      '5. 상단/하단 액션 영역의 "신청하기" 버튼 .click().',
+      (s.applySample ? '' : '   (샘플 신청 skip — 곧바로 공동구매 신청 폼으로)'),
+      '',
+      (s.applySample ? '[샘플 신청 — JS 일괄 채움]\n' +
+      '6. 샘플 신청 모달/탭 표시. "샘플 신청" 체크박스/탭 .click().\n' +
+      '7. browser_batch 로 다음을 한 번에 실행:\n' +
+      '   - select[name~="type"|"신청유형"] 의 value 를 payload.sample.type 으로 (.value 설정 + change 이벤트)\n' +
+      '   - input[name~="qty"|"수량"] 의 .value = payload.sample.qty + input 이벤트\n' +
+      '   - input[name~="name"|"이름"] .value = payload.sample.shipName\n' +
+      '   - input[name~="phone"|"연락처"] .value = payload.sample.shipPhone\n' +
+      '   - input/textarea[name~="addr"|"주소"] .value = payload.sample.shipAddr\n' +
+      '   - input/textarea[name~="note"|"요청"|"메모"] .value = payload.sample.shipNote\n' +
+      '   - 모든 input 에 InputEvent("input", {bubbles:true}) dispatch (React/Vue 컨트롤드 컴포넌트 호환)\n' +
+      '8. "신청하기" 버튼 .click() → 성공 토스트 또는 페이지 이동 확인 (get_page_text 1회로).' : ''),
+      '',
+      '[공동구매 신청 — JS 일괄 채움]',
+      '9. "공동구매 신청" 폼으로 이동 (탭/버튼 .click() 또는 직접 URL).',
+      '10. browser_batch 로 다음을 한 번에 실행:',
+      '   - 시작 일자/시각: input[type=date|"시작"].value = "' + s.startDate + '", input[type=time|"시작"].value = "' + s.startTime + '"',
+      '   - 종료 일자/시각: input[type=date|"종료"].value = "' + s.endDate + '", input[type=time|"종료"].value = "' + s.endTime + '"',
+      (s.preEvent ?
+        '   - 사전 이벤트 체크박스 .click() (이미 켜져 있으면 skip)\n' +
+        '   - 당첨 대상 select.value = "' + s.preEvent.target + '"\n' +
+        '   - 당첨 인원 input.value = "' + s.preEvent.count + '"\n' +
+        '   - 당첨 방식 select.value = "' + s.preEvent.method + '"\n' +
+        '   - 당첨 상품 select.value = "' + s.preEvent.prize + '"'
+        : '   - 사전 이벤트 체크박스는 OFF (켜져있으면 .click() 해서 해제)'),
+      (s.buyerEvent ?
+        '   - 구매자 이벤트 체크박스 .click()\n' +
+        '   - 당첨 대상 select.value = "' + s.buyerEvent.target + '"\n' +
+        '   - 당첨 인원 input.value = "' + s.buyerEvent.count + '"\n' +
+        '   - 당첨 방식 select.value = "' + s.buyerEvent.method + '"\n' +
+        '   - 당첨 상품 select.value = "' + s.buyerEvent.prize + '"'
+        : '   - 구매자 이벤트 체크박스는 OFF'),
+      '   - 코멘트 textarea/input.value = "' + s.comment + '"',
+      '   - 모든 input/select 에 InputEvent/ChangeEvent dispatch',
+      '11. "신청하기" 버튼 .click() → 성공 메시지 확인.',
+      '12. **신청 성공 확인 후, 같은 탭의 URL 을 ' + callbackOrigin + ' 로 navigate back** (location.assign). dashboard 로 자동 복귀.',
+      '',
+      '[완료 후 보고]',
+      '- 채팅에 한 줄로: "✅ 샘플 신청 완료 + 공동구매 신청 완료 — dashboard 로 복귀" 또는 어디서 막혔는지.',
+      '',
+      '[절대 금지 — 속도 저하]',
+      '- take_screenshot / 페이지 스크린샷 / vision 도구 호출 X. 각 단계 확인은 get_page_text + DOM 셀렉터만.',
+      '- 단계 사이마다 페이지를 다시 보지 말 것. browser_batch 한 묶음 안에서 끝.',
+      '- 글자 한 자씩 타이핑 시뮬레이션 X. .value = "..." + InputEvent dispatch 만.',
+      '',
+      '[안전 & 탐지 회피]',
+      '- 다른 제품/메뉴 절대 X. 검색 결과의 정확한 매칭 행 1개만.',
+      '- 의외의 모달/confirm 뜨면 일시정지 후 사용자에게 보고 (자동 OK X).',
+      '- 같은 신청을 짧은 시간에 중복 호출 X.',
+      '',
+      '[fallback]',
+      '- 셀렉터가 안 맞으면 get_page_text 1회로 라벨 → input 매핑 한 번에 추론. 그래도 안 되면 시각 인식 최소 1회만.',
+    ].filter(Boolean).join('\n');
   }
 
   // ---- 실행 ----
@@ -7192,6 +7382,7 @@ ${authorLine}
   var TH_PENDING_KEY = 'threads_search_pending';   // { startedAt, query, tab, maxCount }
   var TH_PENDING_TTL_MS = 10 * 60 * 1000;          // 10분 지나면 만료로 간주
   var TH_MODE_KEY = 'threads_search_mode';         // 'ultra' | 'fast' | 'capture'
+  var TH_LAST_FORM_KEY = 'threads_search_last_form'; // { query, tab, maxCount } — 페이지 reload 후 폼 복원용
   var _thMode = (localStorage.getItem(TH_MODE_KEY) || 'ultra');
 
   window.setThreadsMode = function(mode) {
@@ -7364,7 +7555,8 @@ ${authorLine}
     if (maxCount > 50) maxCount = 50;
     if (maxCount < 3) maxCount = 3;
 
-    const callbackOrigin = location.origin + location.pathname + '#threads-search';
+    const callbackOriginBase = location.origin + location.pathname;
+    const callbackOrigin = callbackOriginBase + '#threads-search';
     const cleanQuery = queryRaw.replace(/^#+/, '');
     const searchUrl = `https://www.threads.net/search?q=${encodeURIComponent(cleanQuery)}&serp_type=default`;
     const tabLabel = tab === 'recent' ? '최근(Recent)' : '인기(Top)';
@@ -7375,115 +7567,110 @@ ${authorLine}
 
     let cmd;
     if (mode === 'ultra') {
-      // ── 초고속: Claude for Chrome 도구(get_page_text/find/browser_batch) 일괄 활용 ──
-      const altSearchUrl = `https://www.threads.com/search?q=${encodeURIComponent(cleanQuery)}&serp_type=default`;
+      // ── 초고속: JS 가 base64 반환 → Claude 가 명시적으로 navigate back ──
       cmd =
-`다음 작업을 Claude for Chrome 사이드바에서 ${modeBadge} 로 수행해주세요.
-**왕복 최소화 / DOM 일괄 / 시각 인식 금지** 가 핵심입니다.
+`Threads "${queryRaw}" 검색 ${maxCount}건 추출.
 
-[검색 정보]
-- 플랫폼: Threads (threads.net 또는 threads.com 둘 다 OK)
-- 검색어: "${queryRaw}"
-- 탭: ${tabLabel}
-- 최대 수집: ${maxCount}건
-
-[속도 최적화 4원칙 — 반드시 지킬 것]
-① 로그인 탭 재사용: 현재 열린 탭 중 threads.net / threads.com 도메인의 탭이 이미 있고 로그인돼 있으면 **그 탭을 재사용**. 새 navigate 절약.
-② URL 직접 접근: 검색창 타이핑·클릭 X. URL 파라미터로 바로 검색 결과 페이지 진입.
-③ get_page_text + find 병렬: 페이지 전체 텍스트를 한 번에 읽고, 동시에 find 도구로 핸들/링크/숫자 패턴 매칭 (왕복 1회).
-④ browser_batch 일괄 처리: navigate → 대기 → 텍스트 추출 → DOM 추출을 한 배치로 묶어서 실행. 단계별 왕복 X.
-
-[수행]
-1. browser_batch 로 다음을 한 번에 실행:
-   a. (탭 재사용 가능하면) 기존 Threads 탭 활성화. 아니면 현재 탭의 URL 을 다음 중 하나로 이동:
-      - ${searchUrl}
-      - (위가 안 되면) ${altSearchUrl}
-   b. 결과 컨테이너 로드 대기 — \`a[href*="/post/"]\` 가 최소 1개 등장하거나 1.5초 둘 중 빠른 쪽
-   c. get_page_text 로 페이지 전체 텍스트 한 번 읽기 (병렬: find 로 "/post/" 패턴 링크 매칭)
-   d. 다음 JS 한 번 실행해서 구조화된 배열 얻기:
+1. 현재 탭을 ${searchUrl} 로 이동.
+2. \`a[href*="/post/"]\` 등장하면 즉시 (또는 1초 후) 다음 JS 실행. **JS 는 base64 인코딩된 결과 문자열을 return 함**:
 
 \`\`\`js
-(function(){
-  const MAX = ${maxCount};
-  const out = [];
-  const seen = new Set();
-  // 카운트 텍스트 → 숫자 ('1.2K' → 1200, '3,456' → 3456, '1.5만' → 15000)
-  function parseCount(s) {
-    if (!s) return 0;
-    const t = String(s).trim().replace(/[,\\s]/g, '');
-    const m = t.match(/^([0-9]*\\.?[0-9]+)([KkMm만천억]?)$/);
-    if (!m) { const n = parseInt(t.replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }
-    const v = parseFloat(m[1]);
-    const u = m[2] || '';
-    const mul = u === 'K' || u === 'k' || u === '천' ? 1000
-              : u === 'M' || u === 'm' ? 1000000
-              : u === '만' ? 10000
-              : u === '억' ? 100000000 : 1;
-    return Math.round(v * mul);
-  }
-  const links = Array.from(document.querySelectorAll('a[href*="/post/"]'));
-  for (const a of links) {
-    if (out.length >= MAX) break;
-    const href = a.href;
-    if (!href || seen.has(href) || !/\\/post\\//.test(href)) continue;
-    const card = a.closest('[data-pressable-container]') || a.closest('article') || a.closest('div[role="link"]') || a.closest('div');
-    if (!card) continue;
-    seen.add(href);
-    const m = href.match(/threads\\.(?:net|com)\\/(@[^/]+)\\/post/);
-    const author = m ? m[1] : '';
-    const textNodes = Array.from(card.querySelectorAll('span,div')).map(el => (el.textContent || '').trim()).filter(t => t && t.length > 10);
-    const content = textNodes.sort((a,b) => b.length - a.length)[0] || '';
-    const timeEl = card.querySelector('time');
-    const date = timeEl ? (timeEl.getAttribute('datetime') || timeEl.textContent || '').trim() : '';
-    // 좋아요/답글/리포스트 — Threads 카드 하단 액션 영역 (SVG 아이콘 옆 카운트)
-    // 1) aria-label 으로 의미 있는 버튼 우선
-    let likes = 0, replies = 0, reposts = 0;
-    const btns = Array.from(card.querySelectorAll('[role="button"], button, a[aria-label]'));
-    for (const b of btns) {
-      const al = (b.getAttribute('aria-label') || '').toLowerCase();
-      const txt = (b.textContent || '').trim();
-      const num = parseCount(txt.replace(/[^0-9.,Kk만천억]/g, '').slice(0, 10));
-      if (!num) continue;
-      if (/like|좋아요/i.test(al)) likes = Math.max(likes, num);
-      else if (/repl|comment|답글|댓글/i.test(al)) replies = Math.max(replies, num);
-      else if (/repost|share|리포스트|공유/i.test(al)) reposts = Math.max(reposts, num);
+(async function(){
+  const MAX=${maxCount};
+  function pn(s){if(!s)return 0;const t=String(s).trim().replace(/[,\\s]/g,'');const m=t.match(/^([0-9]*\\.?[0-9]+)([KkMm만천억]?)$/);if(!m)return parseInt(t.replace(/[^0-9]/g,''),10)||0;const v=parseFloat(m[1]);const u=m[2]||'';return Math.round(v*({K:1e3,k:1e3,M:1e6,m:1e6,'만':1e4,'천':1e3,'억':1e8}[u]||1));}
+  const out=[],seen=new Set();
+  function harvest(){
+    for(const a of document.querySelectorAll('a[href*="/post/"]')){
+      if(out.length>=MAX)return;
+      const h=a.href;if(seen.has(h)||!/\\/post\\//.test(h))continue;
+      const c=a.closest('[data-pressable-container]')||a.closest('article')||a.closest('div[role="link"]')||a.closest('div');
+      if(!c)continue;seen.add(h);
+      const author=(h.match(/threads\\.(?:net|com)\\/(@[^/]+)\\/post/)||[])[1]||'';
+      const cardText=(c.textContent||'').replace(/\\s+/g,'');
+      // 본문 — UI chrome / 메트릭 텍스트 제거 후 가장 긴 텍스트 블록
+      // 1순위: <span dir="auto"> (Threads 본문 표준 셀렉터)
+      let content='';
+      const dirAuto=Array.from(c.querySelectorAll('span[dir="auto"]')).map(e=>(e.textContent||'').trim()).filter(t=>t.length>10);
+      if(dirAuto.length){content=dirAuto.sort((a,b)=>b.length-a.length)[0]||'';}
+      if(!content){
+        content=Array.from(c.querySelectorAll('span,div')).map(e=>(e.textContent||'').trim()).filter(t=>{
+          if(t.length<=10)return false;
+          const compact=t.replace(/\\s/g,'');
+          // 메트릭 집계 텍스트
+          if(/답글\\d|리포스트\\d|공유하기\\d|likes?\\s*\\d|replies?\\s*\\d/i.test(compact))return false;
+          // UI 라벨 (팔로우/인증된 계정/더 보기/번역 보기 등)
+          if(/팔로우|인증된\\s*계정|더\\s*보기|번역\\s*보기|Follow$|Verified|See\\s*more|See\\s*translation/i.test(t))return false;
+          // 작성자 핸들이 그대로 들어간 메타정보 (예: "팔로우bro_yaksa인증된 계정")
+          if(author&&compact.startsWith(author.replace(/^@/,'')))return false;
+          return true;
+        }).sort((a,b)=>b.length-a.length)[0]||'';
+      }
+      const te=c.querySelector('time');const date=te?(te.getAttribute('datetime')||te.textContent||'').trim():'';
+      let likes=0,replies=0,reposts=0,shares=0;
+      // 1) 집계 텍스트 패턴 매칭 — 가장 안정적 (한국어)
+      // 예: "581답글16리포스트56공유하기39"
+      const numTok='(\\\\d+(?:[.,]\\\\d+)?[KkMm만천억]?)';
+      const reKo=new RegExp(numTok+'답글'+numTok+'리포스트'+numTok+'(?:공유하기'+numTok+')?');
+      const mKo=cardText.match(reKo);
+      if(mKo){
+        likes=pn(mKo[1]);replies=pn(mKo[2]);reposts=pn(mKo[3]);shares=pn(mKo[4]||'0');
+      }else{
+        // 2) 영어 패턴
+        const reEn=new RegExp(numTok+'\\\\s*(?:likes?|like)?\\\\s*'+numTok+'\\\\s*(?:repl(?:y|ies)|comments?)\\\\s*'+numTok+'\\\\s*(?:reposts?)','i');
+        const mEn=cardText.match(reEn);
+        if(mEn){likes=pn(mEn[1]);replies=pn(mEn[2]);reposts=pn(mEn[3]);}
+      }
+      // 3) fallback — aria-label 으로 각 버튼 매칭
+      if(!likes&&!replies&&!reposts){
+        for(const b of c.querySelectorAll('[role="button"],button,a[aria-label]')){
+          const al=(b.getAttribute('aria-label')||'').toLowerCase();
+          const txt=(b.textContent||'').replace(/[^0-9.,Kk만천억]/g,'').slice(0,10);
+          const n=pn(txt);
+          if(!n)continue;
+          if(/like|좋아요/.test(al))likes=Math.max(likes,n);
+          else if(/repl|comment|답글|댓글/.test(al))replies=Math.max(replies,n);
+          else if(/repost|리포스트/.test(al))reposts=Math.max(reposts,n);
+          else if(/share|공유/.test(al))shares=Math.max(shares,n);
+        }
+      }
+      out.push({url:h,author,content:content.slice(0,500),date,likes,replies,reposts,shares,mediaType:'text',thumbnailDataUrl:''});
     }
-    // 2) fallback — 카드 내 짧은 숫자 텍스트 4개를 순서대로 likes/replies/reposts/share 로 사용
-    if (likes === 0 && replies === 0 && reposts === 0) {
-      const nums = Array.from(card.querySelectorAll('span'))
-        .map(el => (el.textContent || '').trim())
-        .filter(t => /^[0-9]{1,3}([,.][0-9]+)?[KkMm만천억]?$/.test(t))
-        .map(parseCount);
-      if (nums.length >= 1) likes = nums[0] || 0;
-      if (nums.length >= 2) replies = nums[1] || 0;
-      if (nums.length >= 3) reposts = nums[2] || 0;
-    }
-    out.push({ url: href, author: author, content: content.slice(0, 500), date: date, likes: likes, replies: replies, reposts: reposts, mediaType: 'text', thumbnailDataUrl: '' });
   }
-  // 좋아요 많은 순 정렬해서 반환
-  return out.sort((a, b) => (b.likes - a.likes) || ((b.date || '').localeCompare(a.date || '')));
+  // 페이징 — MAX 채울 때까지 스크롤 + 재추출 반복, 새 게시글 안 늘면 중단
+  let stall=0,last=0;
+  for(let i=0;i<20&&out.length<MAX;i++){
+    harvest();
+    if(out.length>=MAX)break;
+    if(out.length===last){stall++;if(stall>=2)break;}else{stall=0;}
+    last=out.length;
+    window.scrollTo(0,document.body.scrollHeight);
+    await new Promise(r=>setTimeout(r,700));
+  }
+  out.sort((a,b)=>(b.likes-a.likes)||(b.date||'').localeCompare(a.date||''));
+  const payload=JSON.stringify({query:"${queryRaw}",tab:"${tab}",posts:out.slice(0,MAX)});
+  // 백업 — clipboard
+  try{await navigator.clipboard.writeText(payload);}catch(e){}
+  // base64 인코딩된 문자열을 반환 — Claude 가 이걸로 dashboard URL 만들어 navigate
+  const b64=btoa(unescape(encodeURIComponent(payload)));
+  // setTimeout 으로도 동시 시도
+  const dest='${callbackOriginBase}'+'#threads-search?_thd='+encodeURIComponent(b64);
+  setTimeout(()=>{ try { location.assign(dest); } catch(e){} }, 200);
+  return b64;
 })()
 \`\`\`
 
-2. JS 결과 + get_page_text/find 매칭 결과로 ${maxCount}개 채움. 부족하면 page-end 까지 단 1회 스크롤 후 같은 JS 재실행 (browser_batch 안에서).
-3. **금지**: 게시글 카드 클릭, 상세 페이지 진입, 시각적 vision 인식, 이미지 캡처, 마우스 호버, 댓글 펼치기.
+3. **반드시 수행 — 결과를 dashboard 결과창에 넣는 핵심 단계**:
+   위 JS 의 return 값(base64 문자열) 을 받아서 같은 탭을 다음 URL 로 navigate back:
+   \`${callbackOriginBase}#threads-search?_thd=<JS 가 반환한 base64 문자열을 그대로 붙임>\`
 
-[수집 후]
-4. 같은 탭에서 ${callbackOrigin} 로 navigate back (location.assign — browser_batch 안에 같이 묶어도 OK).
-5. 페이지 로드 후 호출:
-   window.receiveThreadsResults({
-     "query": "${queryRaw}", "tab": "${tab}",
-     "posts": /* JS/find 통합 결과, 최대 ${maxCount}개 */
-   })
-   ※ 함수가 아직 정의 전이면 짧게 polling 후 호출.
+4. 채팅엔 "✅ ${queryRaw} ${maxCount}건 완료 — dashboard 복귀" 한 줄만.
 
-[fallback]
-- 0건이거나 selector 안 맞으면 채팅에 JSON 직접 출력 → 사용자가 "📋 결과 JSON 직접 붙여넣기" 로 가져감.
-
-[안전 & 탐지 회피]
-- DOM·텍스트만 읽기. 클릭/입력/제출 X.
-- 게시글 카드에 hover X (조회 로그 남길 수 있음).
-- 같은 검색을 짧은 시간에 반복 호출 X.`;
+[절대 금지 — 속도 저하 원인]
+- take_screenshot / 스크린샷 / 페이지 캡처 일체 X
+- read_image / vision / 시각 인식 X
+- 스크롤 X · 마우스 호버 X · 댓글 펼치기 X
+- JS 실행 후 추가 도구 호출 X (JS 가 알아서 navigate back 함)
+- 한 번의 navigate + 한 번의 JS + 한 줄 보고로 끝.`;
     } else {
       // ── fast / capture: 기존 방식 (시각적 읽기 + 옵션 캡처) ──
       const captureImages = (mode === 'capture');
@@ -7527,6 +7714,11 @@ ${authorLine}
 
 ${captureRules}
 
+[절대 금지 — 속도 저하]
+- take_screenshot / 페이지 캡처 도구 사용 금지 (단, capture 모드의 메인 미디어 캡처는 예외).
+- 시각 페이지 확인 / vision 도구 호출 X. get_page_text + querySelectorAll 만 사용.
+- 단계 사이의 확인 차원 도구 호출 X. browser_batch 안에서 끝낼 것.
+
 [수집 후]
 5. 같은 탭에서 ${callbackOrigin} 로 navigate back.
 6. window.receiveThreadsResults({"query":"${queryRaw}", "tab":"${tab}", "posts": [...]})
@@ -7547,6 +7739,8 @@ ${captureRules}
     window._thLastRequestedAt = Date.now();
     try { localStorage.setItem('threads_search_requested_at', String(window._thLastRequestedAt)); } catch (e) {}
     saveThPending({ startedAt: window._thLastRequestedAt, query: queryRaw, tab: tab, maxCount: maxCount });
+    // 페이지 reload 후 폼 복원용 — pending 이 clear 되어도 마지막 입력값 유지
+    try { localStorage.setItem(TH_LAST_FORM_KEY, JSON.stringify({ query: queryRaw, tab: tab, maxCount: maxCount })); } catch (e) {}
     showThreadsSearchCommandToast(cmd);
     showThreadsSearchPending(window._thLastRequestedAt);
   };
@@ -7555,14 +7749,23 @@ ${captureRules}
     const isMac = /Mac|iPad|iPhone/i.test(navigator.platform || navigator.userAgent || '');
     const shortcut = isMac ? '⌥ A' : 'Alt+A';
     const pasteKey = isMac ? '⌘ V' : 'Ctrl+V';
+    const isUltra = (_thMode === 'ultra');
     const old = document.getElementById('th-search-cmd-toast');
     if (old) old.remove();
     const t = document.createElement('div');
     t.id = 'th-search-cmd-toast';
-    t.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:600; background:#161b22; border:1.5px solid #FF8A00; border-radius:12px; padding:14px 16px; width:340px; box-shadow:0 12px 36px rgba(0,0,0,0.4); font-family:"Noto Sans KR", sans-serif; color:#c9d1d9;';
+    t.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:600; background:#161b22; border:1.5px solid #FF8A00; border-radius:12px; padding:14px 16px; width:360px; box-shadow:0 12px 36px rgba(0,0,0,0.4); font-family:"Noto Sans KR", sans-serif; color:#c9d1d9;';
+    const ultraStep4 = `<div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#2dd4bf; color:#0d1117; font-size:10px; font-weight:700;">4</span>
+          <span><strong>이 탭으로 돌아오면 자동 import</strong> (또는 📋 결과 JSON 직접 붙여넣기 버튼)</span>
+        </div>`;
+    const stdStep3 = `<div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">3</span>
+          <span>Enter → 결과는 자동으로 이 페이지에 표시됨</span>
+        </div>`;
     t.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
-        <div style="font-size:13px; font-weight:700; color:#FF8A00;">✅ 명령 복사 완료 (Threads)</div>
+        <div style="font-size:13px; font-weight:700; color:#FF8A00;">✅ 명령 복사 완료 ${isUltra ? '(⚡⚡ 초고속)' : '(Threads)'}</div>
         <button onclick="this.parentElement.parentElement.remove()" style="background:transparent; border:0; color:#8b949e; cursor:pointer; font-size:14px; padding:0; line-height:1;">✕</button>
       </div>
       <div style="font-size:12px; line-height:1.6; color:#c9d1d9;">
@@ -7574,10 +7777,8 @@ ${captureRules}
           <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">2</span>
           <span>붙여넣기 — <kbd style="background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:1px 6px; font-size:11px;">${pasteKey}</kbd></span>
         </div>
-        <div style="display:flex; gap:6px; align-items:center; margin:2px 0;">
-          <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#FF8A00; color:#fff; font-size:10px; font-weight:700;">3</span>
-          <span>Enter → 결과는 자동으로 이 페이지에 표시됨</span>
-        </div>
+        ${isUltra ? '' : stdStep3}
+        ${isUltra ? ultraStep4 : ''}
       </div>
       <div style="margin-top:10px; display:flex; gap:6px;">
         <button onclick="(function(){navigator.clipboard&&navigator.clipboard.writeText(window._lastThreadsCmd||'');})()" style="flex:1; background:#4f46e5; color:#fff; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px;">📋 다시 복사</button>
@@ -7627,9 +7828,26 @@ ${captureRules}
     if (typeof showToast === 'function') showToast(`✅ 스레드 ${posts.length}건 도착`);
   };
 
-  // ── 수동 붙여넣기 ──
-  window.showThreadsManualPaste = function() {
-    const json = prompt('Claude 가 채팅에 출력한 결과 JSON 을 그대로 붙여넣어주세요.');
+  // ── 수동/자동 클립보드 import ──
+  window.showThreadsManualPaste = async function() {
+    // 1) 클립보드에서 자동 읽기 시도 (Claude 가 navigator.clipboard.writeText 로 복사한 경우)
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim().startsWith('{') && text.includes('posts')) {
+          try {
+            const data = JSON.parse(text);
+            if (data && Array.isArray(data.posts)) {
+              receiveThreadsResults(data);
+              if (typeof showToast === 'function') showToast(`✅ 클립보드에서 ${data.posts.length}건 import`);
+              return;
+            }
+          } catch (e) { /* 다음 단계로 */ }
+        }
+      } catch (e) { /* permission denied → 수동 입력 */ }
+    }
+    // 2) fallback — 수동 prompt
+    const json = prompt('클립보드 읽기 실패. Claude 가 출력한 JSON 을 직접 붙여넣어주세요.');
     if (!json) return;
     try {
       const data = JSON.parse(json);
@@ -7638,6 +7856,41 @@ ${captureRules}
       alert('JSON 파싱 실패: ' + e.message);
     }
   };
+
+  // 페이지가 다시 focus 받을 때 + 페이지 로드 직후 자동으로 클립보드 체크 — pending 중인 경우만
+  let _thAutoImportArmed = false;
+  async function tryThreadsClipboardImport() {
+    const pend = loadThPending();
+    if (!pend) return false;
+    if (!navigator.clipboard || !navigator.clipboard.readText) return false;
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim().startsWith('{') || !text.includes('posts')) return false;
+      const data = JSON.parse(text);
+      if (data && data.query && Array.isArray(data.posts) && data.query === pend.query) {
+        receiveThreadsResults(data);
+        if (typeof showToast === 'function') showToast(`✅ 자동 import — ${data.posts.length}건`);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  function armThreadsAutoImport() {
+    if (_thAutoImportArmed) return;
+    _thAutoImportArmed = true;
+    window.addEventListener('focus', tryThreadsClipboardImport);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryThreadsClipboardImport(); });
+  }
+  // 페이지 로드 직후 1초간 짧게 반복 시도 (navigate back 직후 focus 이벤트 안 잡힐 수 있음)
+  setTimeout(() => {
+    armThreadsAutoImport();
+    let tries = 0;
+    const id = setInterval(async () => {
+      tries++;
+      const ok = await tryThreadsClipboardImport();
+      if (ok || tries >= 5) clearInterval(id);
+    }, 400);
+  }, 300);
 
   // ── 기록 초기화 ──
   window.clearThreadsSearchHistory = function() {
@@ -7776,8 +8029,65 @@ ${captureRules}
     runThreadsSearch();
   };
 
-  // 페이지 로드 시 1회 — 캐시된 결과 자동 표시
-  setTimeout(() => { try { renderThreadsSearchHistory(); renderThreadsSearchResults(); } catch (e) {} }, 200);
+  // 페이지 로드 시 1회 — 캐시된 결과 자동 표시 + 폼 값 복원
+  setTimeout(() => {
+    try { renderThreadsSearchHistory(); renderThreadsSearchResults(); } catch (e) {}
+    // 폼 값 복원 (view init 보다 먼저 진입한 경우에도 동작)
+    try {
+      let formState = null;
+      const pend = loadThPending();
+      if (pend && pend.query) formState = { query: pend.query, tab: pend.tab, maxCount: pend.maxCount };
+      if (!formState) {
+        const raw = localStorage.getItem(TH_LAST_FORM_KEY);
+        if (raw) formState = JSON.parse(raw);
+      }
+      if (!formState) {
+        const cur = loadThSearchCurrent();
+        if (cur && cur.query) formState = { query: cur.query, tab: cur.tab };
+      }
+      if (formState) {
+        const q = document.getElementById('th-search-query');
+        const tabEl = document.getElementById('th-search-tab');
+        const maxEl = document.getElementById('th-search-max');
+        if (q && formState.query != null && !q.value) q.value = formState.query;
+        if (tabEl && formState.tab) tabEl.value = formState.tab;
+        if (maxEl && formState.maxCount) maxEl.value = String(formState.maxCount);
+      }
+    } catch (e) {}
+  }, 250);
+
+  // ── URL 해시로 전달된 검색 결과 자동 import (Claude 가 hash 안에 담아 navigate back 한 경우) ──
+  // 형식: #threads-search?_thd=BASE64  또는  #ig-search?_igd=BASE64
+  (function importFromUrlHash() {
+    try {
+      const hash = (location.hash || '').replace(/^#/, '');
+      if (!hash || hash.indexOf('?') < 0) return;
+      const qIdx = hash.indexOf('?');
+      const view = hash.slice(0, qIdx);
+      const qs = hash.slice(qIdx + 1);
+      const params = new URLSearchParams(qs);
+      const thd = params.get('_thd');
+      const igd = params.get('_igd');
+      if (!thd && !igd) return;
+      const b64ToJson = (b64) => {
+        try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); } catch (e) { return null; }
+      };
+      if (thd) {
+        const data = b64ToJson(thd);
+        if (data && Array.isArray(data.posts)) {
+          try { receiveThreadsResults(data); } catch (e) {}
+        }
+      }
+      if (igd) {
+        const data = b64ToJson(igd);
+        if (data && Array.isArray(data.posts)) {
+          try { receiveInstagramResults(data); } catch (e) {}
+        }
+      }
+      // URL 정리 — 데이터 파라미터 제거하고 view hash 만 유지
+      try { history.replaceState(null, '', location.pathname + (view ? '#' + view : '')); } catch (e) {}
+    } catch (e) {}
+  })();
 
   // Initial paint from cache (Instagram)
   try { renderInstagramPanel(); } catch (e) {}
