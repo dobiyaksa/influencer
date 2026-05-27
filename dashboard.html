@@ -1131,6 +1131,24 @@
     }
     .ig-handle-btn:hover { border-color: var(--teal); color: #fff; }
 
+    .ig-profile-card {
+      display: flex; align-items: center; gap: 20px; padding: 16px 20px;
+    }
+    .ig-profile-pic {
+      width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #30363d; flex-shrink: 0;
+      background: #1f2530;
+    }
+    .ig-profile-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .ig-profile-name { font-size: 15px; font-weight: 700; color: #e6edf3; }
+    .ig-profile-handle { font-size: 12px; color: #8b949e; }
+    .ig-profile-bio {
+      font-size: 12px; color: #c9d1d9; line-height: 1.5; white-space: pre-line;
+      max-width: 480px;
+    }
+    .ig-profile-stats { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .ig-profile-stats strong { color: #c9d1d9; font-weight: 600; }
+
     .contents-summary-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 14px; padding: 12px 0 8px;
@@ -1743,6 +1761,19 @@
       </div>
     </details>
 
+    <!-- Instagram Profile Card -->
+    <div class="dash-card ig-profile-card" id="ig-profile-card" style="display:none">
+      <img class="ig-profile-pic" id="ig-profile-pic" src="" alt="프로필 사진">
+      <div class="ig-profile-info">
+        <div class="ig-profile-name" id="ig-profile-name">—</div>
+        <div class="ig-profile-handle" id="ig-profile-handle">—</div>
+        <div class="ig-profile-bio" id="ig-profile-bio"></div>
+        <div class="ig-profile-stats">
+          <span>팔로워 <strong id="ig-profile-followers">—</strong></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Active Plans Panel -->
     <div class="dash-card active-plans-section">
       <div class="active-plans-header">
@@ -1849,7 +1880,7 @@
       <div class="charts-grid">
         <div class="panel">
           <p class="section-label" style="margin-bottom:8px">공구별 매출 TOP 10</p>
-          <div class="chart-wrap" style="height:220px">
+          <div class="chart-wrap" style="height:320px">
             <canvas id="chart-plans"></canvas>
           </div>
         </div>
@@ -2433,8 +2464,12 @@
         }
         if (!instagramFetched) {
           instagramFetched = true;
-          if (instagramState && instagramState.handle) fetchInstagramContent();
-          else renderInstagramPanel();
+          if (instagramState && instagramState.handle) {
+            fetchInstagramContent();
+            fetchInstagramProfile();
+          } else {
+            renderInstagramPanel();
+          }
         }
       };
     })(),
@@ -2475,6 +2510,7 @@
   const IG_TOKEN_KEY = 'apify_demo_token';
   const IG_HANDLE_KEY = 'apify_demo_handle';
   const IG_POSTS_KEY = 'apify_demo_posts';
+  const IG_PROFILE_KEY = 'apify_profile_data';
 
   const instagramState = {
     token: localStorage.getItem(IG_TOKEN_KEY) || '',
@@ -2483,6 +2519,7 @@
     error: null,
     posts: null,
     fetchedAt: null,
+    profile: null,
   };
 
   // 페이지 로드 시 캐시된 posts 복원
@@ -2497,6 +2534,76 @@
       }
     } catch (e) {}
   })();
+
+  // 페이지 로드 시 캐시된 profile 복원
+  (function restoreProfileCache() {
+    try {
+      const raw = localStorage.getItem(IG_PROFILE_KEY);
+      if (!raw) return;
+      const cached = JSON.parse(raw);
+      if (cached && cached.data) {
+        instagramState.profile = cached.data;
+        renderInstagramProfileCard();
+      }
+    } catch (e) {}
+  })();
+
+  function renderInstagramProfileCard() {
+    const card = document.getElementById('ig-profile-card');
+    if (!card) return;
+    const p = instagramState.profile;
+    if (!p) { card.style.display = 'none'; return; }
+
+    card.style.display = 'flex';
+    const pic = document.getElementById('ig-profile-pic');
+    const name = document.getElementById('ig-profile-name');
+    const handle = document.getElementById('ig-profile-handle');
+    const bio = document.getElementById('ig-profile-bio');
+    const followers = document.getElementById('ig-profile-followers');
+
+    if (pic) pic.src = p.profilePicUrl || p.profilePicUrlHD || '';
+    if (name) name.textContent = p.fullName || p.username || '';
+    if (handle) handle.textContent = '@' + (p.username || instagramState.handle);
+    if (bio) bio.textContent = p.biography || '';
+    if (followers) {
+      const n = p.followersCount || 0;
+      followers.textContent = n >= 10000 ? (n / 10000).toFixed(1).replace(/\.0$/, '') + '만' : n.toLocaleString('ko-KR');
+    }
+  }
+
+  async function fetchInstagramProfile() {
+    if (!instagramState.handle || !instagramState.token) return;
+
+    // 캐시 TTL 체크 (6시간)
+    try {
+      const raw = localStorage.getItem(IG_PROFILE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && cached.fetchedAt && (Date.now() - cached.fetchedAt) < 6 * 60 * 60 * 1000) {
+          instagramState.profile = cached.data;
+          renderInstagramProfileCard();
+          return;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const endpoint = 'https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token='
+        + encodeURIComponent(instagramState.token);
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames: [instagramState.handle] }),
+      });
+      if (!res.ok) return;
+      const items = await res.json();
+      const profile = Array.isArray(items) ? items[0] : null;
+      if (!profile) return;
+      instagramState.profile = profile;
+      localStorage.setItem(IG_PROFILE_KEY, JSON.stringify({ data: profile, fetchedAt: Date.now() }));
+      renderInstagramProfileCard();
+    } catch (e) {}
+  }
 
   function igEsc(s) { return esc(s == null ? '' : String(s)); }
 
@@ -2763,7 +2870,10 @@
     if (cleanedHandle) localStorage.setItem(IG_HANDLE_KEY, cleanedHandle); else localStorage.removeItem(IG_HANDLE_KEY);
     if (cleanedToken) localStorage.setItem(IG_TOKEN_KEY, cleanedToken); else localStorage.removeItem(IG_TOKEN_KEY);
     instagramState.posts = null;
+    instagramState.profile = null;
+    localStorage.removeItem(IG_PROFILE_KEY);
     fetchInstagramContent();
+    fetchInstagramProfile();
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -3499,11 +3609,10 @@
           data: data.map(d => d.totalSales),
           backgroundColor: '#1D9E75',
           borderRadius: 3,
-          barThickness: 16
+          barThickness: 24
         }]
       },
       options: {
-        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -3515,28 +3624,30 @@
             titleColor: c.tooltipTitle,
             bodyColor: c.tooltipBody,
             padding: 10,
-            callbacks: { label: ctx => formatCurrency(ctx.parsed.x) }
+            callbacks: { label: ctx => formatCurrency(ctx.parsed.y) }
           }
         },
         scales: {
           x: {
+            grid: { display: false },
+            ticks: {
+              color: c.text,
+              font: { size: 9 },
+              maxRotation: 35,
+              minRotation: 35,
+              callback: function(val) {
+                const label = this.getLabelForValue(val);
+                return label.length > 10 ? label.slice(0, 10) + '…' : label;
+              }
+            },
+            border: { color: 'transparent' }
+          },
+          y: {
             grid: { color: c.grid },
             ticks: {
               color: c.text,
               font: { size: 10, family: 'JetBrains Mono' },
               callback: v => moneyMasked ? '' : (v >= 100000000 ? (v / 100000000) + '억' : v >= 10000 ? Math.round(v / 10000) + '만' : v)
-            },
-            border: { color: 'transparent' }
-          },
-          y: {
-            grid: { display: false },
-            ticks: {
-              color: c.text,
-              font: { size: 10 },
-              callback: function(val) {
-                const label = this.getLabelForValue(val);
-                return label.length > 12 ? label.slice(0, 12) + '…' : label;
-              }
             },
             border: { color: 'transparent' }
           }
