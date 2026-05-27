@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 이벤트 추첨 — 공구 당첨자 뽑기</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #FBF8F2;
+    --paper: #FFFEFB;
+    --text: #2C2620;
+    --muted: #8B7D74;
+    --accent: #D4776D;
+    --accent-soft: #FBE8E5;
+    --line: #ECE2DD;
+    --green: #5A9A5A;
+    --amber: #E5B23B;
+    --red: #C96E66;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg);
+    color: var(--text); font-family: 'Noto Sans KR', sans-serif;
+    padding: 40px 20px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 {
+    font-family: 'Jua', sans-serif; font-size: 36px; margin: 0 0 6px;
+    color: var(--text);
+  }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: 14px; line-height: 1.6; }
+  .topnav {
+    margin-bottom: 24px;
+    display: flex; gap: 14px; align-items: center;
+    font-size: 12px; color: var(--muted);
+  }
+  .topnav a { color: var(--muted); text-decoration: none; }
+  .topnav a:hover { color: var(--accent); }
+
+  .step {
+    background: var(--paper); border: 1.5px solid var(--line);
+    border-radius: 16px; padding: 24px 28px; margin-bottom: 16px;
+    transition: opacity 0.2s, border-color 0.2s;
+  }
+  .step.disabled { opacity: 0.45; pointer-events: none; }
+  .step.active { border-color: var(--accent); box-shadow: 0 4px 20px rgba(212, 119, 109, 0.08); }
+  .step-head {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+  }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-family: 'Jua', sans-serif; font-size: 15px;
+  }
+  .step.done .step-num { background: var(--green); }
+  .step.done .step-num::after { content: '✓'; }
+  .step.done .step-num > span { display: none; }
+  .step-title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+  }
+  .step-body { font-size: 14px; line-height: 1.6; color: var(--text); }
+
+  /* Step 1 — Upload */
+  .drop-zone {
+    border: 2.5px dashed var(--accent); border-radius: 14px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    background: var(--accent-soft); transition: background 0.15s, transform 0.1s;
+  }
+  .drop-zone:hover { background: #f7d9d4; }
+  .drop-zone.dragover { background: #f7d9d4; transform: scale(1.01); }
+  .drop-zone .big { font-size: 36px; margin-bottom: 8px; }
+  .drop-zone .label { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .drop-zone .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .file-info {
+    margin-top: 12px; padding: 10px 14px;
+    background: #f3eee9; border-radius: 8px;
+    font-size: 12px; color: var(--muted);
+    display: none;
+  }
+  .file-info.show { display: block; }
+  .file-info b { color: var(--text); }
+
+  /* Step 2 — Mapping */
+  .mapping-grid {
+    display: grid; grid-template-columns: 160px 1fr; gap: 10px 14px;
+    align-items: center; margin-top: 8px;
+  }
+  .mapping-grid label { font-weight: 700; font-size: 13px; }
+  .mapping-grid label .req { color: var(--red); margin-left: 3px; }
+  .mapping-grid select {
+    width: 100%; padding: 9px 12px;
+    border: 1.5px solid var(--line); border-radius: 8px;
+    font-size: 13px; font-family: inherit;
+    background: #fff; color: var(--text); outline: none;
+  }
+  .mapping-grid select:focus { border-color: var(--accent); }
+  .mapping-grid select.auto { border-color: var(--green); background: #f0f8f0; }
+  .preview-table-wrap {
+    margin-top: 14px; overflow-x: auto;
+    border: 1px solid var(--line); border-radius: 8px;
+    max-height: 240px; overflow-y: auto;
+  }
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .preview-table th, .preview-table td {
+    padding: 6px 10px; text-align: left; white-space: nowrap;
+    border-bottom: 1px solid var(--line); color: var(--text);
+  }
+  .preview-table th { background: #f7f0ed; font-weight: 700; color: var(--muted); position: sticky; top: 0; }
+  .preview-meta { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* Step 3 — Filter */
+  .filter-row {
+    display: flex; align-items: center; gap: 10px; margin: 6px 0;
+    font-size: 14px; user-select: none;
+  }
+  .filter-row input[type=checkbox] {
+    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+  }
+  .filter-row label { cursor: pointer; }
+  .filter-row .note { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .pool-summary {
+    margin-top: 14px; padding: 14px 18px;
+    background: linear-gradient(135deg, var(--accent-soft), #fff);
+    border: 1.5px solid var(--accent);
+    border-radius: 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .pool-summary .icon { font-size: 28px; }
+  .pool-summary .text { flex: 1; font-size: 13px; line-height: 1.5; color: var(--text); }
+  .pool-summary .count {
+    font-family: 'Jua', sans-serif; font-size: 28px;
+    color: var(--accent);
+  }
+
+  /* Step 4 — Config + Roulette */
+  .config-row {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .config-row label { font-weight: 700; font-size: 13px; }
+  .config-row input[type=number] {
+    width: 80px; padding: 8px 12px; font-size: 16px;
+    border: 1.5px solid var(--line); border-radius: 8px; outline: none;
+    text-align: center; font-family: inherit;
+  }
+  .config-row input[type=number]:focus { border-color: var(--accent); }
+  .roulette-area {
+    margin-top: 16px; display: flex; flex-direction: column; align-items: center;
+    gap: 12px; min-height: 380px;
+  }
+  .wheel-stage {
+    position: relative; width: 360px; height: 360px;
+  }
+  .wheel-stage::before {
+    content: ''; position: absolute; inset: -8px;
+    background: radial-gradient(circle, var(--accent-soft) 50%, transparent);
+    border-radius: 50%; z-index: 0;
+  }
+  .wheel-svg {
+    width: 100%; height: 100%;
+    transform-origin: 50% 50%;
+    position: relative; z-index: 1;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.12));
+  }
+  .wheel-pointer {
+    position: absolute; top: -4px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 28px solid var(--accent);
+    z-index: 5;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  .wheel-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px; border-radius: 50%;
+    background: #fff; border: 4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Jua', sans-serif; font-size: 16px; color: var(--accent);
+    z-index: 3;
+  }
+  .spin-btn {
+    padding: 14px 32px; font-size: 15px; font-weight: 700;
+    background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .spin-btn:hover { transform: translateY(-1px); }
+  .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .spin-status {
+    font-size: 13px; color: var(--muted); min-height: 22px;
+  }
+  .spin-status .winner-name {
+    font-family: 'Jua', sans-serif; color: var(--accent); font-size: 18px;
+    animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+
+  /* Step 5 — Results */
+  .winners-list {
+    list-style: none; padding: 0; margin: 0;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    overflow: hidden;
+  }
+  .winners-list li {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+    font-size: 14px;
+  }
+  .winners-list li:last-child { border-bottom: 0; }
+  .winners-list li .rank {
+    font-family: 'Jua', sans-serif; font-size: 18px;
+    color: var(--accent); width: 32px;
+  }
+  .winners-list li .name { font-weight: 700; flex: 1; }
+  .winners-list li .id { color: var(--muted); font-size: 12px; }
+  .actions {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+  }
+  .actions button {
+    padding: 10px 16px; font-size: 13px; font-weight: 700;
+    border: 1.5px solid var(--line); background: #fff; color: var(--text);
+    border-radius: 8px; cursor: pointer; font-family: inherit;
+  }
+  .actions button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .actions button:hover { opacity: 0.9; }
+  .mask-toggle { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; }
+  .mask-toggle input { accent-color: var(--accent); }
+
+  /* Poster (hidden, used for html2canvas) */
+  .poster {
+    position: fixed; left: -99999px; top: 0;
+    width: 1080px; height: 1350px;
+    background: linear-gradient(180deg, var(--accent-soft) 0%, #FFFBF9 60%, #fff 100%);
+    padding: 70px 60px; box-sizing: border-box;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text);
+  }
+  .poster .badge {
+    display: inline-block; padding: 8px 22px;
+    background: var(--accent); color: #fff;
+    border-radius: 30px; font-size: 22px; font-weight: 700;
+    font-family: 'Jua', sans-serif; margin-bottom: 30px;
+  }
+  .poster h2 {
+    font-family: 'Jua', sans-serif; font-size: 80px; margin: 0 0 8px;
+    color: var(--text); line-height: 1.1;
+  }
+  .poster .sub {
+    font-size: 28px; color: var(--muted); margin-bottom: 50px;
+  }
+  .poster ol { padding: 0; margin: 0; list-style: none; }
+  .poster ol li {
+    display: flex; align-items: center; gap: 24px;
+    padding: 22px 0; border-bottom: 2px solid var(--accent-soft);
+    font-size: 36px;
+  }
+  .poster ol li:last-child { border-bottom: 0; }
+  .poster ol li .rank {
+    font-family: 'Jua', sans-serif; font-size: 52px;
+    color: var(--accent); width: 70px; text-align: center;
+  }
+  .poster ol li .name { font-weight: 700; flex: 1; }
+  .poster ol li .id { color: var(--muted); font-size: 24px; font-family: monospace; }
+  .poster footer {
+    position: absolute; bottom: 60px; left: 60px; right: 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 22px;
+  }
+  .poster footer .handle { color: var(--accent); font-weight: 700; }
+
+  .privacy-note {
+    font-size: 11px; color: var(--muted); padding: 12px 16px;
+    background: #f3eee9; border-radius: 8px; margin-bottom: 16px;
+    border-left: 3px solid var(--accent);
+  }
+  .err { color: var(--red); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topnav">
+    <a href="/dashboard">← 대시보드</a>
+    <a href="/event-admin.html">이벤트 관리자</a>
+    <span style="color: #ccc">|</span>
+    <span>이벤트 추첨</span>
+  </div>
+
+  <h1>🎲 이벤트 추첨</h1>
+  <p class="sub">
+    공동구매 종료 후 주문 명단에서 공정하게 당첨자를 뽑습니다.<br>
+    엑셀(.xlsx) 을 올리면 자동으로 구매자명·구매자ID 를 인식하고, 룰렛 회전 후 N명을 선정해 인스타 발표용 이미지까지 생성합니다.
+  </p>
+
+  <div class="privacy-note">
+    🔒 업로드한 엑셀은 본인 브라우저 안에서만 처리되며, 외부 서버로 전송되지 않습니다.
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div class="step active" id="step-1">
+    <div class="step-head">
+      <span class="step-num"><span>1</span></span>
+      <span class="step-title">주문 엑셀 업로드</span>
+    </div>
+    <div class="step-body">
+      <div class="drop-zone" id="drop-zone">
+        <div class="big">📂</div>
+        <div class="label">엑셀 파일을 여기로 드래그하거나 클릭해서 선택</div>
+        <div class="hint">친한스토어 / 스마트스토어 / 카페24 등 .xlsx 형식 모두 지원</div>
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none">
+      </div>
+      <div class="file-info" id="file-info"></div>
+      <div class="err" id="upload-err"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Mapping -->
+  <div class="step disabled" id="step-2">
+    <div class="step-head">
+      <span class="step-num"><span>2</span></span>
+      <span class="step-title">컬럼 확인</span>
+    </div>
+    <div class="step-body">
+      <p style="margin: 0 0 12px; font-size: 13px; color: var(--muted);">
+        엑셀에서 추첨에 사용할 컬럼을 확인하세요. 초록색은 자동 감지됨 — 필요하면 수동 변경.
+      </p>
+      <div class="mapping-grid">
+        <label>구매자명 <span class="req">*</span></label>
+        <select id="map-name"></select>
+        <label>구매자ID <span class="req">*</span></label>
+        <select id="map-id"></select>
+        <label>주문상태 (선택)</label>
+        <select id="map-status"><option value="">— 사용 안 함</option></select>
+        <label>클레임상태 (선택)</label>
+        <select id="map-claim"><option value="">— 사용 안 함</option></select>
+        <label>상품명 (선택)</label>
+        <select id="map-product"><option value="">— 사용 안 함</option></select>
+      </div>
+      <div class="preview-table-wrap">
+        <table class="preview-table" id="preview-table"></table>
+      </div>
+      <div class="preview-meta" id="preview-meta"></div>
+    </div>
+  </div>
+
+  <!-- Step 3: Filter -->
+  <div class="step disabled" id="step-3">
+    <div class="step-head">
+      <span class="step-num"><span>3</span></span>
+      <span class="step-title">응모자 필터</span>
+    </div>
+    <div class="step-body">
+      <div class="filter-row">
+        <input type="checkbox" id="filter-cancel" checked>
+        <label for="filter-cancel">❌ 취소된 주문 제외</label>
+        <span class="note">(주문상태 = "취소")</span>
+      </div>
+      <div class="filter-row">
+        <input type="checkbox" id="filter-claim" checked>
+        <label for="filter-claim">❌ 클레임 완료 주문 제외</label>
+        <span class="note">(클레임상태 = "취소완료")</span>
+      </div>
+      <div class="filter-row">
+        <input type="checkbox" id="filter-dedupe" checked>
+        <label for="filter-dedupe">👤 1인 1회 응모</label>
+        <span class="note">(같은 구매자ID 의 여러 주문은 1번만)</span>
+      </div>
+      <div class="pool-summary">
+        <span class="icon">🎯</span>
+        <div class="text">
+          최종 응모자 <span class="count" id="pool-count">0</span>명
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="pool-detail">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Roulette -->
+  <div class="step disabled" id="step-4">
+    <div class="step-head">
+      <span class="step-num"><span>4</span></span>
+      <span class="step-title">룰렛 추첨</span>
+    </div>
+    <div class="step-body">
+      <div class="config-row">
+        <label for="winner-count">당첨자 수:</label>
+        <input type="number" id="winner-count" value="5" min="1" max="100">
+        <span style="font-size:12px;color:var(--muted);">명</span>
+        <span id="winner-count-hint" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+      <div class="roulette-area">
+        <div class="wheel-stage">
+          <div class="wheel-pointer"></div>
+          <svg class="wheel-svg" id="wheel-svg" viewBox="0 0 360 360"></svg>
+          <div class="wheel-center" id="wheel-center">START</div>
+        </div>
+        <button class="spin-btn" id="spin-btn">🎲 추첨 시작</button>
+        <div class="spin-status" id="spin-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: Results -->
+  <div class="step disabled" id="step-5">
+    <div class="step-head">
+      <span class="step-num"><span>5</span></span>
+      <span class="step-title">당첨자 발표</span>
+    </div>
+    <div class="step-body">
+      <ol class="winners-list" id="winners-list"></ol>
+      <div class="mask-toggle">
+        <input type="checkbox" id="mask-toggle" checked>
+        <label for="mask-toggle">결과 발표 시 마스킹 적용 (김** 형식)</label>
+      </div>
+      <div class="actions">
+        <button class="primary" onclick="downloadPoster()">🖼 인스타 포스터 (.png)</button>
+        <button onclick="downloadCSV()">📥 CSV 다운로드</button>
+        <button onclick="copyResults()">📋 클립보드 복사</button>
+        <button onclick="restartRaffle()">↻ 다시 추첨</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 인스타 포스터 — html2canvas 캡처용 (화면 밖) -->
+<div class="poster" id="poster"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── State ──────────────────────────────────────────────────────────
+  const state = {
+    fileName: '',
+    headers: [],
+    rows: [],              // AOA 데이터 행 (헤더 제외)
+    colMap: {              // header name (string)
+      name: '', id: '', status: '', claim: '', product: ''
+    },
+    pool: [],              // 필터 통과한 응모자 [{name, id, ...rawRow}]
+    winners: [],           // 당첨자 [{name, id, rank}]
+    wheelAngle: 0,         // 룰렛 현재 각도
+    isSpinning: false,
+  };
+
+  // ─── Auto-detect column candidates ──────────────────────────────────
+  const CAND = {
+    name: ['구매자명', '구매자', '주문자명', '주문자', '이름', '성명', '고객명', '회원명', '구매자성명', 'buyer', 'name', 'customer_name'],
+    id:   ['구매자id', '구매자아이디', '구매아이디', '구매자ID', '구매자Id', '고객id', '회원id', '회원아이디', '아이디', 'buyer_id', 'customer_id', 'user_id', 'id'],
+    status: ['주문상태', '상태', 'order_status', 'status'],
+    claim: ['클레임상태', '클레임', 'claim_status', 'claim'],
+    product: ['상품명', '제품명', 'product_name', 'item_name', 'product'],
+  };
+
+  function detectColumn(headers, cands) {
+    const lower = headers.map(h => (h || '').toString().trim().toLowerCase());
+    // 1) exact match
+    for (const c of cands) {
+      const idx = lower.indexOf(c.toLowerCase());
+      if (idx >= 0) return headers[idx];
+    }
+    // 2) partial match
+    for (const c of cands) {
+      const idx = lower.findIndex(h => h && h.includes(c.toLowerCase()));
+      if (idx >= 0) return headers[idx];
+    }
+    return '';
+  }
+
+  // ─── Step navigation helpers ────────────────────────────────────────
+  function setStep(n, status) {
+    const el = document.getElementById('step-' + n);
+    if (!el) return;
+    el.classList.remove('disabled', 'active', 'done');
+    if (status === 'active') el.classList.add('active');
+    else if (status === 'done') el.classList.add('done');
+    else if (status === 'disabled') el.classList.add('disabled');
+  }
+  function showStep(n) {
+    setStep(n, 'active');
+    setTimeout(() => {
+      document.getElementById('step-' + n).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  // ─── Step 1: Upload ─────────────────────────────────────────────────
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files[0]; if (f) handleFile(f);
+  });
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0]; if (f) handleFile(f);
+  });
+
+  function handleFile(file) {
+    const errEl = document.getElementById('upload-err');
+    errEl.textContent = '';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if (!aoa.length) throw new Error('시트가 비어있습니다');
+        // 첫 행이 헤더
+        let headerRow = 0;
+        // 일부 엑셀은 빈 행으로 시작 — 첫 non-empty 행을 헤더로
+        for (let i = 0; i < Math.min(5, aoa.length); i++) {
+          if (aoa[i].some(c => c && c.toString().trim())) { headerRow = i; break; }
+        }
+        state.headers = aoa[headerRow].map(h => (h || '').toString().trim());
+        state.rows = aoa.slice(headerRow + 1).filter(r => r.some(c => c && c.toString().trim()));
+        state.fileName = file.name;
+
+        document.getElementById('file-info').classList.add('show');
+        document.getElementById('file-info').innerHTML =
+          `📄 <b>${esc(file.name)}</b> · ${(file.size / 1024).toFixed(1)}KB · 총 ${state.rows.length}행`;
+
+        autoMapColumns();
+        renderMapping();
+        renderPreview();
+        setStep(1, 'done');
+        showStep(2);
+        applyFiltersAndUpdatePool();
+        renderRoulette();
+      } catch (err) {
+        console.error(err);
+        errEl.textContent = '엑셀 읽기 실패: ' + err.message;
+      }
+    };
+    reader.onerror = () => { errEl.textContent = '파일 읽기 오류'; };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ─── Step 2: Mapping ────────────────────────────────────────────────
+  function autoMapColumns() {
+    state.colMap.name = detectColumn(state.headers, CAND.name);
+    state.colMap.id = detectColumn(state.headers, CAND.id);
+    state.colMap.status = detectColumn(state.headers, CAND.status);
+    state.colMap.claim = detectColumn(state.headers, CAND.claim);
+    state.colMap.product = detectColumn(state.headers, CAND.product);
+  }
+  function renderMapping() {
+    const buildSelect = (key, includeEmpty) => {
+      const sel = document.getElementById('map-' + key);
+      const current = state.colMap[key];
+      const opts = state.headers.map(h => `<option value="${esc(h)}"${h === current ? ' selected' : ''}>${esc(h)}</option>`).join('');
+      sel.innerHTML = (includeEmpty ? '<option value="">— 사용 안 함</option>' : '') + opts;
+      if (current) sel.classList.add('auto'); else sel.classList.remove('auto');
+      sel.onchange = (e) => {
+        state.colMap[key] = e.target.value;
+        sel.classList.remove('auto');
+        applyFiltersAndUpdatePool();
+        renderRoulette();
+      };
+    };
+    buildSelect('name', false);
+    buildSelect('id', false);
+    buildSelect('status', true);
+    buildSelect('claim', true);
+    buildSelect('product', true);
+    setStep(2, 'active');
+  }
+  function renderPreview() {
+    const tbl = document.getElementById('preview-table');
+    const headers = state.headers;
+    const preview = state.rows.slice(0, 5);
+    let h = '<thead><tr>' + headers.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+    preview.forEach(row => {
+      h += '<tr>' + headers.map((_, i) => `<td>${esc(row[i] || '')}</td>`).join('') + '</tr>';
+    });
+    h += '</tbody>';
+    tbl.innerHTML = h;
+    document.getElementById('preview-meta').textContent =
+      `총 ${state.rows.length}행 · 미리보기는 상위 5행`;
+  }
+
+  // ─── Step 3: Filter ─────────────────────────────────────────────────
+  document.getElementById('filter-cancel').addEventListener('change', () => { applyFiltersAndUpdatePool(); renderRoulette(); });
+  document.getElementById('filter-claim').addEventListener('change', () => { applyFiltersAndUpdatePool(); renderRoulette(); });
+  document.getElementById('filter-dedupe').addEventListener('change', () => { applyFiltersAndUpdatePool(); renderRoulette(); });
+
+  function colIdx(headerName) {
+    if (!headerName) return -1;
+    return state.headers.indexOf(headerName);
+  }
+  function applyFiltersAndUpdatePool() {
+    if (!state.colMap.name || !state.colMap.id) {
+      state.pool = [];
+      updatePoolDisplay(0, '구매자명 / 구매자ID 컬럼을 먼저 지정하세요');
+      return;
+    }
+    const idxName = colIdx(state.colMap.name);
+    const idxId = colIdx(state.colMap.id);
+    const idxStatus = colIdx(state.colMap.status);
+    const idxClaim = colIdx(state.colMap.claim);
+    const skipCancel = document.getElementById('filter-cancel').checked;
+    const skipClaim = document.getElementById('filter-claim').checked;
+    const dedupe = document.getElementById('filter-dedupe').checked;
+
+    let stats = { total: state.rows.length, removedCancel: 0, removedClaim: 0, removedDup: 0 };
+    let result = [];
+    const seenIds = new Set();
+
+    for (const row of state.rows) {
+      const name = (row[idxName] || '').toString().trim();
+      const id = (row[idxId] || '').toString().trim();
+      if (!name || !id) continue;
+
+      if (skipCancel && idxStatus >= 0) {
+        const s = (row[idxStatus] || '').toString().trim();
+        if (s.includes('취소')) { stats.removedCancel++; continue; }
+      }
+      if (skipClaim && idxClaim >= 0) {
+        const c = (row[idxClaim] || '').toString().trim();
+        if (c.includes('취소완료') || c.includes('환불완료')) { stats.removedClaim++; continue; }
+      }
+      if (dedupe) {
+        if (seenIds.has(id)) { stats.removedDup++; continue; }
+        seenIds.add(id);
+      }
+      result.push({ name, id, _row: row });
+    }
+    state.pool = result;
+    const detail = `원본 ${stats.total}행 → 취소 ${stats.removedCancel} · 클레임 ${stats.removedClaim} · 중복 ${stats.removedDup} 제외`;
+    updatePoolDisplay(result.length, detail);
+    setStep(3, result.length > 0 ? 'active' : 'disabled');
+    if (result.length > 0) setStep(4, 'active');
+    else setStep(4, 'disabled');
+  }
+  function updatePoolDisplay(count, detail) {
+    document.getElementById('pool-count').textContent = count;
+    document.getElementById('pool-detail').textContent = detail;
+    const wcInput = document.getElementById('winner-count');
+    const wcHint = document.getElementById('winner-count-hint');
+    if (count > 0) {
+      if (parseInt(wcInput.value, 10) > count) wcInput.value = Math.min(count, 5);
+      wcInput.max = count;
+      wcHint.textContent = `(응모자 ${count}명 중)`;
+    } else {
+      wcHint.textContent = '';
+    }
+  }
+
+  // ─── Step 4: Roulette ───────────────────────────────────────────────
+  const COLORS = ['#D4776D', '#E5B23B', '#7BB661', '#5DA8D8', '#A87DC5', '#D89BB5', '#88C5A6', '#F0A868', '#9BB1D8', '#C39BD3'];
+
+  function renderRoulette() {
+    const svg = document.getElementById('wheel-svg');
+    const candidates = remainingCandidates();
+    const n = candidates.length;
+    svg.innerHTML = '';
+    if (n === 0) {
+      svg.innerHTML = '<text x="180" y="180" text-anchor="middle" font-family="Jua" font-size="20" fill="#aaa">응모자 없음</text>';
+      return;
+    }
+    const cx = 180, cy = 180, r = 175;
+    const sectorAngle = 360 / n;
+    for (let i = 0; i < n; i++) {
+      const startA = i * sectorAngle - 90;
+      const endA = (i + 1) * sectorAngle - 90;
+      const start = polar(cx, cy, r, startA);
+      const end = polar(cx, cy, r, endA);
+      const large = sectorAngle > 180 ? 1 : 0;
+      const path = `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${large} 1 ${end.x} ${end.y} Z`;
+      const color = COLORS[i % COLORS.length];
+      svg.insertAdjacentHTML('beforeend',
+        `<path d="${path}" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2"></path>`);
+      // 텍스트 — 섹터 중심
+      const midA = startA + sectorAngle / 2;
+      const tp = polar(cx, cy, r * 0.62, midA);
+      const label = n <= 12 ? candidates[i].name :
+                     n <= 30 ? truncate(candidates[i].name, 4) :
+                     (i + 1).toString();
+      svg.insertAdjacentHTML('beforeend',
+        `<text x="${tp.x}" y="${tp.y}" text-anchor="middle" dominant-baseline="middle"
+               font-family="'Jua', sans-serif" font-size="${n <= 12 ? 14 : n <= 24 ? 11 : 9}" fill="#fff"
+               transform="rotate(${midA + 90} ${tp.x} ${tp.y})">${esc(label)}</text>`);
+    }
+    svg.style.transition = 'none';
+    svg.style.transform = `rotate(${state.wheelAngle}deg)`;
+  }
+  function polar(cx, cy, r, deg) {
+    const rad = deg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+  function remainingCandidates() {
+    const winnerIds = new Set(state.winners.map(w => w.id));
+    return state.pool.filter(p => !winnerIds.has(p.id));
+  }
+  function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+  document.getElementById('spin-btn').addEventListener('click', spinOnce);
+
+  function spinOnce() {
+    if (state.isSpinning) return;
+    const candidates = remainingCandidates();
+    if (candidates.length === 0) return;
+    const target = parseInt(document.getElementById('winner-count').value, 10) || 0;
+    if (state.winners.length >= target) return;
+
+    state.isSpinning = true;
+    const spinBtn = document.getElementById('spin-btn');
+    spinBtn.disabled = true;
+    spinBtn.textContent = '돌리는 중...';
+
+    const n = candidates.length;
+    const winnerIdx = Math.floor(Math.random() * n);
+    const sectorAngle = 360 / n;
+    // pointer is at top (-90°). target sector center should land at top.
+    const sectorCenter = winnerIdx * sectorAngle + sectorAngle / 2;
+    const desiredAngle = -sectorCenter;       // SVG rotation needed
+    // ensure rotation count is 5~6 full + final landing
+    const currentMod = ((state.wheelAngle % 360) + 360) % 360;
+    const desiredMod = ((desiredAngle % 360) + 360) % 360;
+    let delta = desiredMod - currentMod;
+    if (delta <= 0) delta += 360;
+    const extraRotations = 5 + Math.random();   // 5~6 rotations
+    const totalAngle = state.wheelAngle + extraRotations * 360 + delta;
+
+    const svg = document.getElementById('wheel-svg');
+    const duration = 4200;
+    svg.style.transition = `transform ${duration}ms cubic-bezier(0.17, 0.67, 0.21, 0.99)`;
+    svg.style.transform = `rotate(${totalAngle}deg)`;
+    state.wheelAngle = totalAngle;
+
+    document.getElementById('wheel-center').textContent = '...';
+    document.getElementById('spin-status').textContent = '🎰 룰렛이 돌아갑니다...';
+
+    setTimeout(() => {
+      const winner = candidates[winnerIdx];
+      const rank = state.winners.length + 1;
+      state.winners.push({ ...winner, rank });
+      const status = document.getElementById('spin-status');
+      status.innerHTML = `🎉 ${rank}번 당첨자: <span class="winner-name">${esc(winner.name)}</span>`;
+      document.getElementById('wheel-center').textContent = '🎉';
+      state.isSpinning = false;
+      spinBtn.disabled = false;
+
+      renderWinnersList();
+      if (state.winners.length >= target) {
+        spinBtn.textContent = '✓ 모든 당첨자 추첨 완료';
+        spinBtn.disabled = true;
+        document.getElementById('wheel-center').textContent = 'END';
+        setStep(4, 'done');
+        showStep(5);
+      } else {
+        spinBtn.textContent = `🎲 다음 당첨자 (${state.winners.length + 1}/${target})`;
+        // 다음 회전 위해 휠 갱신
+        setTimeout(() => renderRoulette(), 800);
+      }
+    }, duration + 100);
+  }
+
+  // ─── Step 5: Results ────────────────────────────────────────────────
+  function renderWinnersList() {
+    const list = document.getElementById('winners-list');
+    const mask = document.getElementById('mask-toggle').checked;
+    list.innerHTML = state.winners.map(w => {
+      const name = mask ? maskName(w.name) : w.name;
+      const id = mask ? maskId(w.id) : w.id;
+      return `<li><span class="rank">${w.rank}</span><span class="name">${esc(name)}</span><span class="id">${esc(id)}</span></li>`;
+    }).join('');
+    setStep(5, state.winners.length > 0 ? 'active' : 'disabled');
+  }
+  document.getElementById('mask-toggle').addEventListener('change', renderWinnersList);
+
+  function maskName(name) {
+    if (!name) return '';
+    const len = name.length;
+    if (len === 1) return name;
+    if (len === 2) return name[0] + '*';
+    return name[0] + '*'.repeat(Math.max(1, len - 2)) + name[len - 1];
+  }
+  function maskId(id) {
+    if (!id) return '';
+    if (id.length <= 2) return id;
+    return id.slice(0, 2) + '*'.repeat(Math.max(1, id.length - 2));
+  }
+
+  // CSV 다운로드
+  window.downloadCSV = function() {
+    const mask = document.getElementById('mask-toggle').checked;
+    const lines = [['순위', '이름', '구매자ID']];
+    state.winners.forEach(w => {
+      const name = mask ? maskName(w.name) : w.name;
+      const id = mask ? maskId(w.id) : w.id;
+      lines.push([w.rank, name, id]);
+    });
+    const csv = lines.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `당첨자_${getDateTag()}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  };
+  // 클립보드 복사
+  window.copyResults = function() {
+    const mask = document.getElementById('mask-toggle').checked;
+    const lines = state.winners.map(w => {
+      const name = mask ? maskName(w.name) : w.name;
+      const id = mask ? maskId(w.id) : w.id;
+      return `${w.rank}. ${name} (${id})`;
+    }).join('\n');
+    const text = `🎉 이벤트 당첨자 발표\n${getDateTag()}\n\n${lines}`;
+    navigator.clipboard.writeText(text)
+      .then(() => alert('클립보드에 복사되었습니다!'))
+      .catch(() => prompt('복사 실패. 아래 텍스트를 직접 복사하세요:', text));
+  };
+  // 포스터 PNG
+  window.downloadPoster = async function() {
+    const mask = document.getElementById('mask-toggle').checked;
+    const poster = document.getElementById('poster');
+    const product = state.colMap.product ? state.rows[0][colIdx(state.colMap.product)] : '';
+    const title = product ? truncate(product.toString(), 22) : '이벤트 당첨자 발표';
+    poster.innerHTML = `
+      <div class="badge">🎉 EVENT WINNER</div>
+      <h2>당첨자 발표</h2>
+      <div class="sub">${esc(title)}</div>
+      <ol>
+        ${state.winners.map(w => {
+          const name = mask ? maskName(w.name) : w.name;
+          const id = mask ? maskId(w.id) : w.id;
+          return `<li><span class="rank">${w.rank}</span><span class="name">${esc(name)}</span><span class="id">${esc(id)}</span></li>`;
+        }).join('')}
+      </ol>
+      <footer>
+        <span class="handle">@friendly-pharmacist</span>
+        <span>${getDateTag()}</span>
+      </footer>
+    `;
+    try {
+      const canvas = await html2canvas(poster, { scale: 1, backgroundColor: '#FFFBF9' });
+      const link = document.createElement('a');
+      link.download = `당첨자_포스터_${getDateTag()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      alert('포스터 생성 실패: ' + e.message);
+    }
+  };
+  // 다시 추첨
+  window.restartRaffle = function() {
+    state.winners = [];
+    state.wheelAngle = 0;
+    document.getElementById('winners-list').innerHTML = '';
+    document.getElementById('spin-status').textContent = '';
+    document.getElementById('wheel-center').textContent = 'START';
+    document.getElementById('spin-btn').textContent = '🎲 추첨 시작';
+    document.getElementById('spin-btn').disabled = false;
+    renderRoulette();
+    setStep(4, 'active');
+    setStep(5, 'disabled');
+    showStep(4);
+  };
+
+  // ─── Utility ────────────────────────────────────────────────────────
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function getDateTag() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+})();
+</script>
+</body>
+</html>
